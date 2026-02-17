@@ -786,31 +786,29 @@ class ModuleController extends ApiController
 
             $module = Module::find($credentials['module_id']);
             $oldModule = clone $module;
+            $hasServersInput = array_key_exists('servers', $credentials);
             $serverIds = array_column($credentials['servers'] ?? [], 'id');
             $configFile = $request->file('config_file');
 
             if ($module->servers->isEmpty() && !$configFile) throw ValidationException::withMessages(['config' => 'config file required']);
 
+            if ($hasServersInput) {
                 // check permissions
-            foreach ($serverIds as $serverId) {
-                $server = Server::find($serverId);
-                $this->chackPermissionModule($server);
+                foreach ($serverIds as $serverId) {
+                    $server = Server::find($serverId);
+                    $this->chackPermissionModule($server);
 
-                if ($server['is_down'] === Server::OFF) throw ValidationException::withMessages(['msg' => 'server : ' . $server['name'] . ' is off']);
+                    if ($server['is_down'] === Server::OFF) throw ValidationException::withMessages(['msg' => 'server : ' . $server['name'] . ' is off']);
+                }
+
+                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
+
+                // update file
+                if ($configFile) {
+                    $jsonConfig = YamlParserService::uploadModuleFile($configFile);
+                    $output = $this->updateConfigForDB($module, $serverIds, $jsonConfig, $request, $credentials['port'] ?? 22);
+                }
             }
-
-            if ($serverIds) {
-
-                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
-
-                        // update file
-                    if ($configFile) {
-                        $jsonConfig = YamlParserService::uploadModuleFile($configFile);
-                        $output = $this->updateConfigForDB($module, $serverIds, $jsonConfig, $request, $credentials['port'] ?? 22);
-                    }
-
-            } else
-                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
 
 
 

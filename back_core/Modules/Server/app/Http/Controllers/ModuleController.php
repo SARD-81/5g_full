@@ -786,31 +786,29 @@ class ModuleController extends ApiController
 
             $module = Module::find($credentials['module_id']);
             $oldModule = clone $module;
-            $serverIds = array_column($credentials['servers'], 'id') ?? [];
+            $hasServersInput = array_key_exists('servers', $credentials);
+            $serverIds = array_column($credentials['servers'] ?? [], 'id');
             $configFile = $request->file('config_file');
 
             if ($module->servers->isEmpty() && !$configFile) throw ValidationException::withMessages(['config' => 'config file required']);
 
+            if ($hasServersInput) {
                 // check permissions
-            foreach ($serverIds as $serverId) {
-                $server = Server::find($serverId);
-                $this->chackPermissionModule($server);
+                foreach ($serverIds as $serverId) {
+                    $server = Server::find($serverId);
+                    $this->chackPermissionModule($server);
 
-                if ($server['is_down'] === Server::OFF) throw ValidationException::withMessages(['msg' => 'server : ' . $server['name'] . ' is off']);
+                    if ($server['is_down'] === Server::OFF) throw ValidationException::withMessages(['msg' => 'server : ' . $server['name'] . ' is off']);
+                }
+
+                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
+
+                // update file
+                if ($configFile) {
+                    $jsonConfig = YamlParserService::uploadModuleFile($configFile);
+                    $output = $this->updateConfigForDB($module, $serverIds, $jsonConfig, $request, $credentials['port'] ?? 22);
+                }
             }
-
-            if ($serverIds) {
-
-                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
-
-                        // update file
-                    if ($configFile) {
-                        $jsonConfig = YamlParserService::uploadModuleFile($configFile);
-                        $output = $this->updateConfigForDB($module, $serverIds, $jsonConfig, $request, $credentials['port'] ?? 22);
-                    }
-
-            } else
-                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
 
 
 
@@ -844,13 +842,15 @@ class ModuleController extends ApiController
                             'name' => $module->name,
                             'type' => $module->type,
                         ],
-                        'module_server' => [
-                            'id' => $module->servers->first()->id,
-                            'name' => $module->servers->first()->name,
-                            'path_config' => $module->servers->first()->path_config,
-                            'path_fun_config' => $module->servers->first()->path_fun_config,
-                            'ip' => $module->servers->first()->ip
-                        ]
+                        'module_server' => optional($module->servers->first(), function ($server) {
+                            return [
+                                'id' => $server->id,
+                                'name' => $server->name,
+                                'path_config' => $server->path_config,
+                                'path_fun_config' => $server->path_fun_config,
+                                'ip' => $server->ip,
+                            ];
+                        })
                     ])
                     ->log('The export file config is taken from the module configuration.');
 
@@ -861,6 +861,7 @@ class ModuleController extends ApiController
                     'message' => 'Module updated successfully',
                     'output' => $output ?? null,
                     'module' => [
+                        'module_id' => $module['id'],
                         'module_name' => $module['name'],
                         'module_type' => $module['type'],
                         'module_server' => $module->servers->pluck('id')->toArray(),

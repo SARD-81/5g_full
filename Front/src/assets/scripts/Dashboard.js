@@ -4791,6 +4791,7 @@ async function showModuls(page = 1) {
             height="20" 
             id="${y + 1}"
             data-id-modules = "${y + 1}"
+            data-module-id = "${data.module.module[y].module_id}"
             fill="currentColor" 
             data-bs-toggle="modal"
             data-bs-target="#schedulingModule"
@@ -4809,6 +4810,7 @@ async function showModuls(page = 1) {
           fill="currentColor"
           id="${y + 1}"
           data-id-modules = "${y + 1}"
+            data-module-id = "${data.module.module[y].module_id}"
           data-bs-toggle="modal"
           data-bs-target="#editModule"
           class="bi bi-pencil-square editModuleClick cursorPointer"
@@ -4832,6 +4834,7 @@ async function showModuls(page = 1) {
            height="20" 
            id="${y + 1}"
            data-id-modules = "${y + 1}"
+            data-module-id = "${data.module.module[y].module_id}"
            data-bs-toggle="modal"
            data-bs-target="#removeModule"
            fill="currentColor" 
@@ -5080,32 +5083,15 @@ function modalEditModule() {
         .getElementById("buttonUpdateModule")
         .removeAttribute("data-bs-dismiss");
       idTrModule = this.dataset.idModules;
-
-      // let userNameServer = localStorage.getItem("userNameServer");
-      // let passwordServer = localStorage.getItem("passwordServer");
-      // let port = localStorage.getItem("port");
-      // document.getElementById("saveValue").checked = false;
-
-      // if (userNameServer && passwordServer) {
-      //   document.querySelector('input[name="name_InputUserNameModule"]').value =
-      //     userNameServer;
-      //   document.querySelector('input[name="name_InputPasswordModule"]').value =
-      //     passwordServer;
-      // } else {
-      //   document.querySelector('input[name="name_InputUserNameModule"]').value =
-      //     "";
-      //   document.querySelector('input[name="name_InputPasswordModule"]').value =
-      //     "";
-      // }
-      // document.querySelector('input[name="name_InputPortModule"]').value = port;
+      const moduleIdFromDataset = Number(this.dataset.moduleId);
+      const moduleRow = this.closest("tr");
+      idModule = moduleIdFromDataset || Number(moduleRow?.dataset.id || 0);
 
       document.querySelector("#moduleFile").value = "";
-      let dataSet = this.dataset.idModules;
-      // const trElement = element.closest("tr");
-      // const dataId = trElement.getAttribute("data-id");
+      const dataSet = this.dataset.idModules;
       document.getElementById("ServerEditModule").innerHTML = "";
-      crateServerEditModule(dataSet);
-      typeModuleEdit(dataSet);
+      crateServerEditModule(dataSet, idModule);
+      typeModuleEdit(idModule);
 
       for (let i = 0; i < numberAndNameServers.length; i++) {
         if (numberAndNameServers[i].serverStatus == 1) {
@@ -5666,16 +5652,17 @@ if (window.top !== window.self) {
   window.top.location.href = "/"; // مسیر صفحه اصلی parent
 }
 
-function typeModuleEdit() {
-  let type;
+function typeModuleEdit(moduleId) {
+  let type = [];
   for (let y = 0; y < modulesInfo.length; y++) {
-    if (modulesInfo[y].moduleID == idModule) {
-      type = modulesInfo[y].moduleType;
+    if (Number(modulesInfo[y].moduleID) === Number(moduleId)) {
+      type = modulesInfo[y].moduleType || [];
+      break;
     }
   }
 
   // نرمال‌سازی داده‌ها (تبدیل به حروف کوچک)
-  const normalizedData = type.map((item) => item.toLowerCase());
+  const normalizedData = type.map((item) => String(item).toLowerCase());
 
   // انتخاب چک‌باکس‌ها
   const epcCheckbox = document.getElementById("moduleTypeEPC");
@@ -5705,10 +5692,13 @@ function typeModuleEdit() {
 
 let idModule;
 let serverModule = [];
-function crateServerEditModule(x) {
-  let servers = modulesInfo[x - 1].serverIDs;
-  let serverLength = servers.length;
-  idModule = modulesInfo[x - 1].moduleID;
+function crateServerEditModule(x, moduleId) {
+  const selectedModule = modulesInfo.find(
+    (moduleItem) => Number(moduleItem.moduleID) === Number(moduleId)
+  );
+  const servers = selectedModule?.serverIDs || [];
+  const serverLength = servers.length;
+  idModule = Number(moduleId);
   document.querySelector('input[name="name_nameInputEditModule"]').value =
     document.querySelector(`#tBody3 #tr${x} .td2`).textContent;
   let numberLength = numberAndNameServers.length;
@@ -5883,63 +5873,16 @@ async function editModules(idModule) {
 
   // let saveValue = document.getElementById("saveValue");
 
+  let requestSuccess = false;
   await useApi({
     url: `edit-module`,
     method: "post",
     data: formData,
     headers: {
-      "Content-Type": "multipart/form-data", // این هدر مهم است
+      "Content-Type": "multipart/form-data",
     },
-    callback: function (data) {
-      let lengthServer = data.module.module_server.length;
-      let server = data.module.module_server;
-
-      for (let y = 0; y < modulesInfo.length; y++) {
-        if (modulesInfo[y].moduleID == idModule) {
-          modulesInfo[y].serverIDs.length = 0;
-          for (let i = 0; i < server.length; i++) {
-            modulesInfo[y].serverIDs.push(server[i]);
-          }
-        }
-      }
-
-      for (let y = 0; y < modulesInfo.length; y++) {
-        modulesInfo[y].moduleType.length = 0;
-        if (modulesInfo[y].moduleID == idModule) {
-          modulesInfo[y].moduleType.push(data.module.module_type);
-          modulesInfo[y].moduleName = data.module.module_name;
-        }
-      }
-
-      serverModule = [];
-      for (let i = 0; i < lengthServer; i++) {
-        serverModule.push(data.module.module_server[i]);
-        document.getElementById(`selectServerEdit${server[i]}`).checked = true;
-      }
-
-      if (serverModule.length === 0) {
-        document.querySelector(`#tr${idTrModule} .td3`).innerHTML = "";
-      } else {
-        // if (saveValue.checked) {
-        //   localStorage.setItem("userNameServer", userName);
-        //   localStorage.setItem("passwordServer", password);
-        // }
-
-        document.querySelector(`#tr${idTrModule} .td2`).innerHTML =
-          data.module.module_name;
-
-        let lengthModule = data.module.module_server_name;
-        let result = JSON.stringify(lengthModule)
-          .replace(/,\s*\]$/, "")
-          .replace(/^\[/, "")
-          .replace(/\]$/, "")
-          .replace(/,/g, ", ")
-          .replace(/"/g, "");
-        document.querySelector(`#tr${idTrModule} .td3 span`).innerHTML = result;
-
-        document.querySelector(`#tr${idTrModule} .td4`).innerHTML =
-          data.module.module_type.toUpperCase();
-      }
+    callback: async function (data) {
+      requestSuccess = true;
       Toastify({
         text: data.message,
         style: {
@@ -5947,12 +5890,33 @@ async function editModules(idModule) {
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
         },
       }).showToast();
+
+      const pageToRefresh = Number(currentPageModule || urlModule || 1);
+      modulesInfo = [];
+      await showModuls(pageToRefresh);
+
       let button = document.getElementById("buttonUpdateModule");
       button.setAttribute("data-bs-dismiss", "modal");
       btnEditModule = "modalEditModule";
-      button.click(); // کلیک برنامه‌نویسی
+      button.click();
+    },
+    errorCallback: async function () {
+      requestSuccess = false;
+      const pageToRefresh = Number(currentPageModule || urlModule || 1);
+      modulesInfo = [];
+      await showModuls(pageToRefresh);
     },
   });
+
+  if (!requestSuccess) {
+    Toastify({
+      text: "Update failed. Changes were not saved.",
+      style: {
+        background: "linear-gradient(to right,rgb(255, 0, 0),rgb(231, 0, 0))",
+      },
+    }).showToast();
+  }
+
   document.getElementById("idLoading").style.display = "none";
   document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
 }

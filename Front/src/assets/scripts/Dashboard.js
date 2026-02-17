@@ -6049,6 +6049,7 @@ document.getElementById("addModal").addEventListener("click", function () {
 
   // document.querySelector('input[name="name_InputPortAddModule"]').value = port;
 
+  createModuleServerCredentials = {};
   document.getElementById("ServerAddModule").innerHTML = "";
   crateServerAddModule();
   for (let i = 0; i < numberAndNameServers.length; i++) {
@@ -6070,22 +6071,87 @@ function crateServerAddModule() {
   let numberLength = numberAndNameServers.length;
   for (let i = 1; i <= numberLength; i++) {
     let idInputServer = serverCard[i - 1].id;
+    let serverName = numberAndNameServers[i - 1].nameServer;
+    let savedServerCredentials =
+      createModuleServerCredentials[idInputServer] ||
+      dataServer.find((server) => Number(server.id) === Number(idInputServer)) ||
+      {};
+
+    let wrapper = document.createElement("div");
+    wrapper.setAttribute("class", "border rounded p-2 mb-2");
+
     let div = document.createElement("div");
-    div.setAttribute("class", "form-check");
+    div.setAttribute("class", "form-check mb-2");
     let input = document.createElement("input");
     input.setAttribute("class", "form-check-input addModalCheckbox");
     input.setAttribute("data-server-id", `${idInputServer}`);
     input.setAttribute("value", "");
     input.setAttribute("type", "checkbox");
     input.setAttribute("id", `selectServer${idInputServer}`);
+
     let lable = document.createElement("label");
     lable.setAttribute("class", "form-check-label");
     lable.setAttribute("for", `selectServer${idInputServer}`);
-    lable.innerHTML = `${numberAndNameServers[i - 1].nameServer}`;
+    lable.innerHTML = `${serverName}`;
+
     div.appendChild(input);
     div.appendChild(lable);
-    document.getElementById("ServerAddModule").appendChild(div);
+
+    let credentialsDiv = document.createElement("div");
+    credentialsDiv.setAttribute("id", `serverCredentialsRow${idInputServer}`);
+    credentialsDiv.setAttribute("class", "server-credential-block d-none");
+    credentialsDiv.innerHTML = `
+      <div class="row g-2">
+        <div class="col-12 col-md-4">
+          <input type="text" class="form-control form-control-sm addModuleServerUsername" data-server-id="${idInputServer}" placeholder="Username" value="${savedServerCredentials.username || ""}" />
+        </div>
+        <div class="col-12 col-md-4">
+          <input type="password" class="form-control form-control-sm addModuleServerPassword" data-server-id="${idInputServer}" placeholder="Password" value="${savedServerCredentials.password || ""}" />
+        </div>
+        <div class="col-12 col-md-4">
+          <input type="number" min="1" class="form-control form-control-sm addModuleServerPort" data-server-id="${idInputServer}" placeholder="Port (default 22)" value="${savedServerCredentials.port || ""}" />
+        </div>
+      </div>
+    `;
+
+    input.addEventListener("change", function () {
+      if (this.checked) {
+        credentialsDiv.classList.remove("d-none");
+      } else {
+        credentialsDiv.classList.add("d-none");
+      }
+    });
+
+    wrapper.appendChild(div);
+    wrapper.appendChild(credentialsDiv);
+    document.getElementById("ServerAddModule").appendChild(wrapper);
   }
+
+  document
+    .querySelectorAll(
+      ".addModuleServerUsername, .addModuleServerPassword, .addModuleServerPort"
+    )
+    .forEach((inputElement) => {
+      inputElement.addEventListener("input", function () {
+        const serverId = Number(this.getAttribute("data-server-id"));
+        const username = document
+          .querySelector(`.addModuleServerUsername[data-server-id="${serverId}"]`)
+          ?.value.trim();
+        const password = document
+          .querySelector(`.addModuleServerPassword[data-server-id="${serverId}"]`)
+          ?.value.trim();
+        const portRaw = document
+          .querySelector(`.addModuleServerPort[data-server-id="${serverId}"]`)
+          ?.value.trim();
+
+        createModuleServerCredentials[serverId] = {
+          id: serverId,
+          username,
+          password,
+          port: portRaw || 22,
+        };
+      });
+    });
 }
 
 document
@@ -6162,6 +6228,14 @@ document
   });
 
 let btnAddModule = "";
+let createModuleServerCredentials = {};
+
+function getServerNameById(serverId) {
+  return (
+    numberAndNameServers.find((server) => Number(server.idServer) === Number(serverId))
+      ?.nameServer || `ID ${serverId}`
+  );
+}
 
 function getSelectedServersWithCredentials(checkboxSelector, selectedServerIds) {
   const selectedIds = selectedServerIds
@@ -6173,15 +6247,40 @@ function getSelectedServersWithCredentials(checkboxSelector, selectedServerIds) 
   const selectedServers = [];
 
   for (const serverId of selectedIds) {
-    const server = dataServer.find((item) => Number(item.id) === Number(serverId));
-    const username = server?.username?.trim?.() || "";
-    const password = server?.password?.trim?.() || "";
-    const portValue = Number(server?.port);
+    const inlineUsername = document
+      .querySelector(`.addModuleServerUsername[data-server-id="${serverId}"]`)
+      ?.value?.trim?.();
+    const inlinePassword = document
+      .querySelector(`.addModuleServerPassword[data-server-id="${serverId}"]`)
+      ?.value?.trim?.();
+    const inlinePort = document
+      .querySelector(`.addModuleServerPort[data-server-id="${serverId}"]`)
+      ?.value?.trim?.();
 
-    if (!username || !password || !Number.isInteger(portValue) || portValue <= 0) {
+    const cachedCredentials = createModuleServerCredentials[serverId] || {};
+    const storedServer = dataServer.find(
+      (item) => Number(item.id) === Number(serverId)
+    );
+
+    const username =
+      inlineUsername || cachedCredentials.username || storedServer?.username?.trim?.() || "";
+    const password =
+      inlinePassword || cachedCredentials.password || storedServer?.password?.trim?.() || "";
+
+    const port = Number(
+      inlinePort || cachedCredentials.port || storedServer?.port || 22
+    );
+
+    const missingFields = [];
+    if (!username) missingFields.push("username");
+    if (!password) missingFields.push("password");
+
+    if (missingFields.length > 0) {
       return {
         isValid: false,
-        error: `Server credentials are required for server ID ${serverId}. Please set username/password/port from server credentials.`
+        error: `Server ${getServerNameById(serverId)} (ID ${serverId}) is missing ${missingFields.join(
+          " and "
+        )}.`,
       };
     }
 
@@ -6189,7 +6288,7 @@ function getSelectedServersWithCredentials(checkboxSelector, selectedServerIds) 
       id: Number(serverId),
       username,
       password,
-      port: portValue,
+      port: Number.isInteger(port) && port > 0 ? port : 22,
     });
   }
 

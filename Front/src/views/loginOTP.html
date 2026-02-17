@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <link
+      rel="stylesheet"
+      href="../assets/styles/styleLoginOTP.css"
+    />
+    <title id="title"></title>
+    <link
+      id="favIcon"
+      rel="icon"
+      type="image/x-icon"
+    />
+  </head>
+  <body>
+    <div class="container containerLogin">
+      <div class="d-flex justify-content-center align-items-center divLogin">
+        <div
+          class="bg-body-tertiary rounded-3 d-flex flex-column justify-content-center align-items-center divContainer position-relative"
+          id="idDivContainer"
+        >
+          <div
+            id="idLoadingLogin"
+            class="loadingLogin"
+          >
+            <svg
+              class="pl"
+              width="240"
+              height="240"
+              viewBox="0 0 240 240"
+            >
+              <circle
+                class="pl__ring pl__ring--a"
+                cx="120"
+                cy="120"
+                r="105"
+                fill="none"
+                stroke="#000"
+                stroke-width="20"
+                stroke-dasharray="0 660"
+                stroke-dashoffset="-330"
+                stroke-linecap="round"
+              ></circle>
+              <circle
+                class="pl__ring pl__ring--b"
+                cx="120"
+                cy="120"
+                r="35"
+                fill="none"
+                stroke="#000"
+                stroke-width="20"
+                stroke-dasharray="0 220"
+                stroke-dashoffset="-110"
+                stroke-linecap="round"
+              ></circle>
+              <circle
+                class="pl__ring pl__ring--c"
+                cx="85"
+                cy="120"
+                r="70"
+                fill="none"
+                stroke="#000"
+                stroke-width="20"
+                stroke-dasharray="0 440"
+                stroke-linecap="round"
+              ></circle>
+              <circle
+                class="pl__ring pl__ring--d"
+                cx="155"
+                cy="120"
+                r="70"
+                fill="none"
+                stroke="#000"
+                stroke-width="20"
+                stroke-dasharray="0 440"
+                stroke-linecap="round"
+              ></circle>
+            </svg>
+          </div>
+          <div
+            id="backLogoOTP"
+            class="d-flex justify-content-center align-items-center mb-4"
+          >
+            <img
+              id="logo"
+              class="img pe-3"
+            />
+          </div>
+          <form class="form">
+            <div class="mb-3">
+              <label
+                for="phoneNamber"
+                class="form-label"
+                >Phone Number</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                name="namePhoneNamber"
+                id="phoneNamber"
+              />
+            </div>
+            <div
+              class="mb-3 d-none flex-column justify-content-center"
+              id="chptchaOffline"
+            >
+              <!-- <div class="d-flex align-items-center">
+                <div
+                  class="CAPTCHA"
+                  id="CAPTCHA"
+                ></div>
+                <button
+                  class="reload p-0"
+                  id="reloadCaptcha"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="25"
+                    height="25"
+                    fill="currentColor"
+                    class="bi bi-arrow-clockwise text-dark"
+                    viewBox="0 0 16 16"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"
+                    />
+                    <path
+                      d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"
+                    />
+                  </svg>
+                </button>
+              </div> -->
+              <div class="d-flex align-items-center">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="nameCaptchaLogin"
+                  id="captchaLogin"
+                />
+                <div
+                  class="divCaptcha"
+                  id="reloadCaptcha"
+                >
+                  <img
+                    class="CAPTCHA"
+                    id="CAPTCHA"
+                  ></img>
+                </div>
+              </div>
+            </div>
+            <div
+              id="reCaptchaOnline"
+              class="my-3 d-none flex-column justify-content-center"
+            >
+              <div id="recaptcha-widget"></div>
+              <!-- <button type="button" id="btnForm2">ریست کردن reCAPTCHA</button> -->
+            </div>
+            <div
+              id="otp-input"
+              class="mb-3 OTP"
+            >
+              <input
+                type="number"
+                id="1"
+                step="1"
+                min="0"
+                max="9"
+                autocomplete="no"
+                pattern="\d*"
+              />
+              <input
+                type="number"
+                id="2"
+                step="1"
+                min="0"
+                max="9"
+                autocomplete="no"
+                pattern="\d*"
+              />
+              <input
+                type="number"
+                id="3"
+                step="1"
+                min="0"
+                max="9"
+                autocomplete="no"
+                pattern="\d*"
+              />
+              <input
+                type="number"
+                id="4"
+                step="1"
+                min="0"
+                max="9"
+                autocomplete="no"
+                pattern="\d*"
+              />
+              <input
+                type="number"
+                id="5"
+                step="1"
+                min="0"
+                max="9"
+                autocomplete="no"
+                pattern="\d*"
+              />
+              <input
+                type="number"
+                id="6"
+                step="1"
+                min="0"
+                max="9"
+                autocomplete="no"
+                pattern="\d*"
+              />
+            </div>
+            <input
+              type="hidden"
+              name="otp"
+            />
+            <div
+              class="OTP mb-3"
+              id="idDivReload"
+            >
+              <button
+                id="idButtonReload"
+                class="p-0 text-white bg-primary rounded-2 buttonReload"
+              >
+                <span class="textReload">Resend</span>
+
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-arrow-clockwise"
+                  viewBox="0 0 16 16"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"
+                  />
+                  <path
+                    d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"
+                  />
+                </svg>
+              </button>
+              <h6
+                class="mb-0 ms-3 d-flex align-items-center"
+                id="time"
+              >
+                02:00
+              </h6>
+            </div>
+            <button
+              id="loginPhoneBtn"
+              class="btn btn-success w-100 d-flex justify-content-center align-items-center"
+              role="button"
+            >
+              <div
+                class="loaderPing me-2"
+                id="loaderPing"
+              ></div>
+              Sending a one-time password
+            </button>
+            <a
+              id="login"
+              class="btn btn-success w-100 justify-content-center align-items-center"
+              role="button"
+            >
+              <div
+                class="loaderPing me-2"
+                id="loaderPingLogin"
+              ></div>
+              Login</a
+            >
+          </form>
+        </div>
+        <div
+          class="box bg-body-tertiary"
+          id="boxCaptcha"
+        >
+          <div
+            class="box-CAPTCHA"
+            id="box-CAPTCHA"
+          >
+            <div
+              class="CAPTCHA"
+              id="CAPTCHA"
+            ></div>
+            <button
+              class="reload p-0"
+              id="reloadCaptcha"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="25"
+                height="25"
+                fill="currentColor"
+                class="bi bi-arrow-clockwise text-dark"
+                viewBox="0 0 16 16"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"
+                />
+                <path
+                  d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"
+                />
+              </svg>
+            </button>
+            <input
+              type="text"
+              id="input"
+              placeholder="Type CAPTCHA Here"
+              maxlength="6"
+            />
+            <div
+              id="wrong"
+              style="margin-left: 10px; color: #f00"
+            ></div>
+            <button
+              class="submit"
+              id="submit"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+      <div
+        id="idLoading"
+        class="loading col-12"
+      >
+        <svg
+          class="pl"
+          width="240"
+          height="240"
+          viewBox="0 0 240 240"
+        >
+          <circle
+            class="pl__ring pl__ring--a"
+            cx="120"
+            cy="120"
+            r="105"
+            fill="none"
+            stroke="#000"
+            stroke-width="20"
+            stroke-dasharray="0 660"
+            stroke-dashoffset="-330"
+            stroke-linecap="round"
+          ></circle>
+          <circle
+            class="pl__ring pl__ring--b"
+            cx="120"
+            cy="120"
+            r="35"
+            fill="none"
+            stroke="#000"
+            stroke-width="20"
+            stroke-dasharray="0 220"
+            stroke-dashoffset="-110"
+            stroke-linecap="round"
+          ></circle>
+          <circle
+            class="pl__ring pl__ring--c"
+            cx="85"
+            cy="120"
+            r="70"
+            fill="none"
+            stroke="#000"
+            stroke-width="20"
+            stroke-dasharray="0 440"
+            stroke-linecap="round"
+          ></circle>
+          <circle
+            class="pl__ring pl__ring--d"
+            cx="155"
+            cy="120"
+            r="70"
+            fill="none"
+            stroke="#000"
+            stroke-width="20"
+            stroke-dasharray="0 440"
+            stroke-linecap="round"
+          ></circle>
+        </svg>
+      </div>
+    </div>
+    <script
+      type="module"
+      defer
+      src="../../main.js"
+    ></script>
+    <script
+      type="module"
+      defer
+      src="../assets/scripts/useApi.js"
+    ></script>
+    <script
+      type="module"
+      defer
+      src="../assets/scripts/loginOTP.js"
+    ></script>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+{
+    "User": true,
+    "Log": true,
+    "Server": true,
+    "SystemSetting": true,
+    "Backup": true
+}

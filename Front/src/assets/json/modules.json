@@ -1,0 +1,1195 @@
+{
+  "AMF": {
+    "logger": {
+      "level": "Logging level",
+      "domain": "Logging operation domain",
+      "file": "Path to the log file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable TLS/SSL authentication verification",
+        "no_tls": "Disable TLS",
+        "cacert": "Path to certificate for TLS",
+        "key": "Path to key for TLS",
+        "cert": "Path to certificate for TLS"
+      },
+      "client": {
+        "no_verify": "Disable TLS/SSL authentication verification",
+        "no_tls": "Disable TLS",
+        "cacert": "Path to certificate for TLS",
+        "key": "Path to key for TLS",
+        "cert": "Path to certificate for TLS"
+      }
+    },
+    "amf": {
+      "sbi": {
+        "addr": "IP address for AMF operations",
+        "port": "Port for AMF services",
+        "advertise": "Addresses advertised to other NFs",
+        "option": "TCP communication settings"
+      }
+    },
+    "service_name": {
+      "namf-comm": "Service name under AMF for communication"
+    },
+    "discovery": {
+      "option": "Service discovery configurations",
+      "delegated": "Auto-discovery method"
+    },
+    "ngap": {
+      "addr": "Address for NGAP",
+      "port": "Port for NGAP",
+      "option": {
+        "option": "SCTP-specific settings",
+        "spp_hbinterval": "Heartbeat interval and SACK delay",
+        "spp_sackdelay": "Heartbeat interval and SACK delay",
+        "srto_initial": "SCTP communication timers",
+        "srto_min": "SCTP communication timers",
+        "srto_max": "SCTP communication timers",
+        "sinit_num_ostreams": "Number of input and output streams",
+        "sinit_max_instreams": "Number of input and output streams"
+      }
+    },
+    "metrics": {
+      "addr": "Address for monitoring tools",
+      "port": "Port for monitoring tools"
+    },
+    "guami": {
+      "plmn_id": "Mobile Country Code (MCC) and Mobile Network Code (MNC)",
+      "amf_id": "AMF identifier (includes region, set, pointer)"
+    },
+    "tai": {
+      "plmn_id": "MCC and MNC specific to the area",
+      "tac": "List of TAC codes"
+    },
+    "plmn_support": {
+      "plmn_id": "Supported MCC and MNC",
+      "s_nssai": {
+        "sst": "Slice type",
+        "sd": "Slice identifier"
+      }
+    },
+    "access_control": {
+      "default_reject_cause": "General reason for rejecting user requests",
+      "plmn_id": "Specific rejection reasons for certain PLMNs"
+    },
+    "network_name": {
+      "full": "Full version of the network name",
+      "short": "Short version of the network name"
+    },
+    "amf_name": "Fully Qualified Domain Name (FQDN) for AMF",
+    "relative_capacity": "AMF\u2019s relative capacity",
+    "security": {
+      "integrity_order": "Priority list for message integrity algorithms",
+      "ciphering_order": "Priority list for encryption algorithms"
+    },
+    "scp": {
+      "sbi": "Service-Based Interface settings for SCP"
+    },
+    "nrf": {
+      "sbi": "NRF-related configurations (similar to SBI in other sections)"
+    },
+    "parameter": {
+      "no_ipv4": "Disable the use of IPv4 addresses",
+      "no_ipv6": "Disable the use of IPv6 addresses",
+      "prefer_ipv4": "Prioritize IPv4-based communication"
+    },
+    "max": {
+      "ue": "Maximum number of UEs managed by this AMF",
+      "peer": "Maximum number of peers"
+    },
+    "usrsctp": {
+      "udp_port": "Default port for USRSCTP"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Heartbeat duration for SBI interfaces"
+      },
+      "message": {
+        "duration": "Lifetime of a message"
+      },
+      "handover": {
+        "duration": "Timing for handovers"
+      },
+      "t3502": {
+        "value": "Specific AMF timer values for RRC"
+      },
+      "t3512": {
+        "value": "Specific AMF timer values for RRC"
+      }
+    }
+  },
+  "AUSF": {
+    "logger": {
+      "level": "Logging level",
+      "domain": "Logging operation domain",
+      "file": "Path to the log file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable TLS/SSL authentication verification",
+        "no_tls": "Disable TLS",
+        "cacert": "Path to certificate for TLS",
+        "key": "Path to key for TLS",
+        "cert": "Path to certificate for TLS"
+      },
+      "client": {
+        "no_verify": "Disable TLS/SSL authentication verification",
+        "no_tls": "Disable TLS",
+        "cacert": "Path to certificate for TLS",
+        "key": "Path to key for TLS",
+        "cert": "Path to certificate for TLS"
+      }
+    },
+    "ausf": {
+      "sbi": {
+        "addr": "IP address for AUSF operations",
+        "port": "Port for AUSF services",
+        "advertise": "Addresses advertised to other NFs",
+        "option": "TCP communication settings"
+      }
+    },
+    "service_name": {
+      "nausf-auth": "Authentication service name under AUSF"
+    },
+    "discovery": {
+      "option": "Service discovery settings",
+      "delegated": "Auto-discovery method"
+    },
+    "scp": {
+      "sbi": "Service-Based Interface settings for SCP (similar to the AUSF)"
+    },
+    "nrf": {
+      "sbi": "NRF-related configurations (address, port, options)"
+    },
+    "parameter": {
+      "no_ipv4": "Disable the use of IPv4 addresses",
+      "no_ipv6": "Disable the use of IPv6 addresses",
+      "prefer_ipv4": "Prioritize IPv4-based communication"
+    },
+    "max": {
+      "ue": "Maximum number of UEs managed by this AUSF",
+      "peer": "Maximum number of peers"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Heartbeat duration for SBI interfaces"
+      },
+      "message": {
+        "duration": "Lifetime of messages on the network"
+      }
+    }
+  },
+  "BSF": {
+    "logger": {
+      "level": "Logging level",
+      "domain": "Logging operation domains",
+      "file": "Path to the log file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable TLS/SSL authentication verification",
+        "no_tls": "Disable TLS for communications",
+        "cacert": "Path to SSL certificate for BSF",
+        "key": "Path to private key for BSF",
+        "cert": "Path to server certificate for BSF"
+      },
+      "client": {
+        "no_verify": "Disable TLS/SSL authentication verification",
+        "no_tls": "Disable TLS for communications",
+        "cacert": "Path to SSL certificate for BSF",
+        "key": "Path to private key for BSF",
+        "cert": "Path to server certificate for BSF"
+      }
+    },
+    "bsf": {
+      "sbi": {
+        "addr": "IP address for BSF operations",
+        "port": "Port for BSF services",
+        "advertise": "Addresses advertised to other Network Functions",
+        "option": {
+          "tcp_nodelay": "Disable data sending delay",
+          "so_linger": "Configure socket linger time"
+        },
+        "name": "Domain name for BSF",
+        "dev": "Network interface",
+        "service_name": "Service name for BSF operations"
+      }
+    },
+    "discovery": {
+      "option": "Service discovery settings",
+      "delegated": "Automatic service discovery method"
+    },
+    "nrf": {
+      "sbi": "NRF configuration"
+    },
+    "parameter": {
+      "no_ipv4": "Disable the use of IPv4 addresses",
+      "no_ipv6": "Disable the use of IPv6 addresses",
+      "prefer_ipv4": "Prioritize IPv4-based communication"
+    },
+    "max": {
+      "ue": "Maximum number of UEs managed by the BSF",
+      "peer": "Maximum number of peers"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Interval for Heartbeat communications"
+      },
+      "message": {
+        "duration": "Timeout for messages on the network"
+      }
+    }
+  },
+  "NRF": {
+    "logger": {
+      "level": "Logging level",
+      "domain": "Domains associated with logging",
+      "file": "Path to the log file for storage"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable TLS/SSL certificate verification",
+        "no_tls": "Disable TLS for communications",
+        "cacert": "Path to SSL certificates",
+        "key": "Path to SSL key",
+        "cert": "Path to SSL certificate"
+      },
+      "client": {
+        "no_verify": "Disable TLS/SSL certificate verification",
+        "no_tls": "Disable TLS for communications",
+        "cacert": "Path to SSL certificates",
+        "key": "Path to SSL key",
+        "cert": "Path to SSL certificate"
+      }
+    },
+    "nrf": {
+      "sbi": {
+        "addr": "IP addresses the NRF listens on",
+        "advertise": "Addresses advertised to other Network Functions",
+        "option": {
+          "tcp_nodelay": "Disable TCP packet transmission delays",
+          "so_linger": "Configure socket linger time"
+        },
+        "port": "Port on which the NRF provides services",
+        "name": "Domain name of the NRF",
+        "dev": "Network interface that the NRF uses"
+      }
+    },
+    "service_name": {
+      "nnrf-nfm": "NRF service name for Network Function Management"
+    },
+    "parameter": {
+      "no_ipv4": "Disable the use of IPv4 addresses",
+      "no_ipv6": "Disable the use of IPv6 addresses",
+      "prefer_ipv4": "Prioritize IPv4-based communication"
+    },
+    "max": {
+      "ue": "Maximum number of UEs that the NRF can manage",
+      "peer": "Maximum number of peers that can connect to the NRF"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Interval for Heartbeat signaling between NFs",
+        "validity": "Validity duration of NF information in the NRF"
+      },
+      "subscription": {
+        "validity": "Validity duration of network subscriptions"
+      },
+      "message": {
+        "duration": "Expiration time for NRF messages"
+      }
+    }
+  },
+  "NSSF": {
+    "logger": {
+      "level": "Logging level",
+      "domain": "Domains where logging is enabled",
+      "file": "Path to the log file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable TLS/SSL certificate verification",
+        "no_tls": "Disable TLS encryption",
+        "cacert": "Path to CA certificates",
+        "key": "Path to NSSF key",
+        "cert": "Path to NSSF certificate"
+      },
+      "client": {
+        "no_verify": "Disable TLS/SSL certificate verification",
+        "no_tls": "Disable TLS encryption",
+        "cacert": "Path to CA certificates",
+        "key": "Path to NSSF key",
+        "cert": "Path to NSSF certificate"
+      }
+    },
+    "nssf": {
+      "sbi": {
+        "addr": "IP addresses the NSSF listens on",
+        "port": "Port used for SBI communications",
+        "name": "Fully Qualified Domain Name (FQDN) for the NSSF",
+        "dev": "Network interface used by the NSSF",
+        "advertise": "Addresses advertised to other Network Functions",
+        "option": {
+          "tcp_nodelay": "Disable Nagle’s algorithm to reduce delays",
+          "so_linger": "Configure behavior for pending socket data after closure"
+        }
+      },
+      "nsi": {
+        "addr": "IP addresses the NSI listens on",
+        "port": "Port for NSI communications",
+        "option": "TCP socket settings",
+        "s_nssai": {
+          "sst": "Slice/Service Type",
+          "sd": "Slice Differentiator"
+        }
+      }
+    },
+    "service_name": "Names of services provided by the NSSF",
+    "discovery": {
+      "option": {
+        "no_service_names": "Specify whether service names are disabled"
+      },
+      "delegated": "Determine the type of delegation for service discovery"
+    },
+    "scp": {
+      "sbi": {
+        "addr": "IP addresses that the SCP listens on",
+        "port": "Port used for SBI communications",
+        "option": "TCP socket configurations",
+        "name": "Fully Qualified Domain Name (FQDN) for the SCP"
+      }
+    },
+    "nrf": {
+      "sbi": {
+        "addr": "IP addresses the NRF listens on",
+        "port": "Port used for SBI communications",
+        "option": "TCP socket configurations",
+        "name": "Fully Qualified Domain Name (FQDN) for the NRF"
+      }
+    },
+    "parameter": {
+      "no_ipv4": "Disable IPv4 usage",
+      "no_ipv6": "Disable IPv6 usage",
+      "prefer_ipv4": "Prioritize IPv4 if both IPv4 and IPv6 are enabled"
+    },
+    "max": {
+      "ue": "Maximum number of User Equipments (UEs) supported",
+      "peer": "Maximum number of peers supported"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Interval for Heartbeat signals (in seconds)"
+      },
+      "message": { "duration": "Message lifetime (in milliseconds)" }
+    }
+  },
+  "PCF": {
+    "db_uri": {
+      "mongodb://localhost/open5gs": "Path to the MongoDB database for storing BBDH data"
+    },
+    "logger": {
+      "level": "Logging level",
+      "domain": "Domains related to logging",
+      "file": "Path to the log file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable certificate verification in TLS/SSL",
+        "no_tls": "Disable TLS encryption",
+        "cacert": "CA certificate path",
+        "key": "private key path",
+        "cert": "PCF certificate path"
+      },
+      "client": {
+        "no_verify": "Disable certificate verification in TLS/SSL",
+        "no_tls": "Disable TLS encryption",
+        "cacert": "CA certificate path",
+        "key": "private key path",
+        "cert": "PCF certificate path"
+      }
+    },
+    "pcf": {
+      "sbi": {
+        "addr": "IP addresses that the PCF listens on",
+        "port": "Port for the SBI interface",
+        "tls": "Specific TLS settings, including the key and certificate",
+        "advertise": "Addresses advertised to other Network Functions",
+        "name": "Fully Qualified Domain Name (FQDN) of the PCF",
+        "dev": "Network interface used",
+        "option": {
+          "tcp_nodelay": "Disable Nagle's algorithm",
+          "so_linger": "Configure linger and socket closure settings"
+        }
+      }
+    },
+    "service_name": "Service names provided by the PCF",
+    "discovery": {
+      "option": {
+        "no_service_names": "Choose whether to enable or disable service names"
+      },
+      "delegated": "Configure automatic delegation"
+    },
+    "metrics": {
+      "addr": "IP address and port for sending metrics"
+    },
+    "tls": {
+      "client": "TLS settings for the client, including key, certificate, and CA certificate"
+    },
+    "nrf": {
+      "sbi": {
+        "addr": "IP addresses the NRF listens on for communications",
+        "port": "Port for SBI communications",
+        "option": "Related TCP socket configurations",
+        "name": "Fully Qualified Domain Name (FQDN) for the NRF"
+      }
+    },
+    "parameter": {
+      "no_ipv4": "Disable IPv4 usage",
+      "no_ipv6": "Disable IPv6 usage",
+      "prefer_ipv4": "Prioritize IPv4-based communication when both IPv4 and IPv6 are available"
+    },
+    "max": {
+      "ue": "Maximum number of UEs supported",
+      "peer": "Maximum number of peers supported"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Interval for Heartbeat signals (in seconds)"
+      },
+      "message": {
+        "duration": "Lifetime of messages (in milliseconds)"
+      }
+    }
+  },
+  "SCP": {
+    "db_uri": {
+      "mongodb://localhost/open5gs": "Path to connect to the MongoDB database for storing BBDH-related data"
+    },
+    "logger": {
+      "level": "Logging level",
+      "domain": "Domains related to logging",
+      "file": "Path to the log file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable TLS/SSL certificate verification",
+        "no_tls": "Disable TLS for communication",
+        "cacert": "Path to CA certificate",
+        "key": "Path to private key of SCP",
+        "cert": "Path to SCP certificate"
+      },
+      "client": {
+        "no_verify": "Disable TLS/SSL certificate verification",
+        "no_tls": "Disable TLS for communication",
+        "cacert": "Path to CA certificate",
+        "key": "Path to private key of SCP",
+        "cert": "Path to SCP certificate"
+      }
+    },
+    "scp": {
+      "sbi": {
+        "addr": "IP addresses that SCP will listen on (IPv4 and IPv6)",
+        "port": "Port used for SCP communications",
+        "option": {
+          "tcp_nodelay": "Disable Nagle’s algorithm to improve transmission speed",
+          "so_linger": "Configure lingering settings for pending socket data during closure"
+        },
+        "advertise": "Addresses advertised to other Network Functions",
+        "name": "Fully Qualified Domain Name (FQDN) of the SCP",
+        "dev": "Network interface used by SCP"
+      }
+    },
+    "discovery": {
+      "delegated": "Specify whether automatically discovered services are managed"
+    },
+    "next_scp": {
+      "sbi": {
+        "addr": "IP addresses that the next SCP listens on",
+        "port": "Port for the next SCP",
+        "option": "TCP settings (similar to previous SBI configurations)",
+        "name": "FQDN of the next SCP"
+      }
+    },
+    "nrf": {
+      "sbi": {
+        "addr": "IP addresses that the NRF listens on",
+        "port": "Port for NRF communication",
+        "option": "TCP settings (similar to SCP configurations)"
+      }
+    },
+    "parameter": {
+      "no_ipv4": "Disable IPv4 usage",
+      "no_ipv6": "Disable IPv6 usage",
+      "prefer_ipv4": "Prioritize IPv4 over IPv6"
+    },
+    "max": {
+      "ue": "Maximum number of User Equipment (UEs) managed",
+      "peer": "Maximum number of peers supported by SCP"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Interval for sending Heartbeat signals between Network Functions (in seconds)"
+      },
+      "message": {
+        "duration": "Expiration time for messages (in milliseconds)"
+      }
+    }
+  },
+  "UDM": {
+    "logger": {
+      "level": "Logging level",
+      "domain": "Domains related to logging",
+      "file": "Path to the log file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable TLS certificate verification",
+        "no_tls": "Disable TLS encryption",
+        "cacert": "Path to CA certificate",
+        "key": "Path to private key",
+        "cert": "Path to UDM certificate"
+      },
+      "client": {
+        "no_verify": "Disable TLS certificate verification",
+        "no_tls": "Disable TLS encryption",
+        "cacert": "Path to CA certificate",
+        "key": "Path to private key",
+        "cert": "Path to UDM certificate"
+      }
+    },
+    "udm": {
+      "hnet": {
+        "id": "Related identifier",
+        "scheme": "Type of cryptographic mechanism used",
+        "key": "Path to the key file"
+      },
+      "sbi": {
+        "addr": "IP addresses that the UDM listens on",
+        "port": "UDM connection port",
+        "option": {
+          "tcp_nodelay": "Disable Nagle's algorithm to reduce delay",
+          "so_linger": {
+            "so_linger": "Configure linger settings for socket closure",
+            "l_onoff": "Enable linger",
+            "l_linger": "Duration of linger"
+          }
+        },
+        "advertise": "Advertised addresses for other NFs",
+        "name": "FQDN for the UDM",
+        "dev": "Network interface used",
+        "service_name": {
+          "nudm-sdm": "Service Data Management",
+          "nudm-uecm": "UE Context Management",
+          "nudm-ueau": "UE Authentication"
+        }
+      }
+    },
+    "discovery": {
+      "option": {
+        "no_service_names": "Disable using service names for discovery"
+      },
+      "delegated": "Enable automatic discovery management"
+    },
+    "scp": {
+      "sbi": {
+        "addr": "IP addresses for SCP",
+        "port": "SCP port",
+        "option": {
+          "tcp_nodelay": "Disable TCP delays",
+          "so_linger": "Configure linger for socket"
+        },
+        "name": "SCP domain name"
+      }
+    }
+  },
+  "UDR": {
+    "db_uri": {
+      "mongodb": "Address for connecting to the MongoDB database"
+    },
+    "logger": {
+      "level": "Logging level for recording errors",
+      "domain": "Domains related to logging",
+      "file": "Path to the log file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable TLS certificate verification",
+        "no_tls": "Disable TLS encryption",
+        "cacert": "Paths to CA certificates",
+        "key": "Path to private key",
+        "cert": "Path to the UDR certificate file"
+      },
+      "client": {
+        "no_verify": "Disable TLS certificate verification",
+        "no_tls": "Disable TLS encryption",
+        "cacert": "Paths to CA certificates",
+        "key": "Path to private key",
+        "cert": "Path to the UDR certificate file"
+      }
+    },
+    "bsf": {
+      "sbi": {
+        "addr": "IP addresses to listen on",
+        "port": "Port number used by BSF for connection",
+        "name": "Fully Qualified Domain Name (FQDN) of BSF",
+        "option": {
+          "tcp_nodelay": "Disable Nagle's algorithm to reduce latency",
+          "so_linger": "Configure linger handling for socket closure"
+        },
+        "dev": "Network interface",
+        "advertise": "Addresses advertised to other Network Functions"
+      }
+    },
+    "udr": {
+      "service_name": "Services provided by UDR",
+      "sbi": {
+        "addr": "UDR IP address",
+        "port": "Port number for UDR connections"
+      }
+    },
+    "discovery": {
+      "option": {
+        "no_service_names": "Disable the use of service names for discovery"
+      },
+      "delegated": "Enable automatic discovery management of services"
+    },
+    "scp": {
+      "sbi": {
+        "addr": "IP address of SCP",
+        "port": "SCP port number",
+        "name": "FQDN of SCP",
+        "option": {
+          "tcp_nodelay": "Disable TCP delay",
+          "so_linger": "Configure linger settings for the socket"
+        }
+      }
+    },
+    "nrf": {
+      "sbi": {
+        "addr": "IP address of NRF",
+        "port": "NRF port number",
+        "name": "FQDN of NRF",
+        "option": {
+          "tcp_nodelay": "Disable Nagle's algorithm",
+          "so_linger": "Configure linger settings for the socket"
+        }
+      }
+    },
+    "parameter": {
+      "no_ipv4": "Disable the use of IPv4",
+      "no_ipv6": "Disable the use of IPv6",
+      "prefer_ipv4": "Prioritize IPv4 over IPv6"
+    },
+    "max": {
+      "ue": "Maximum number of User Equipments (UEs)",
+      "peer": "Maximum number of peers"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Interval for sending Heartbeat signals to Network Functions"
+      },
+      "message": {
+        "duration": "Maximum duration of messages"
+      }
+    }
+  },
+  "HSS": {
+    "db_uri": "URI for database connection",
+    "logger": {
+      "file": "Log file path",
+      "level": "Logging level",
+      "domain": "Logging operation domain"
+    },
+    "hss": {
+      "freeDiameter": "Path to Diameter config file",
+      "sms_over_ims": "SMS over IMS settings"
+    },
+    "parameter": {
+      "prefer_ipv4": "Prefer IPv4",
+      "no_ipv4": "Disable IPv4",
+      "no_ipv6": "Disable IPv6",
+      "use_mongodb_change_stream": "Enable DB change stream"
+    },
+    "max": {
+      "ue": "Max UEs",
+      "peer": "Max Diameter peers"
+    }
+  },
+  "MME": {
+    "logger": {
+      "file": "Path to the log file",
+      "level": "Logging level",
+      "domain": "Logging domain"
+    },
+    "freeDiameter": "Path to the Diameter protocol configuration file",
+    "s1ap": {
+      "dev": "S1AP network interface",
+      "addr": "IP address for S1AP",
+      "port": "S1AP service port",
+      "option": {
+        "sctp": {
+          "spp_hbinterval": "Heartbeat interval",
+          "spp_sackdelay": "SCTP ACK delay",
+          "srto_initial": "SCTP retransmission initial timer",
+          "min": "SCTP retransmission min timer",
+          "max": "SCTP retransmission max timer",
+          "sinit_num_ostreams": "SCTP output streams",
+          "sinit_max_instreams": "SCTP input streams"
+        }
+      }
+    },
+    "gtpc": {
+      "addr": "IP address for GTP-C communication"
+    },
+    "metrics": {
+      "addr": "Metrics IP address",
+      "port": "Metrics service port"
+    },
+    "gummei": {
+      "plmn_id": {
+        "mcc": "Mobile Country Code",
+        "mnc": "Mobile Network Code",
+        "mme_gid": "MME Group Identifier",
+        "mme_code": "MME Code"
+      }
+    },
+    "tai": {
+      "plmn_id": {
+        "mcc": "Mobile Country Code",
+        "mnc": "Mobile Network Code",
+        "tac": "Tracking area codes"
+      }
+    },
+    "security": {
+      "ciphering_order": "Preferred encryption algorithms",
+      "integrity_order": "Preferred integrity algorithms"
+    },
+    "network_name": {
+      "full": "Full network name",
+      "short": "Short network name"
+    },
+    "mme_name": "MME node name",
+    "relative_capacity": "MME’s relative capacity",
+    "access_control": {
+      "default_reject_cause": "Default rejection code",
+      "plmn_id": {
+        "mcc": "PLMN country code",
+        "mnc": "PLMN network code",
+        "reject_cause": "PLMN-specific rejection code"
+      }
+    },
+    "sgsap": {
+      "name": "MSC/VLR identifier",
+      "addr": "MSC/VLR server IP",
+      "port": "MSC/VLR server port",
+      "map": {
+        "tai": {
+          "plmn_id": {
+            "mcc": "TAI country code",
+            "mnc": "TAI network code"
+          },
+          "tac": "TAI tracking area codes"
+        },
+        "lai": {
+          "plmn_id": {
+            "mcc": "LAI country code",
+            "mnc": "LAI network code"
+          },
+          "lac": "LAI location area codes"
+        }
+      }
+    },
+    "sgwc": {
+      "gtpc": {
+        "name": "SGW domain name",
+        "addr": "GTP-C IP for SGW",
+        "tac": "Supported tracking area codes",
+        "e_cell_id": "Supported cell IDs"
+      }
+    },
+    "smf": {
+      "gtpc": {
+        "addr": "IP address for GTP-C communication with SMF/P-GW"
+      },
+      "apn": "List of supported Access Point Names",
+      "tac": "Supported Tracking Area Codes",
+      "e_cell_id": "Supported cell IDs"
+    }
+  },
+  "SGSN": {
+    "sgsn": {
+      "gtpc": {
+        "addr": "IP addresses for communication with SGSN"
+      },
+      "routes": {
+        "rai": {
+          "rai": "GPRS Routing Area Identity.",
+          "lai": {
+            "lai": "Location Area Identity.",
+            "plmn_id": {
+              "mcc": "Mobile Country Code",
+              "mnc": "Mobile Network Code"
+            },
+            "lac": "Location Area Code",
+            "rac": "Routing Area Code",
+            "ci": "Cell Identity"
+          }
+        }
+      },
+      "name": "SGSN identifier",
+      "default_route": "Marks this SGSN as the default route"
+    },
+    "parameter": {
+      "prefer_ipv4": "Prioritize IPv4 traffic",
+      "no_ipv4": "Disable IPv4 support",
+      "no_ipv6": "Disable IPv6 support",
+      "ue": "Max supported User Equipments",
+      "peer": "Max number of connectable peers"
+    },
+    "usrsctp": {
+      "udp_port": "UDP port for SCTP tunneling"
+    },
+    "time": {
+      "message": {
+        "duration": "Queue lifetime for messages"
+      },
+      "handover": {
+        "duration": "Handover completion timeout"
+      },
+      "t3402": {
+        "value": "Timer for reconnection attempts"
+      },
+      "t3412": {
+        "value": "Location update interval"
+      },
+      "t3423": {
+        "value": "Timeout for ECM-CONNECTED state"
+      }
+    }
+  },
+  "PCRF": {
+    "db_uri": "Database connection URI",
+    "logger": {
+      "file": "Path to log file",
+      "level": "Logging detail level",
+      "domain": "Domains for log messages"
+    },
+    "pcrf": {
+      "freeDiameter": "Path to the Diameter protocol config file"
+    },
+    "parameter": {
+      "prefer_ipv4": "Prefer IPv4",
+      "no_ipv4": "Disable IPv4",
+      "no_ipv6": "Disable IPv6"
+    },
+    "max": {
+      "ue": "Maximum simultaneous users",
+      "peer": "Maximum simultaneous Diameter connections"
+    }
+  },
+  "SGWC": {
+    "logger": {
+      "file": "Path to log file",
+      "level": "Logging level",
+      "domain": "Logging domain"
+    },
+    "sgwc": {
+      "gtpc": {
+        "addr": "IP address for GTP-C requests",
+        "option": {
+          "so_bindtodevice": "Binds service to a specific VRF"
+        }
+      }
+    },
+    "pfcp": {
+      "name": "PFCP server name",
+      "addr": "IP address for PFCP requests",
+      "advertise": "SGWC identity in network",
+      "option": {
+        "so_bindtodevice": "Binds PFCP to a specific VRF"
+      }
+    },
+    "sgwu": {
+      "pfcp": {
+        "addr": "IP address for PFCP communication with SGWU"
+      },
+      "tac": "Supported Tracking Area Codes",
+      "apn": "Supported Access Point Names",
+      "e_cell_id": "Supported cell IDs"
+    },
+    "parameter": {
+      "prefer_ipv4": "Prefer IPv4 use",
+      "no_ipv4": "Disable IPv4 support",
+      "no_ipv6": "Disable IPv6 support",
+      "no_pfcp_rr_select": "Disable PFCP Round Robin selection"
+    },
+    "max": {
+      "ue": "Maximum supported user equipment",
+      "peer": "Maximum connectable peers",
+      "gtp_peer": "Maximum number of connectable GTP peers"
+    },
+    "time": {
+      "message": {
+        "duration": "Queue lifetime for messages"
+      }
+    }
+  },
+  "SGWU": {
+    "logger": {
+      "file": "Path to the log file",
+      "level": "Logging level",
+      "domain": "Logging domain"
+    },
+    "sgwu": {
+      "gtpu": {
+        "name": "Name of the GTP-U interface",
+        "addr": "IP addresses for GTP-U",
+        "advertise": "Addresses announced to peers",
+        "teid_range_indication": "Indicator for Tunnel Endpoint ID allocation",
+        "teid_range": "Range of usable TEIDs",
+        "network_instance": "List of network instances",
+        "source_interface": "Source interface for outgoing traffic",
+        "dev": "List of network devices",
+        "option": {
+          "so_bindtodevice": "Bind to specific network device"
+        }
+      }
+    },
+    "pfcp": {
+      "name": "PFCP server name",
+      "addr": "IP addresses for PFCP",
+      "advertise": "Addresses advertised to the network"
+    },
+    "sgwc": {
+      "pfcp": {
+        "addr": "IP addresses for PFCP connection to SGWC"
+      }
+    },
+    "parameter": {
+      "prefer_ipv4": "Prefer IPv4",
+      "no_ipv4": "Disable IPv4",
+      "no_ipv6": "Disable IPv6"
+    },
+    "max": {
+      "ue": "Maximum supported UEs",
+      "peer": "Maximum supported peers"
+    },
+    "time": {
+      "message": {
+        "duration": "Queue duration for messages"
+      }
+    }
+  },
+  "SMF": {
+    "logger": {
+      "file": "Path to the log file for events",
+      "level": "Logging level",
+      "domain": "Logging domains"
+    },
+    "smf": {
+      "service_name": "SMF service name",
+      "sbi": {
+        "name": "Interface name for SBI",
+        "addr": "List of IP addresses for SBI",
+        "port": "Port used by SBI",
+        "option": {
+          "tcp_nodelay": "Disable/enable TCP delay",
+          "so_linger": {
+            "l_onoff": "Enable socket linger",
+            "l_linger": "Linger time"
+          }
+        },
+        "advertise": "Addresses to advertise to other nodes",
+        "dev": "Network device name for advertisement"
+      }
+    },
+    "discovery": {
+      "delegated": "Service discovery method",
+      "option": {
+        "no_service_names": "Allow or disable service names"
+      }
+    },
+    "pfcp": {
+      "name": "PFCP server name",
+      "addr": "List of IP addresses for PFCP",
+      "advertise": "Addresses advertised to other nodes",
+      "option": {
+        "so_bindtodevice": "Bind PFCP to a specific VRF or device"
+      }
+    },
+    "gtpc": {
+      "addr": "IP addresses for GTP-C",
+      "option": {
+        "so_bindtodevice": "Bind to a specific VRF or device"
+      }
+    },
+    "gtpu": {
+      "addr": "IP addresses for GTP-U",
+      "option": {
+        "so_bindtodevice": "Bind to a specific VRF or device"
+      }
+    },
+    "metrics": {
+      "addr": "IP addresses for metrics service",
+      "port": "Port for metrics service"
+    },
+    "subnet": {
+      "addr": "Subnet IP address",
+      "dev": "Device for the subnet",
+      "apn": "Access Point Name"
+    },
+    "dns": {
+      "dns": "List of DNS server addresses"
+    },
+    "p-cscf": {
+      "p-cscf": "List of P-CSCF addresses"
+    },
+    "info": {
+      "s_nssai": {
+        "sst": "Slice/service type",
+        "dnn": "Access point names",
+        "sd": "Network slice identifier"
+      },
+      "tai": {
+        "plmn_id": {
+          "mcc": "Mobile country code",
+          "mnc": "Mobile network code"
+        },
+        "tac": "List of tracking area codes"
+      }
+    },
+    "security_indication": {
+      "integrity_protection_indication": "Integrity protection requirement",
+      "confidentiality_protection_indication": "Confidentiality protection requirement",
+      "maximum_integrity_protected_data_rate_uplink": "Max protected uplink data rate",
+      "maximum_integrity_protected_data_rate_downlink": "Max protected downlink data rate"
+    },
+    "mtu": {
+      "mtu": "Maximum transmission unit size"
+    },
+    "ctf": {
+      "enabled": "CTF (Control and Traffic Function) enable status"
+    },
+    "freeDiameter": {
+      "freeDiameter": "Path to the FreeDiameter configuration file"
+    },
+    "sbi": {
+      "server": {
+        "no_verify": "Disable verification",
+        "no_tls": "Disable/enable TLS",
+        "cacert": "Path to CA certificate",
+        "key": "Path to server key"
+      },
+      "client": {
+        "no_verify": "Disable verification",
+        "no_tls": "Disable/enable TLS",
+        "cacert": "Path to CA certificate",
+        "key": "Path to client key"
+      }
+    },
+    "scp": {
+      "sbi": {
+        "name": "SCP name",
+        "addr": "IP addresses for SCP",
+        "option": "Additional SBI options",
+        "port": "SBI port for SCP"
+      }
+    },
+    "nrf": {
+      "sbi": {
+        "name": "NRF name",
+        "addr": "IP addresses for NRF",
+        "option": "Additional SBI options",
+        "port": "SBI port for NRF"
+      }
+    },
+    "upf": {
+      "pfcp": {
+        "addr": "List of UPF PFCP IP addresses"
+      }
+    },
+    "parameter": {
+      "prefer_ipv4": "Prioritize IPv4",
+      "no_ipv4": "Disable IPv4",
+      "no_ipv6": "Disable IPv6",
+      "no_pfcp_rr_select": "Disable PFCP Round Robin selection",
+      "no_ipv4v6_local_addr_in_packet_filter": "Disable local IPv4/IPv6 in filter"
+    },
+    "max": {
+      "ue": "Maximum number of UEs supported",
+      "peer": "Maximum number of peers",
+      "gtp_peer": "Maximum GTP peers supported"
+    },
+    "time": {
+      "nf_instance": {
+        "heartbeat": "Heartbeat period for NF instance"
+      },
+      "message": {
+        "duration": "Message queue retention duration (ms)"
+      },
+      "handover": {
+        "duration": "Handover window duration (ms)"
+      }
+    }
+  },
+  "UPF": {
+    "logger": {
+      "file": "Path to the log file",
+      "level": "Logging level (e.g., trace)",
+      "domain": "Logging domains"
+    },
+    "upf": {
+      "pfcp": {
+        "name": "PFCP server name",
+        "addr": "List of IP addresses for PFCP",
+        "advertise": "Addresses advertised to other nodes",
+        "option": {
+          "so_bindtodevice": "Bind to a specific VRF/device"
+        }
+      },
+      "gtpu": {
+        "name": "GTP-U interface name",
+        "addr": "IP addresses for GTP-U user plane",
+        "option": {
+          "so_bindtodevice": "Bind to a specific VRF/device"
+        },
+        "dev": "Network interface device(s)",
+        "advertise": "Announced addresses",
+        "teid_range_indication": "TEID range indicator",
+        "teid_range": "Usable TEID range",
+        "network_instance": "Network instance identifier(s)",
+        "source_interface": "Source interface number"
+      }
+    },
+    "metrics": {
+      "addr": "IP address for metrics service",
+      "port": "Metrics collection port"
+    },
+    "subnet": {
+      "addr": "Subnet IP address",
+      "dnn": "Data Network Name",
+      "dev": "Device/interface"
+    },
+    "smf": {
+      "pfcp": {
+        "addr": "IP addresses for PFCP communication with SMF"
+      }
+    },
+    "parameter": {
+      "prefer_ipv4": "Prioritize IPv4",
+      "no_ipv4": "Disable IPv4",
+      "no_ipv6": "Disable IPv6",
+      "sctp_streams": "Number of SCTP streams supported"
+    },
+    "max": {
+      "ue": "Maximum number of supported user devices",
+      "peer": "Maximum number of peers"
+    },
+    "time": {
+      "message": {
+        "duration": "Duration (ms) for message queue retention"
+      }
+    }
+  }
+}

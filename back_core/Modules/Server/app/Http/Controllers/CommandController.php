@@ -1,0 +1,178 @@
+<?php
+
+namespace Modules\Server\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Modules\Server\Helpers\SshHelper;
+use Modules\Server\Http\Requests\Module\restartServiceModuleRequest;
+use Modules\Server\Http\Requests\SshServer\SshServerRequest;
+use Modules\Server\Models\Module;
+use Modules\Server\Models\Server;
+use Modules\Server\Utility\CommandOutputAnalyzerService;
+use Modules\SystemSetting\Http\Requests\ShowInterfaceVmRequest;
+
+class CommandController extends Controller
+{
+    public function __construct()
+    {}
+
+    public function showInterfaceVm (ShowInterfaceVmRequest $request)
+    {
+        $credentials = $request->validated();
+        $serverIds   = array_column($credentials['servers'], 'id');
+
+        try {
+            $servers = server::whereIn('id', $serverIds)->get();
+
+            $command = 'ip link show'; // command as systemctl
+
+            $result = [];
+            foreach ($servers as $server) {
+                 $serverIndex = array_search($server['id'], array_column($credentials['servers'], 'id'));
+
+                 $connectionData = [
+                     'username' => $credentials['servers'][$serverIndex]['username'],
+                     'password' => $credentials['servers'][$serverIndex]['password'],
+                 ];
+
+                $result[$server->name] = [
+                    'server_id' => $server->id,
+                    'server_name' => $server->name,
+                    'command_output' => $this->runCommandModuleToServer($connectionData, $command, $server,'show-interface-vm', 'showInterfaceVm'),
+                ];
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            throw ValidationException::withMessages(['warning' => $e->getMessage()]);
+        }
+    }
+
+
+    // service module
+    private function runCommandModuleToServer (
+        $credentials,
+        $command,
+        $server,
+        $typeCommand,
+        $method,
+        int $port = 22,
+        int $timeout = 5
+    ) {
+        $username = $credentials['username'];
+        $password = $credentials['password'];
+
+//           is down server
+        if ($server->is_down == Server::OFF)
+            throw ValidationException::withMessages(['server', 'this server off']);
+
+
+        try {
+
+            $sshHelper = new sshHelper($server->ip, $username, $password, $port, $timeout);
+
+            $outputCommand = $sshHelper->runCommandModule($command, $typeCommand, $method, $server);
+
+            if (! empty(CommandOutputAnalyzerService::extractErrors($outputCommand)))
+                throw ValidationException::withMessages(CommandOutputAnalyzerService::extractErrors($outputCommand));
+
+//            return response()->json(['message' => $outputCommand]);
+            return $outputCommand;
+
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch(\InvalidArgumentException $e) {
+            DB::rollBack();
+
+            $message = $e->getMessage();
+
+            $message = preg_replace('/\x1b\[[0-9;]*m/', '', $message); // حذف کدهای ANSI
+            $message = preg_replace('/\r?\n.*?\[root@localhost.*?$/', '', $message); // حذف اطلاعات اضافی مربوط به خط فرمان
+
+            preg_match_all('/\b(FATAL|ERROR):\s.*?(?=\s\(.*?\)|$)/m', $message, $matches);
+
+            $formattedMessages = $matches[0] ?? [];
+
+            $separatedMessages = [];
+            foreach ($formattedMessages as $index => $msg) {
+                $separatedMessages["Error-" . ($index + 1)] = $msg;
+            }
+
+            throw ValidationException::withMessages(['message' => $separatedMessages]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+                throw ValidationException::withMessages(['message' => $e->getMessage()]);
+        }
+    }
+    public function restartServiceModule (restartServiceModuleRequest $request)
+    {
+        $credentials = $request->validated();
+
+        $server = Server::find($credentials['server_id']);
+        $module = Module::find($credentials['module_id']);
+
+        $command = 'systemctl restart ' . 'bbdh-' . $module['name'] . 'd'; // command as systemctl
+
+        $output  = $this->runCommandModuleToServer($credentials, $command, $server,'restartModel', 'restartServiceModule');
+
+        return response()->json(['success' => true, 'message' => $output]);
+    }
+    public function startServiceModule (restartServiceModuleRequest $request)
+    {
+        $credentials = $request->validated();
+
+        $server = Server::find($credentials['server_id']);
+        $module = Module::find($credentials['module_id']);
+
+        $command = 'systemctl start ' . 'bbdh-' . $module['name'] . 'd'; // command as systemctl
+
+        $output  = $this->runCommandModuleToServer($credentials, $command, $server, 'startModule', 'startServiceModule');
+
+        return response()->json(['success' => true, 'message' => $output]);
+
+    }
+    public function stopServiceModule (restartServiceModuleRequest $request)
+    {
+        $credentials = $request->validated();
+
+        $server = Server::find($credentials['server_id']);
+        $module = Module::find($credentials['module_id']);
+
+        $command = 'systemctl stop ' . 'bbdh-' . $module['name'] . 'd'; // command as systemctl
+
+        $output  = $this->runCommandModuleToServer($credentials, $command, $server,'stopModule', 'stopServiceModule');
+
+        return response()->json(['success' => true, 'message' => $output]);
+    }
+    public function statusServiceModule (restartServiceModuleRequest $request)
+    {
+        $credentials = $request->validated();
+
+        $server = Server::find($credentials['server_id']);
+        $module = Module::find($credentials['module_id']);
+
+        $command = 'systemctl status ' . 'bbdh-' . $module['name'] . 'd'; // command as systemctl
+
+        $output = $this->runCommandModuleToServer($credentials, $command, $server, 'statusModule', 'statusServiceModule');
+
+        return response()->json(['success' => true, 'message' => $output]);
+    }
+    public function PingServer (SshServerRequest $request)
+    {
+        $credentials = $request->validated();
+
+        $server = server::find($credentials['server_id']);
+
+            $credentials['Interface'] ?? null
+            ? $command = 'ping ' . '-I ' . $credentials['Interface'] . ' ' . $credentials['ipـdestination'] . ' -c 5'
+            : $command = 'ping ' . $credentials['ipـdestination'] . ' -c 5';
+
+
+        $sshHelper = new SSHHelper($server->ip, $credentials['username'], $credentials['password']);
+        return response()->json(['success' => true, 'message' => $sshHelper->pingRunCommand($command)]);
+    }
+}

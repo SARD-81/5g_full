@@ -1,0 +1,23 @@
+.bi-person-x {
+  cursor: pointer;
+}
+.bi-person-x:hover {
+  color: red;
+}
+.bi-pencil-square {
+  cursor: pointer;
+}
+.bi-pencil-square:hover {
+  color: green;
+}
+
+.formEdit {
+  height: 100%;
+  z-index: 100;
+}
+.offcanvas-backdrop {
+  z-index: 5;
+}
+/* .modal-dialog {
+  width: 800px !important;
+} */

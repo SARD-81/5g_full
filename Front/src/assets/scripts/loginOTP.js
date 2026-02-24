@@ -340,7 +340,7 @@ async function phone() {
     errorCallback: function () {
       // generateCAPTCHA();
       disableReloadCaptcha();
-      if(!reCAPTCHA) {
+      if (!reCAPTCHA) {
         getCaptcha();
       }
       document.getElementById("captchaLogin").value = "";
@@ -420,9 +420,10 @@ document
     event.preventDefault();
     // generateCAPTCHA();
     disableReloadCaptcha();
-    if(!reCAPTCHA) {
+    if (!reCAPTCHA) {
       getCaptcha();
-    }  });
+    }
+  });
 
 function disableReloadCaptcha() {
   const el = document.getElementById("reloadCaptcha");
@@ -519,11 +520,11 @@ let captchaTextLower;
 
 window.onload = async function () {
   // generateCAPTCHA();
-  disableReloadCaptcha();  
+  disableReloadCaptcha();
   document.getElementById("idLoadingLogin").style.display = "flex";
   await statusReCaptcha();
-  loadRecaptcha();  
-  if(!reCAPTCHA) {
+  loadRecaptcha();
+  if (!reCAPTCHA) {
     getCaptcha();
   }
 };

@@ -1,524 +1,268 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <title>Config Server</title>
 
-    <link
-      rel="stylesheet"
-      href="../assets/styles/settingServer.css"
-    />
-    <link
-      id="favIcon"
-      rel="icon"
-      type="image/x-icon"
-    />
-  </head>
-  <body id="body">
-    <div class="container-fluid">
-      <div class="row d-grid">
-        <div
-          class="col-12"
-          id="menuHamber"
-        >
-          <div class="iconMenuHamber">
-            <button
-              class="btn p-1 mt-2 ms-2"
-              type="button"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#offcanvasWithBothOptions"
-              aria-controls="offcanvasWithBothOptions"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="35"
-                height="35"
-                fill="currentColor"
-                class="bi bi-list text-dark"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"
-                />
-              </svg>
-            </button>
-          </div>
-          <!--menu respansive-->
-          <!--menu respansive-->
-          <!--menu respansive-->
-          <div
-            class="offcanvas offcanvas-start divMenuHumber backOffcanvas"
-            data-bs-scroll="true"
-            tabindex="-1"
-            id="offcanvasWithBothOptions"
-            aria-labelledby="offcanvasWithBothOptionsLabel"
-          >
-            <div class="offcanvas-header">
-              <div
-                class="offcanvas-title"
-                id="offcanvasWithBothOptionsLabel"
-              >
-                <nav
-                  aria-label="breadcrumb"
-                  class="mt-3"
-                >
-                  <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                      <a
-                        class="text-white opacity-75"
-                        href="../views/dashboard.html"
-                        >Home</a
-                      >
-                    </li>
-                    <li
-                      class="breadcrumb-item text-white active"
-                      aria-current="page"
-                    >
-                      <a id="serverBreadrumb"></a>
-                    </li>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Config Server</title>
+  <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../assets/styles/settingServer.css" />
+  <link id="favIcon" rel="icon" type="image/x-icon" />
+</head>
 
-                    <li
-                      class="breadcrumb-item text-white active"
-                      aria-current="page"
-                    >
-                      Services
-                    </li>
-                  </ol>
-                </nav>
-              </div>
-              <button
-                type="button"
-                class="btn-close bg-white opacity-100"
-                data-bs-dismiss="offcanvas"
-                aria-label="Close"
-                id="closeOffcanvas"
-              ></button>
-            </div>
-            <div class="offcanvas-body p-0">
-              <nav class="sidebar p-0 d-flex flex-column">
-                <div
-                  class="accordion"
-                  id="sidebarAccordion"
-                >
-                  <!-- App Management Item -->
-                  <div class="accordion-item bg-transparent border-0">
-                    <h2
-                      class="accordion-header my-3"
-                      id="epc"
-                    >
-                      <button
-                        class="styleButton border-0 collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseEPC"
-                        aria-expanded="false"
-                        aria-controls="collapseEPC"
-                      >
-                        <span class="ms-2">EPC</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          fill="currentColor"
-                          class="bi bi-caret-right-fill"
-                          viewBox="0 0 16 16"
-                        >
-                          <path
-                            d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"
-                          />
-                        </svg>
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseEPC"
-                      class="accordion-collapse collapse"
-                      data-bs-parent="#sidebarAccordion"
-                    >
-                      <div class="accordion-body accordion-body-epc p-0"></div>
-                    </div>
-                  </div>
+<body id="body">
+  <div class="container-fluid">
+    <div class="row d-grid">
+      <div class="col-12" id="menuHamber">
+        <div class="iconMenuHamber">
+          <button class="btn p-1 mt-2 ms-2" type="button" data-bs-toggle="offcanvas"
+            data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
+            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor"
+              class="bi bi-list text-dark" viewBox="0 0 16 16">
+              <path fill-rule="evenodd"
+                d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+            </svg>
+          </button>
+        </div>
+        <!--menu respansive-->
+        <!--menu respansive-->
+        <!--menu respansive-->
+        <div class="offcanvas offcanvas-start divMenuHumber backOffcanvas" data-bs-scroll="true" tabindex="-1"
+          id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel">
+          <div class="offcanvas-header">
+            <div class="offcanvas-title" id="offcanvasWithBothOptionsLabel">
+              <nav aria-label="breadcrumb" class="mt-3">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item">
+                    <a class="text-white opacity-75" href="../views/dashboard.html">Home</a>
+                  </li>
+                  <li class="breadcrumb-item text-white active" aria-current="page">
+                    <a id="serverBreadrumb"></a>
+                  </li>
 
-                  <div class="accordion-item bg-transparent border-0">
-                    <h2
-                      class="accordion-header my-3"
-                      id="5gc"
-                    >
-                      <button
-                        class="styleButton border-0 collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapse5GC"
-                        aria-expanded="false"
-                        aria-controls="collapse5GC"
-                      >
-                        <span class="ms-2">5GC</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          fill="currentColor"
-                          class="bi bi-caret-right-fill"
-                          viewBox="0 0 16 16"
-                        >
-                          <path
-                            d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"
-                          />
-                        </svg>
-                      </button>
-                    </h2>
-                    <div
-                      id="collapse5GC"
-                      class="accordion-collapse collapse"
-                      data-bs-parent="#sidebarAccordion"
-                    >
-                      <div class="accordion-body accordion-body-5gc p-0"></div>
-                    </div>
-                  </div>
-                </div>
+                  <li class="breadcrumb-item text-white active" aria-current="page">
+                    Services
+                  </li>
+                </ol>
               </nav>
             </div>
+            <button type="button" class="btn-close bg-white opacity-100" data-bs-dismiss="offcanvas" aria-label="Close"
+              id="closeOffcanvas"></button>
           </div>
-          <!--menu respansive-->
-          <!--menu respansive-->
-          <!--menu respansive-->
-        </div>
-        <!-- Sidebar -->
-        <nav
-          class="col-2 col-md-3 col-xl-2 sidebar px-0 d-flex flex-column"
-          id="idSidebar"
-        >
-          <div
-            id="idLoadingModule"
-            class="loadingModule col-2 col-md-3 col-xl-2 pe-4"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <div class="d-flex justify-content-center align-items-center">
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item">
-                  <a
-                    class="text-white opacity-75"
-                    href="../views/dashboard.html"
-                    >Home</a
-                  >
-                </li>
-                <li
-                  class="breadcrumb-item text-white active"
-                  aria-current="page"
-                >
-                  <a id="serverBreadrumb"></a>
-                </li>
+          <div class="offcanvas-body p-0">
+            <nav class="sidebar p-0 d-flex flex-column">
+              <div class="accordion" id="sidebarAccordion">
+                <!-- App Management Item -->
+                <div class="accordion-item bg-transparent border-0">
+                  <h2 class="accordion-header my-3" id="epc">
+                    <button class="styleButton border-0 collapsed" type="button" data-bs-toggle="collapse"
+                      data-bs-target="#collapseEPC" aria-expanded="false" aria-controls="collapseEPC">
+                      <span class="ms-2">EPC</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                        <path
+                          d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
+                      </svg>
+                    </button>
+                  </h2>
+                  <div id="collapseEPC" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                    <div class="accordion-body accordion-body-epc p-0"></div>
+                  </div>
+                </div>
 
-                <li
-                  class="breadcrumb-item text-white active"
-                  aria-current="page"
-                >
-                  Services
-                </li>
-              </ol>
+                <div class="accordion-item bg-transparent border-0">
+                  <h2 class="accordion-header my-3" id="5gc">
+                    <button class="styleButton border-0 collapsed" type="button" data-bs-toggle="collapse"
+                      data-bs-target="#collapse5GC" aria-expanded="false" aria-controls="collapse5GC">
+                      <span class="ms-2">5GC</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                        <path
+                          d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
+                      </svg>
+                    </button>
+                  </h2>
+                  <div id="collapse5GC" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+                    <div class="accordion-body accordion-body-5gc p-0"></div>
+                  </div>
+                </div>
+              </div>
             </nav>
           </div>
+        </div>
+        <!--menu respansive-->
+        <!--menu respansive-->
+        <!--menu respansive-->
+      </div>
+      <!-- Sidebar -->
+      <nav class="col-2 col-md-3 col-xl-2 sidebar px-0 d-flex flex-column" id="idSidebar">
+        <div id="idLoadingModule" class="loadingModule col-2 col-md-3 col-xl-2 pe-4">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="d-flex justify-content-center align-items-center">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item">
+                <a class="text-white opacity-75" href="../views/dashboard.html">Home</a>
+              </li>
+              <li class="breadcrumb-item text-white active" aria-current="page">
+                <a id="serverBreadrumb"></a>
+              </li>
 
-          <div
-            class="accordion"
-            id="sidebarAccordion"
-          >
-            <!-- App Management Item -->
-            <div class="accordion-item bg-transparent border-0">
-              <h2
-                class="accordion-header my-3"
-                id="epc"
-              >
-                <button
-                  class="styleButton border-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseEPC"
-                  aria-expanded="false"
-                  aria-controls="collapseEPC"
-                >
-                  <span class="ms-2">EPC</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    class="bi bi-caret-right-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"
-                    />
-                  </svg>
-                </button>
-              </h2>
-              <div
-                id="collapseEPC"
-                class="accordion-collapse collapse"
-                data-bs-parent="#sidebarAccordion"
-              >
-                <div class="accordion-body accordion-body-epc p-0"></div>
-              </div>
-            </div>
+              <li class="breadcrumb-item text-white active" aria-current="page">
+                Services
+              </li>
+            </ol>
+          </nav>
+        </div>
 
-            <div class="accordion-item bg-transparent border-0">
-              <h2
-                class="accordion-header my-3"
-                id="5gc"
-              >
-                <button
-                  class="styleButton border-0 collapsed"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapse5GC"
-                  aria-expanded="false"
-                  aria-controls="collapse5GC"
-                >
-                  <span class="ms-2">5GC</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    class="bi bi-caret-right-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"
-                    />
-                  </svg>
-                </button>
-              </h2>
-              <div
-                id="collapse5GC"
-                class="accordion-collapse collapse"
-                data-bs-parent="#sidebarAccordion"
-              >
-                <div class="accordion-body accordion-body-5gc p-0"></div>
-              </div>
-            </div>
-          </div>
-        </nav>
-        <div
-          class="col-12 col-md-9 col-xl-10 mr-auto pageConfigModule"
-          id="idpageConfigModule"
-        >
-          <div>
-            <div class="d-flex justify-content-between">
-              <div class="d-flex divRestModule">
-                <div class="d-flex align-items-center">
-                  <button
-                    type="button"
-                    id="returnToPreviousState"
-                    class="btn btn-primary my-3"
-                    data-bs-toggle="modal"
-                    data-bs-target="#returnToPrevious"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="22"
-                      height="22"
-                      fill="currentColor"
-                      class="bi bi-chevron-left"
-                      viewBox="0 0 16 16"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"
-                      />
-                    </svg>
-                    <span id="spanReturnToPreviousState">
-                      Restore to Previous State
-                    </span>
-                  </button>
-                </div>
-                <div class="d-flex align-items-center">
-                  <button
-                    type="button"
-                    id="returnToTheInitialState"
-                    class="btn btn-primary my-3"
-                    data-bs-toggle="modal"
-                    data-bs-target="#returnToTheInitial"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="22"
-                      height="22"
-                      fill="currentColor"
-                      class="bi bi-chevron-double-left"
-                      viewBox="0 0 16 16"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"
-                      />
-                      <path
-                        fill-rule="evenodd"
-                        d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"
-                      />
-                    </svg>
-                    <span id="spanReturnToTheInitialState">
-                      Restore to Default
-                    </span>
-                  </button>
-                </div>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  id="exportModule"
-                  class="btn btn-primary my-3"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    fill="currentColor"
-                    class="bi bi-download me-md-2"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"
-                    />
-                    <path
-                      d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"
-                    />
-                  </svg>
-                  <span id="spanExportModule"> Export module </span>
-                </button>
-              </div>
-            </div>
-            <div class="d-flex divButtons">
-              <div class="d-flex align-items-start">
-                <button
-                  type="button"
-                  id="startModule"
-                  class="btn btn-success mb-4"
-                  title="Module Start"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="25"
-                    height="25"
-                    fill="currentColor"
-                    class="bi bi-play-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"
-                    />
-                  </svg>
-                  <span id="spanStartModule"> Turn on the module </span>
-                </button>
-              </div>
-              <div class="d-flex align-items-start">
-                <button
-                  type="button"
-                  id="stopModule"
-                  class="btn btn-success mb-4"
-                  title="Module Stop"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="25"
-                    height="25"
-                    fill="currentColor"
-                    class="bi bi-pause-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"
-                    />
-                  </svg>
-                  <span id="spanStopModule"> Turn off the module </span>
-                </button>
-              </div>
-              <div class="d-flex align-items-start">
-                <button
-                  type="button"
-                  id="restartModule"
-                  class="btn btn-success mb-4"
-                  title="Module Restart"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="25"
-                    height="25"
-                    fill="currentColor"
-                    class="bi bi-arrow-clockwise"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"
-                    />
-                    <path
-                      d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"
-                    />
-                  </svg>
-                  <span id="spanRestartModule"> Restart the module </span>
-                </button>
-              </div>
-              <div class="d-flex align-items-start">
-                <button
-                  type="button"
-                  id="statusModule"
-                  class="btn btn-success mb-4"
-                  title="Module Status"
-                  data-bs-toggle="modal"
-                    data-bs-target="#modalStatusModule"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="25"
-                    height="25"
-                    fill="currentColor"
-                    class="bi bi-info-lg"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      d="m9.708 6.075-3.024.379-.108.502.595.108c.387.093.464.232.38.619l-.975 4.577c-.255 1.183.14 1.74 1.067 1.74.72 0 1.554-.332 1.933-.789l.116-.549c-.263.232-.65.325-.905.325-.363 0-.494-.255-.402-.704zm.091-2.755a1.32 1.32 0 1 1-2.64 0 1.32 1.32 0 0 1 2.64 0"
-                    />
-                  </svg>
-                  <span id="spanStatusModule"> Module status </span>
-                </button>
-              </div>
+        <div class="accordion" id="sidebarAccordion">
+          <!-- App Management Item -->
+          <div class="accordion-item bg-transparent border-0">
+            <h2 class="accordion-header my-3" id="epc">
+              <button class="styleButton border-0 collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseEPC" aria-expanded="false" aria-controls="collapseEPC">
+                <span class="ms-2">EPC</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                  class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                  <path
+                    d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
+                </svg>
+              </button>
+            </h2>
+            <div id="collapseEPC" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+              <div class="accordion-body accordion-body-epc p-0"></div>
             </div>
           </div>
 
-          <div
-            class="editor-container"
-            id="TabEditorContainer"
-          >
-            <ul
-              class="nav nav-tabs"
-              id="mainTabs"
-              role="tablist"
-            ></ul>
+          <div class="accordion-item bg-transparent border-0">
+            <h2 class="accordion-header my-3" id="5gc">
+              <button class="styleButton border-0 collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapse5GC" aria-expanded="false" aria-controls="collapse5GC">
+                <span class="ms-2">5GC</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                  class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+                  <path
+                    d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
+                </svg>
+              </button>
+            </h2>
+            <div id="collapse5GC" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
+              <div class="accordion-body accordion-body-5gc p-0"></div>
+            </div>
           </div>
-
-          <div
-            class="editor-container"
-            id="EditorContainer"
-          >
-            <div
-              class="tab-content"
-              id="jsoneditor"
-            ></div>
+        </div>
+      </nav>
+      <div class="col-12 col-md-9 col-xl-10 mr-auto pageConfigModule" id="idpageConfigModule">
+        <div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex divRestModule">
+              <div class="d-flex align-items-center">
+                <button type="button" id="returnToPreviousState" class="btn btn-primary my-3" data-bs-toggle="modal"
+                  data-bs-target="#returnToPrevious">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+                    class="bi bi-chevron-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                      d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0" />
+                  </svg>
+                  <span id="spanReturnToPreviousState">
+                    Restore to Previous State
+                  </span>
+                </button>
+              </div>
+              <div class="d-flex align-items-center">
+                <button type="button" id="returnToTheInitialState" class="btn btn-primary my-3" data-bs-toggle="modal"
+                  data-bs-target="#returnToTheInitial">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+                    class="bi bi-chevron-double-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                      d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0" />
+                    <path fill-rule="evenodd"
+                      d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0" />
+                  </svg>
+                  <span id="spanReturnToTheInitialState">
+                    Restore to Default
+                  </span>
+                </button>
+              </div>
+            </div>
+            <div>
+              <button type="button" id="VersioningModule" class="btn btn-info my-3 mx-3 " title="Version Modal"
+                data-bs-toggle="modal" data-bs-target="#VersioningModal">
+                <span id="spanExportModule"> Versioning module </span>
+              </button>
+              <button type="button" id="exportModule" class="btn btn-primary my-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                  class="bi bi-download me-md-2" viewBox="0 0 16 16">
+                  <path
+                    d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                  <path
+                    d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                </svg>
+                <span id="spanExportModule"> Export module </span>
+              </button>
+            </div>
           </div>
+          <div class="d-flex divButtons">
+            <div class="d-flex align-items-start">
+              <button type="button" id="startModule" class="btn btn-success mb-4" title="Module Start">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
+                  class="bi bi-play-fill" viewBox="0 0 16 16">
+                  <path
+                    d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393" />
+                </svg>
+                <span id="spanStartModule"> Start The Module </span>
+              </button>
+            </div>
+            <div class="d-flex align-items-start">
+              <button type="button" id="stopModule" class="btn btn-success mb-4" title="Module Stop">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
+                  class="bi bi-pause-fill" viewBox="0 0 16 16">
+                  <path
+                    d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5" />
+                </svg>
+                <span id="spanStopModule"> Stop The Module </span>
+              </button>
+            </div>
+            <div class="d-flex align-items-start">
+              <button type="button" id="restartModule" class="btn btn-success mb-4" title="Module Restart">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
+                  class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z" />
+                  <path
+                    d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466" />
+                </svg>
+                <span id="spanRestartModule"> Restart the module </span>
+              </button>
+            </div>
+            <div class="d-flex align-items-start">
+              <button type="button" id="statusModule" class="btn btn-success mb-4" title="Module Status"
+                data-bs-toggle="modal" data-bs-target="#modalStatusModule">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-info-lg"
+                  viewBox="0 0 16 16">
+                  <path
+                    d="m9.708 6.075-3.024.379-.108.502.595.108c.387.093.464.232.38.619l-.975 4.577c-.255 1.183.14 1.74 1.067 1.74.72 0 1.554-.332 1.933-.789l.116-.549c-.263.232-.65.325-.905.325-.363 0-.494-.255-.402-.704zm.091-2.755a1.32 1.32 0 1 1-2.64 0 1.32 1.32 0 0 1 2.64 0" />
+                </svg>
+                <span id="spanStatusModule"> Module status </span>
+              </button>
+            </div>
+          </div>
+        </div>
 
-          <!-- Modal -->
-          <!-- <div
+        <div class="editor-container" id="TabEditorContainer">
+          <ul class="nav nav-tabs" id="mainTabs" role="tablist"></ul>
+        </div>
+
+        <div class="editor-container" id="EditorContainer">
+          <div class="tab-content" id="jsoneditor"></div>
+        </div>
+
+        <!-- Modal -->
+        <!-- <div
             class="modal fade"
             id="dataJsonEditor"
             tabindex="-1"
@@ -548,7 +292,7 @@
             </div>
           </div> -->
 
-          <!-- <div style="min-height: 120px">
+        <!-- <div style="min-height: 120px">
             <div
               class="collapse collapse-horizontal"
               id="collapseWidthExample"
@@ -563,280 +307,164 @@
             </div>
           </div> -->
 
-          <div
-            class="boxChange position-fixed d-flex justify-content-between"
-            id="updateBtn"
-          >
-            <div class="d-flex align-items-center">
-              <button
-                id="updateBtn"
-                type="button"
-                class="btn btn-warning"
-                data-bs-toggle="modal"
-                data-bs-target="#moduleUpdateBtn"
-              >
-                Update
-              </button>
+        <div class="boxChange position-fixed d-flex justify-content-between" id="updateBtn">
+          <div class="d-flex align-items-center">
+            <button id="updateBtn" type="button" class="btn btn-warning" data-bs-toggle="modal"
+              data-bs-target="#moduleUpdateBtn">
+              Update
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="moduleUpdateBtn" tabindex="-1" aria-labelledby="exampleModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Update Config Module</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <p class="p-2 mb-0">
+                Select the desired server to update the module on that server.
+              </p>
+              <div id="divServers" class="modal-body p-2 d-flex flex-column justify-content-center"></div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+                  Cancel
+                </button>
+                <button type="button" id="subUpdateModule" class="btn btn-primary" data-bs-dismiss="modal">
+                  Confirm
+                </button>
+              </div>
             </div>
           </div>
-
-          <!-- Modal -->
-          <div
-            class="modal fade"
-            id="moduleUpdateBtn"
-            tabindex="-1"
-            aria-labelledby="exampleModalLabel"
-            aria-hidden="true"
-          >
-            <div class="modal-dialog modal-dialog-scrollable">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">Update Config Module</h5>
-                  <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  ></button>
-                </div>
-                <p class="p-2 mb-0">
-                  Select the desired server to update the module on that server.
-                </p>
-                <div
-                  id="divServers"
-                  class="modal-body p-2 d-flex flex-column justify-content-center"
-                ></div>
-                <div class="modal-footer">
-                  <button
-                    type="button"
-                    class="btn btn-danger"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    id="subUpdateModule"
-                    class="btn btn-primary"
-                    data-bs-dismiss="modal"
-                  >
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="returnToPrevious" tabindex="-1" aria-labelledby="exampleModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Restore to Previous State</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body p-2">
+                Are you sure you want to revert the module configurations to
+                the previous state?
+              </div>
+              <div class="modal-footer">
+                <form class="w-100 was-validated d-flex flex-row-reverse">
+                  <button type="button" id="subReturnToPrevious" class="btn btn-primary" data-bs-dismiss="modal">
                     Confirm
                   </button>
+                  <button type="button" class="btn btn-danger me-2" data-bs-dismiss="modal">
+                    Cancel
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="returnToTheInitial" tabindex="-1" aria-labelledby="exampleModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Restore to Default</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body p-2">
+                Are you sure you want to revert the module configurations to
+                the default state?
+              </div>
+              <div class="modal-footer">
+                <form class="w-100 was-validated d-flex flex-row-reverse">
+                  <button type="button" id="subReturnToTheInitial" class="btn btn-primary" data-bs-dismiss="modal">
+                    Confirm
+                  </button>
+                  <button type="button" class="btn btn-danger me-2" data-bs-dismiss="modal">
+                    Cancel
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal fade" id="modalStatusModule" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+          aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Status Module</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body modalLog">
+                <div class="container-fluid formEdit d-flex justify-content-center align-items-center">
+                  <p id="textStatus" class="mb-1 w-100 modalModuleStatusText"></p>
                 </div>
               </div>
             </div>
           </div>
-          <!-- Modal -->
-          <div
-            class="modal fade"
-            id="returnToPrevious"
-            tabindex="-1"
-            aria-labelledby="exampleModalLabel"
-            aria-hidden="true"
-          >
-            <div class="modal-dialog modal-dialog-scrollable">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">Restore to Previous State</h5>
-                  <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  ></button>
-                </div>
-                <div class="modal-body p-2">
-                  Are you sure you want to revert the module configurations to
-                  the previous state?
-                </div>
-                <div class="modal-footer">
-                  <form class="w-100 was-validated d-flex flex-row-reverse">
-                    <button
-                      type="button"
-                      id="subReturnToPrevious"
-                      class="btn btn-primary"
-                      data-bs-dismiss="modal"
-                    >
-                      Confirm
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-danger me-2"
-                      data-bs-dismiss="modal"
-                    >
-                      Cancel
-                    </button>
-                  </form>
-                </div>
+        </div>
+        <div class="modal fade" id="VersioningModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+          aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          <div class="modalBox  modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="">versioning modal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-            </div>
-          </div>
-          <!-- Modal -->
-          <div
-            class="modal fade"
-            id="returnToTheInitial"
-            tabindex="-1"
-            aria-labelledby="exampleModalLabel"
-            aria-hidden="true"
-          >
-            <div class="modal-dialog modal-dialog-scrollable">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">Restore to Default</h5>
-                  <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  ></button>
-                </div>
-                <div class="modal-body p-2">
-                  Are you sure you want to revert the module configurations to
-                  the default state?
-                </div>
-                <div class="modal-footer">
-                  <form class="w-100 was-validated d-flex flex-row-reverse">
-                    <button
-                      type="button"
-                      id="subReturnToTheInitial"
-                      class="btn btn-primary"
-                      data-bs-dismiss="modal"
-                    >
-                      Confirm
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-danger me-2"
-                      data-bs-dismiss="modal"
-                    >
-                      Cancel
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            class="modal fade"
-            id="modalStatusModule"
-            data-bs-backdrop="static"
-            data-bs-keyboard="false"
-            tabindex="-1"
-            aria-labelledby="staticBackdropLabel"
-            aria-hidden="true"
-          >
-            <div class="modal-dialog modal-dialog-scrollable">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">Status Module</h5>
-                  <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  ></button>
-                </div>
-                <div class="modal-body modalLog">
-                  <div
-                    class="container-fluid formEdit d-flex justify-content-center align-items-center"
-                  >
-                    <p id="textStatus" class="mb-1 w-100"></p>
+              <div class="modal-body modalLog">
+                <div class="modalInputBox">
+                  <div>
+                    <label for="Version">Version</label>
+                    <input type="text" id="Version" name="Version">
+                  </div>
+                  <div>
+                    <label for="">comment</label>
+                    <textarea name="VersioningComments" id="comments"></textarea>
+                  </div>
+
+                  <div class="VersionModalButtons">
+                    <button class="bg-danger" data-bs-dismiss="modal" aria-label="Close">close</button>
+                    <button class="bg-success" id="SaveVersion">save</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div
-          id="idMassgeModule"
-          class="col-12 col-md-9 col-xl-10 align-content-center massgeModule"
-        >
-          <div class="d-flex justify-content-center">
-            <img
-              src="../assets/img/1210569-200.png"
-              alt=""
-            />
-          </div>
-          <div class="d-flex justify-content-center">
-            <h2>Select the desired module.</h2>
-          </div>
-        </div>
-
-        <div
-          id="idLoading"
-          class="loading col-12 col-md-9 col-xl-10"
-        >
-          <svg
-            class="pl"
-            width="240"
-            height="240"
-            viewBox="0 0 240 240"
-          >
-            <circle
-              class="pl__ring pl__ring--a"
-              cx="120"
-              cy="120"
-              r="105"
-              fill="none"
-              stroke="#000"
-              stroke-width="20"
-              stroke-dasharray="0 660"
-              stroke-dashoffset="-330"
-              stroke-linecap="round"
-            ></circle>
-            <circle
-              class="pl__ring pl__ring--b"
-              cx="120"
-              cy="120"
-              r="35"
-              fill="none"
-              stroke="#000"
-              stroke-width="20"
-              stroke-dasharray="0 220"
-              stroke-dashoffset="-110"
-              stroke-linecap="round"
-            ></circle>
-            <circle
-              class="pl__ring pl__ring--c"
-              cx="85"
-              cy="120"
-              r="70"
-              fill="none"
-              stroke="#000"
-              stroke-width="20"
-              stroke-dasharray="0 440"
-              stroke-linecap="round"
-            ></circle>
-            <circle
-              class="pl__ring pl__ring--d"
-              cx="155"
-              cy="120"
-              r="70"
-              fill="none"
-              stroke="#000"
-              stroke-width="20"
-              stroke-dasharray="0 440"
-              stroke-linecap="round"
-            ></circle>
-          </svg>
         </div>
       </div>
+
+      <div id="idMassgeModule" class="col-12 col-md-9 col-xl-10 align-content-center massgeModule">
+        <div class="d-flex justify-content-center">
+          <img src="../assets/img/1210569-200.png" alt="" />
+        </div>
+        <div class="d-flex justify-content-center">
+          <h2>Select the desired module.</h2>
+        </div>
+      </div>
+
+      <div id="idLoading" class="loading col-12 col-md-9 col-xl-10">
+        <svg class="pl" width="240" height="240" viewBox="0 0 240 240">
+          <circle class="pl__ring pl__ring--a" cx="120" cy="120" r="105" fill="none" stroke="#000" stroke-width="20"
+            stroke-dasharray="0 660" stroke-dashoffset="-330" stroke-linecap="round"></circle>
+          <circle class="pl__ring pl__ring--b" cx="120" cy="120" r="35" fill="none" stroke="#000" stroke-width="20"
+            stroke-dasharray="0 220" stroke-dashoffset="-110" stroke-linecap="round"></circle>
+          <circle class="pl__ring pl__ring--c" cx="85" cy="120" r="70" fill="none" stroke="#000" stroke-width="20"
+            stroke-dasharray="0 440" stroke-linecap="round"></circle>
+          <circle class="pl__ring pl__ring--d" cx="155" cy="120" r="70" fill="none" stroke="#000" stroke-width="20"
+            stroke-dasharray="0 440" stroke-linecap="round"></circle>
+        </svg>
+      </div>
     </div>
-    <script
-      type="module"
-      defer
-      src="../../main.js"
-    ></script>
-    <script
-      type="module"
-      defer
-      src="../assets/scripts/useApi.js"
-    ></script>
-    <script
-      type="module"
-      defer
-      src="../assets/scripts/settingServer.js"
-    ></script>
-  </body>
+  </div>
+  <script type="module" defer src="../../main.js"></script>
+  <script type="module" defer src="../assets/scripts/useApi.js"></script>
+  <script type="module" defer src="../assets/scripts/settingServer.js"></script>
+</body>
+
 </html>

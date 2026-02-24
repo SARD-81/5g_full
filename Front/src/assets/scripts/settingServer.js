@@ -8,6 +8,7 @@ import favIconBBDH from "../img/logo white.png";
 import favIconMCI from "../img/logo-mci-02 (1).svg";
 import specialKeys, { dataModules } from "./dataModule.js"; // وارد کردن داده‌ها از data.js// data.js
 import { error } from "jquery";
+import VersioningModule from "./VersioningModules.js";
 let project = import.meta.env.VITE_API_PROJECT;
 
 if (project == "BBDH") {
@@ -1176,7 +1177,7 @@ async function StatusModules(id) {
           )
           .replace(
             /\b(inactive|dead)\b/gi,
-            `<span style="color:gray;">$1</span>`
+            `<span style="color:red;">$1</span>`
           )
           .replace(
             /\b(not-found|bad)\b/gi,
@@ -1191,7 +1192,7 @@ async function StatusModules(id) {
           .replace(/\bfailed\b/gi, `<span style="color:red;">failed</span>`)
           .replace(
             /\b(running|exited)\b/gi,
-            `<span style="color:green;">$1</span>`
+            `<span style="color:darkgreen;">$1</span>`
           )
           .replace(
             /\b(activating|reloading)\b/gi,
@@ -1445,8 +1446,6 @@ function setJsonEditor(data) {
     // مثال استفاده:
     const moduleName = UpperCaseModuleDetails; // از UpperCaseModuleDetails گرفته میشود
     const jsonData = data;
-
-    console.log(oldDataContainer);
 
     finalObject = createModuleObject(moduleName, subModuleName, jsonData);
 
@@ -1770,3 +1769,10 @@ function updateJsonKey(oldData, newData) {
   }
   return oldData;
 }
+// ---------------------------------VersioningModuleHere----------------------------------------
+let VersionSaveBtn = document.getElementById("SaveVersion")
+VersionSaveBtn.addEventListener("click", () => {
+  let VersionInput = document.getElementById("Version").value
+  let CommentInput = document.getElementById("comments").value
+  VersioningModule(VersionInput, CommentInput)
+})

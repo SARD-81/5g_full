@@ -44,26 +44,28 @@ class SshHelper
             ->log($event);
     }
 
-    public function runCommand($command)
-    {
-        try {
-            $this->ssh->setTimeout(1);
+  public function runCommand($command)
+{
+    try {
+        $this->ssh->setTimeout(10);
 
-            $this->ssh->write("sudo -S su\n");
-            $this->ssh->write("{$this->password}\n");
-            $this->ssh->read();
+        $this->ssh->write("sudo -S su\n");
+        $this->ssh->write("{$this->password}\n");
+        $this->ssh->read();
 
-            $this->ssh->write("$command\n");
-            $output = $this->ssh->read();
+        $this->ssh->write("$command\n");
+        $output = $this->ssh->read();
 
-//            $this->logActivity('run-command', 'runCommand');
+        return $output;
+    } catch (Exception $e) {
+        $this->logActivity('failed-command', 'runCommand', [
+            'Error' => $e
+        ]);
 
-            return $output;
-        } catch (Exception $e) {
-            $this->logActivity('failed-command', 'runCommand', ['Error' => $e]);
-            throw $e;
-        }
+
+        throw new Exception('Server error! Please try again');
     }
+}
     public function getFileContent($command)
     {
         $fileContent = $this->ssh->exec($command);

@@ -4791,6 +4791,7 @@ async function showModuls(page = 1) {
             height="20" 
             id="${y + 1}"
             data-id-modules = "${y + 1}"
+            data-module-id = "${data.module.module[y].module_id}"
             fill="currentColor" 
             data-bs-toggle="modal"
             data-bs-target="#schedulingModule"
@@ -4809,9 +4810,12 @@ async function showModuls(page = 1) {
           fill="currentColor"
           id="${y + 1}"
           data-id-modules = "${y + 1}"
+            data-module-id = "${data.module.module[y].module_id}"
           data-bs-toggle="modal"
           data-bs-target="#editModule"
           class="bi bi-pencil-square editModuleClick cursorPointer"
+          aria-label="Edit module"
+          data-test="module-edit-btn"
           viewBox="0 0 16 16"
         >
           <path
@@ -4832,10 +4836,13 @@ async function showModuls(page = 1) {
            height="20" 
            id="${y + 1}"
            data-id-modules = "${y + 1}"
+            data-module-id = "${data.module.module[y].module_id}"
            data-bs-toggle="modal"
            data-bs-target="#removeModule"
            fill="currentColor" 
            class="bi bi-trash3 deleteModuleClick cursorPointer"
+           aria-label="Delete module"
+           data-test="module-delete-btn"
            viewBox="0 0 16 16">
            <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
            </svg>`;
@@ -5080,32 +5087,15 @@ function modalEditModule() {
         .getElementById("buttonUpdateModule")
         .removeAttribute("data-bs-dismiss");
       idTrModule = this.dataset.idModules;
-
-      // let userNameServer = localStorage.getItem("userNameServer");
-      // let passwordServer = localStorage.getItem("passwordServer");
-      // let port = localStorage.getItem("port");
-      // document.getElementById("saveValue").checked = false;
-
-      // if (userNameServer && passwordServer) {
-      //   document.querySelector('input[name="name_InputUserNameModule"]').value =
-      //     userNameServer;
-      //   document.querySelector('input[name="name_InputPasswordModule"]').value =
-      //     passwordServer;
-      // } else {
-      //   document.querySelector('input[name="name_InputUserNameModule"]').value =
-      //     "";
-      //   document.querySelector('input[name="name_InputPasswordModule"]').value =
-      //     "";
-      // }
-      // document.querySelector('input[name="name_InputPortModule"]').value = port;
+      const moduleIdFromDataset = Number(this.dataset.moduleId);
+      const moduleRow = this.closest("tr");
+      idModule = moduleIdFromDataset || Number(moduleRow?.dataset.id || 0);
 
       document.querySelector("#moduleFile").value = "";
-      let dataSet = this.dataset.idModules;
-      // const trElement = element.closest("tr");
-      // const dataId = trElement.getAttribute("data-id");
+      const dataSet = this.dataset.idModules;
       document.getElementById("ServerEditModule").innerHTML = "";
-      crateServerEditModule(dataSet);
-      typeModuleEdit(dataSet);
+      crateServerEditModule(dataSet, idModule);
+      typeModuleEdit(idModule);
 
       for (let i = 0; i < numberAndNameServers.length; i++) {
         if (numberAndNameServers[i].serverStatus == 1) {
@@ -5666,16 +5656,17 @@ if (window.top !== window.self) {
   window.top.location.href = "/"; // مسیر صفحه اصلی parent
 }
 
-function typeModuleEdit() {
-  let type;
+function typeModuleEdit(moduleId) {
+  let type = [];
   for (let y = 0; y < modulesInfo.length; y++) {
-    if (modulesInfo[y].moduleID == idModule) {
-      type = modulesInfo[y].moduleType;
+    if (Number(modulesInfo[y].moduleID) === Number(moduleId)) {
+      type = modulesInfo[y].moduleType || [];
+      break;
     }
   }
 
   // نرمال‌سازی داده‌ها (تبدیل به حروف کوچک)
-  const normalizedData = type.map((item) => item.toLowerCase());
+  const normalizedData = type.map((item) => String(item).toLowerCase());
 
   // انتخاب چک‌باکس‌ها
   const epcCheckbox = document.getElementById("moduleTypeEPC");
@@ -5705,10 +5696,13 @@ function typeModuleEdit() {
 
 let idModule;
 let serverModule = [];
-function crateServerEditModule(x) {
-  let servers = modulesInfo[x - 1].serverIDs;
-  let serverLength = servers.length;
-  idModule = modulesInfo[x - 1].moduleID;
+function crateServerEditModule(x, moduleId) {
+  const selectedModule = modulesInfo.find(
+    (moduleItem) => Number(moduleItem.moduleID) === Number(moduleId)
+  );
+  const servers = selectedModule?.serverIDs || [];
+  const serverLength = servers.length;
+  idModule = Number(moduleId);
   document.querySelector('input[name="name_nameInputEditModule"]').value =
     document.querySelector(`#tBody3 #tr${x} .td2`).textContent;
   let numberLength = numberAndNameServers.length;
@@ -5830,38 +5824,55 @@ async function editModules(idModule) {
   // let port = document.querySelector('input[name="name_InputPortModule"]').value;
 
   let formData = new FormData();
-  let serverIds = [];
-  let serverSpecifications;
 
-  document.querySelectorAll(".editModalCheckbox").forEach((checkBox) => {
-    if (checkBox.checked)
-      dataServer.forEach((server) => {
-        if (server.id == checkBox.getAttribute("data-server-id")) {
-          serverSpecifications = {
-            id: server.id,
-            username: server.username,
-            password: server.password,
-            port: server.port,
-          };
-          serverIds.push(serverSpecifications);
-        }
-      });
-  });
+  const selectedServerIds = Array.from(
+    document.querySelectorAll(".editModalCheckbox")
+  )
+    .filter((checkBox) => checkBox.checked)
+    .map((checkBox) => Number(checkBox.getAttribute("data-server-id")));
 
-  // document.querySelectorAll(".editModalCheckbox").forEach((checkBox) => {
-  //   if (checkBox.checked)
-  //     serverIds.push(Number(checkBox.getAttribute("data-server-id")));
-  // });
+  const selectedModule = modulesInfo.find(
+    (moduleItem) => Number(moduleItem.moduleID) === Number(idModule)
+  );
+  const previousServerIds = (selectedModule?.serverIDs || []).map((id) => Number(id));
 
-  serverIds.forEach((server, index) => {
-    formData.append(`servers[${index}][id]`, server?.id || "");
-    formData.append(`servers[${index}][username]`, server?.username || "");
-    formData.append(`servers[${index}][password]`, server?.password || "");
-    formData.append(`servers[${index}][port]`, server?.port || "");
-  });
+  const sortedSelectedServerIds = [...selectedServerIds].sort((a, b) => a - b);
+  const sortedPreviousServerIds = [...previousServerIds].sort((a, b) => a - b);
+
+  const isServersChanged =
+    sortedSelectedServerIds.length !== sortedPreviousServerIds.length ||
+    sortedSelectedServerIds.some((id, index) => id !== sortedPreviousServerIds[index]);
+
+  const shouldSendServers = Boolean(fileModule) || isServersChanged;
+
+  if (shouldSendServers) {
+    const selectedServerDetails = getSelectedServersWithCredentials(
+      ".editModalCheckbox",
+      selectedServerIds
+    );
+
+    if (!selectedServerDetails.isValid) {
+      Toastify({
+        text: selectedServerDetails.error,
+        style: {
+          background: "linear-gradient(to right,rgb(255, 0, 0),rgb(231, 0, 0))",
+        },
+      }).showToast();
+      document.getElementById("idLoading").style.display = "none";
+      document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
+      return;
+    }
+
+    selectedServerDetails.servers.forEach((server, index) => {
+      formData.append(`servers[${index}][id]`, server.id);
+      formData.append(`servers[${index}][username]`, server.username);
+      formData.append(`servers[${index}][password]`, server.password);
+      formData.append(`servers[${index}][port]`, server.port);
+    });
+  }
 
   // اضافه کردن مقادیر به FormData
-  formData.append("module_id", idModule); // فرض می‌کنیم idModule تعریف‌شده است
+  formData.append("module_id", idModule);
   formData.append("name", nameModul);
   if (fileModule) {
     formData.append("config_file", fileModule); // فایل را اضافه می‌کنیم
@@ -5883,63 +5894,16 @@ async function editModules(idModule) {
 
   // let saveValue = document.getElementById("saveValue");
 
+  let requestSuccess = false;
   await useApi({
     url: `edit-module`,
     method: "post",
     data: formData,
     headers: {
-      "Content-Type": "multipart/form-data", // این هدر مهم است
+      "Content-Type": "multipart/form-data",
     },
-    callback: function (data) {
-      let lengthServer = data.module.module_server.length;
-      let server = data.module.module_server;
-
-      for (let y = 0; y < modulesInfo.length; y++) {
-        if (modulesInfo[y].moduleID == idModule) {
-          modulesInfo[y].serverIDs.length = 0;
-          for (let i = 0; i < server.length; i++) {
-            modulesInfo[y].serverIDs.push(server[i]);
-          }
-        }
-      }
-
-      for (let y = 0; y < modulesInfo.length; y++) {
-        modulesInfo[y].moduleType.length = 0;
-        if (modulesInfo[y].moduleID == idModule) {
-          modulesInfo[y].moduleType.push(data.module.module_type);
-          modulesInfo[y].moduleName = data.module.module_name;
-        }
-      }
-
-      serverModule = [];
-      for (let i = 0; i < lengthServer; i++) {
-        serverModule.push(data.module.module_server[i]);
-        document.getElementById(`selectServerEdit${server[i]}`).checked = true;
-      }
-
-      if (serverModule.length === 0) {
-        document.querySelector(`#tr${idTrModule} .td3`).innerHTML = "";
-      } else {
-        // if (saveValue.checked) {
-        //   localStorage.setItem("userNameServer", userName);
-        //   localStorage.setItem("passwordServer", password);
-        // }
-
-        document.querySelector(`#tr${idTrModule} .td2`).innerHTML =
-          data.module.module_name;
-
-        let lengthModule = data.module.module_server_name;
-        let result = JSON.stringify(lengthModule)
-          .replace(/,\s*\]$/, "")
-          .replace(/^\[/, "")
-          .replace(/\]$/, "")
-          .replace(/,/g, ", ")
-          .replace(/"/g, "");
-        document.querySelector(`#tr${idTrModule} .td3 span`).innerHTML = result;
-
-        document.querySelector(`#tr${idTrModule} .td4`).innerHTML =
-          data.module.module_type.toUpperCase();
-      }
+    callback: async function (data) {
+      requestSuccess = true;
       Toastify({
         text: data.message,
         style: {
@@ -5947,12 +5911,33 @@ async function editModules(idModule) {
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
         },
       }).showToast();
+
+      const pageToRefresh = Number(currentPageModule || urlModule || 1);
+      modulesInfo = [];
+      await showModuls(pageToRefresh);
+
       let button = document.getElementById("buttonUpdateModule");
       button.setAttribute("data-bs-dismiss", "modal");
       btnEditModule = "modalEditModule";
-      button.click(); // کلیک برنامه‌نویسی
+      button.click();
+    },
+    errorCallback: async function () {
+      requestSuccess = false;
+      const pageToRefresh = Number(currentPageModule || urlModule || 1);
+      modulesInfo = [];
+      await showModuls(pageToRefresh);
     },
   });
+
+  if (!requestSuccess) {
+    Toastify({
+      text: "Update failed. Changes were not saved.",
+      style: {
+        background: "linear-gradient(to right,rgb(255, 0, 0),rgb(231, 0, 0))",
+      },
+    }).showToast();
+  }
+
   document.getElementById("idLoading").style.display = "none";
   document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
 }
@@ -6064,6 +6049,7 @@ document.getElementById("addModal").addEventListener("click", function () {
 
   // document.querySelector('input[name="name_InputPortAddModule"]').value = port;
 
+  createModuleServerCredentials = {};
   document.getElementById("ServerAddModule").innerHTML = "";
   crateServerAddModule();
   for (let i = 0; i < numberAndNameServers.length; i++) {
@@ -6085,22 +6071,87 @@ function crateServerAddModule() {
   let numberLength = numberAndNameServers.length;
   for (let i = 1; i <= numberLength; i++) {
     let idInputServer = serverCard[i - 1].id;
+    let serverName = numberAndNameServers[i - 1].nameServer;
+    let savedServerCredentials =
+      createModuleServerCredentials[idInputServer] ||
+      dataServer.find((server) => Number(server.id) === Number(idInputServer)) ||
+      {};
+
+    let wrapper = document.createElement("div");
+    wrapper.setAttribute("class", "border rounded p-2 mb-2");
+
     let div = document.createElement("div");
-    div.setAttribute("class", "form-check");
+    div.setAttribute("class", "form-check mb-2");
     let input = document.createElement("input");
     input.setAttribute("class", "form-check-input addModalCheckbox");
     input.setAttribute("data-server-id", `${idInputServer}`);
     input.setAttribute("value", "");
     input.setAttribute("type", "checkbox");
     input.setAttribute("id", `selectServer${idInputServer}`);
+
     let lable = document.createElement("label");
     lable.setAttribute("class", "form-check-label");
     lable.setAttribute("for", `selectServer${idInputServer}`);
-    lable.innerHTML = `${numberAndNameServers[i - 1].nameServer}`;
+    lable.innerHTML = `${serverName}`;
+
     div.appendChild(input);
     div.appendChild(lable);
-    document.getElementById("ServerAddModule").appendChild(div);
+
+    let credentialsDiv = document.createElement("div");
+    credentialsDiv.setAttribute("id", `serverCredentialsRow${idInputServer}`);
+    credentialsDiv.setAttribute("class", "server-credential-block d-none");
+    credentialsDiv.innerHTML = `
+      <div class="row g-2">
+        <div class="col-12 col-md-4">
+          <input type="text" class="form-control form-control-sm addModuleServerUsername" data-server-id="${idInputServer}" placeholder="Username" value="${savedServerCredentials.username || ""}" />
+        </div>
+        <div class="col-12 col-md-4">
+          <input type="password" class="form-control form-control-sm addModuleServerPassword" data-server-id="${idInputServer}" placeholder="Password" value="${savedServerCredentials.password || ""}" />
+        </div>
+        <div class="col-12 col-md-4">
+          <input type="number" min="1" class="form-control form-control-sm addModuleServerPort" data-server-id="${idInputServer}" placeholder="Port (default 22)" value="${savedServerCredentials.port || ""}" />
+        </div>
+      </div>
+    `;
+
+    input.addEventListener("change", function () {
+      if (this.checked) {
+        credentialsDiv.classList.remove("d-none");
+      } else {
+        credentialsDiv.classList.add("d-none");
+      }
+    });
+
+    wrapper.appendChild(div);
+    wrapper.appendChild(credentialsDiv);
+    document.getElementById("ServerAddModule").appendChild(wrapper);
   }
+
+  document
+    .querySelectorAll(
+      ".addModuleServerUsername, .addModuleServerPassword, .addModuleServerPort"
+    )
+    .forEach((inputElement) => {
+      inputElement.addEventListener("input", function () {
+        const serverId = Number(this.getAttribute("data-server-id"));
+        const username = document
+          .querySelector(`.addModuleServerUsername[data-server-id="${serverId}"]`)
+          ?.value.trim();
+        const password = document
+          .querySelector(`.addModuleServerPassword[data-server-id="${serverId}"]`)
+          ?.value.trim();
+        const portRaw = document
+          .querySelector(`.addModuleServerPort[data-server-id="${serverId}"]`)
+          ?.value.trim();
+
+        createModuleServerCredentials[serverId] = {
+          id: serverId,
+          username,
+          password,
+          port: portRaw || 22,
+        };
+      });
+    });
 }
 
 document
@@ -6177,6 +6228,76 @@ document
   });
 
 let btnAddModule = "";
+let createModuleServerCredentials = {};
+
+function getServerNameById(serverId) {
+  return (
+    numberAndNameServers.find((server) => Number(server.idServer) === Number(serverId))
+      ?.nameServer || `ID ${serverId}`
+  );
+}
+
+function getSelectedServersWithCredentials(checkboxSelector, selectedServerIds) {
+  const selectedIds = selectedServerIds
+    ? selectedServerIds.map((id) => Number(id))
+    : Array.from(document.querySelectorAll(checkboxSelector))
+      .filter((checkBox) => checkBox.checked)
+      .map((checkBox) => Number(checkBox.getAttribute("data-server-id")));
+
+  const selectedServers = [];
+
+  for (const serverId of selectedIds) {
+    const inlineUsername = document
+      .querySelector(`.addModuleServerUsername[data-server-id="${serverId}"]`)
+      ?.value?.trim?.();
+    const inlinePassword = document
+      .querySelector(`.addModuleServerPassword[data-server-id="${serverId}"]`)
+      ?.value?.trim?.();
+    const inlinePort = document
+      .querySelector(`.addModuleServerPort[data-server-id="${serverId}"]`)
+      ?.value?.trim?.();
+
+    const cachedCredentials = createModuleServerCredentials[serverId] || {};
+    const storedServer = dataServer.find(
+      (item) => Number(item.id) === Number(serverId)
+    );
+
+    const username =
+      inlineUsername || cachedCredentials.username || storedServer?.username?.trim?.() || "";
+    const password =
+      inlinePassword || cachedCredentials.password || storedServer?.password?.trim?.() || "";
+
+    const port = Number(
+      inlinePort || cachedCredentials.port || storedServer?.port || 22
+    );
+
+    const missingFields = [];
+    if (!username) missingFields.push("username");
+    if (!password) missingFields.push("password");
+
+    if (missingFields.length > 0) {
+      return {
+        isValid: false,
+        error: `Server ${getServerNameById(serverId)} (ID ${serverId}) is missing ${missingFields.join(
+          " and "
+        )}.`,
+      };
+    }
+
+    selectedServers.push({
+      id: Number(serverId),
+      username,
+      password,
+      port: Number.isInteger(port) && port > 0 ? port : 22,
+    });
+  }
+
+  return {
+    isValid: true,
+    servers: selectedServers,
+    selectedIds,
+  };
+}
 
 async function addModules() {
   if (roleUserGetMe == "visitor") return;
@@ -6222,29 +6343,27 @@ async function addModules() {
   // ).value;
 
   let formData = new FormData();
-  let serverIds = [];
-  let serverSpecifications;
+  const selectedServerDetails = getSelectedServersWithCredentials(
+    ".addModalCheckbox"
+  );
 
-  document.querySelectorAll(".addModalCheckbox").forEach((checkBox) => {
-    if (checkBox.checked)
-      dataServer.forEach((server) => {
-        if (server.id == checkBox.getAttribute("data-server-id")) {
-          serverSpecifications = {
-            id: server.id,
-            username: server.username,
-            password: server.password,
-            port: server.port,
-          };
-          serverIds.push(serverSpecifications);
-        }
-      });
-  });
+  if (!selectedServerDetails.isValid) {
+    Toastify({
+      text: selectedServerDetails.error,
+      style: {
+        background: "linear-gradient(to right,rgb(255, 0, 0),rgb(231, 0, 0))",
+      },
+    }).showToast();
+    document.getElementById("idLoading").style.display = "none";
+    document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
+    return;
+  }
 
-  serverIds.forEach((server, index) => {
-    formData.append(`servers[${index}][id]`, server.id ?? "");
-    formData.append(`servers[${index}][username]`, server.username ?? "");
-    formData.append(`servers[${index}][password]`, server.password ?? "");
-    formData.append(`servers[${index}][port]`, server.port ?? "");
+  selectedServerDetails.servers.forEach((server, index) => {
+    formData.append(`servers[${index}][id]`, server.id);
+    formData.append(`servers[${index}][username]`, server.username);
+    formData.append(`servers[${index}][password]`, server.password);
+    formData.append(`servers[${index}][port]`, server.port);
   });
 
   // اضافه کردن مقادیر به FormData
@@ -6329,11 +6448,6 @@ async function addModules() {
             data.data.created_modules[0].module.module_name;
 
         } else if (x == 3) {
-          // configType
-          td.innerHTML =
-            data.data.created_modules[0].module.config_type ?? "-";
-
-        } else if (x == 4) {
           // Servers
           let arrServers = [];
           let span = document.createElement("span");
@@ -6345,7 +6459,7 @@ async function addModules() {
           span.innerHTML = arrServers.join(", ");
           td.appendChild(span);
 
-        } else if (x == 5) {
+        } else if (x == 4) {
           // Type (EPC / 5GC)
           let arrType = [];
           for (let y = 0; y < 1; y++) {
@@ -6355,22 +6469,26 @@ async function addModules() {
           }
           td.innerHTML = arrType.join(", ");
 
-        } else if (x == 6) {
+        } else if (x == 5) {
           // Scheduling (SVG — بدون تغییر)
           td.setAttribute("class", `td5`);
           let svgElemEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="${numberTrModule}" data-id-modules = "${numberTrModule}" fill="currentColor" data-bs-toggle="modal" data-bs-target="#schedulingModule" class="bi bi-calendar4-week schedulingModule cursorPointer" viewBox="0 0 16 16"> <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M2 2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1zm13 3H1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/> <path d="M11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm-2 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/> </svg>`;
           td.insertAdjacentHTML("afterbegin", svgElemEdit);
 
-        } else if (x == 7) {
+        } else if (x == 6) {
           // Edit (SVG — بدون تغییر)
           td.setAttribute("class", `td6 tdEditModule`);
-          let svgElemEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" id="${numberTrModule}" data-id-modules = "${numberTrModule}" data-bs-toggle="modal" data-bs-target="#editModule" class="bi bi-pencil-square editModuleClick cursorPointer" viewBox="0 0 16 16" > <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" /> <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" /> </svg>`;
+          let svgElemEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" id="${numberTrModule}" data-id-modules = "${numberTrModule}" data-bs-toggle="modal" data-bs-target="#editModule" class="bi bi-pencil-square editModuleClick cursorPointer"
+          aria-label="Edit module"
+          data-test="module-edit-btn" viewBox="0 0 16 16" > <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" /> <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" /> </svg>`;
           td.insertAdjacentHTML("afterbegin", svgElemEdit);
 
-        } else if (x == 8) {
+        } else if (x == 7) {
           // Delete (SVG — بدون تغییر)
           td.setAttribute("class", `td7 tdRemoveModule`);
-          let svgElemEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="${numberTrModule}" data-id-modules = "${numberTrModule}" data-bs-toggle="modal" data-bs-target="#removeModule" fill="currentColor" class="bi bi-trash3 deleteModuleClick cursorPointer" viewBox="0 0 16 16"> <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/> </svg>`;
+          let svgElemEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="${numberTrModule}" data-id-modules = "${numberTrModule}" data-bs-toggle="modal" data-bs-target="#removeModule" fill="currentColor" class="bi bi-trash3 deleteModuleClick cursorPointer"
+           aria-label="Delete module"
+           data-test="module-delete-btn" viewBox="0 0 16 16"> <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/> </svg>`;
           td.insertAdjacentHTML("afterbegin", svgElemEdit);
         }
 
@@ -8831,11 +8949,19 @@ async function showRouteServer(serverId) {
       let rows = cleanedOutput.split("\n");
       const serverName =
         serverCard?.find((server) => server.id == server_id)?.name || "";
-      const testRoute = serverName ? `root@${serverName}` : "";
+
 
       // ساخت ردیف‌ها
       rows
-        .filter((rowText) => rowText.trim() && rowText.trim() !== testRoute)
+        .filter((rowText) => {
+          const line = rowText.trim();
+
+          if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+:.*[$#]$/.test(line)) {
+            return false;
+          }
+
+          return line.length > 0;
+        })
         .forEach((rowText, x) => {
           const cleanRow = rowText.trim();
 

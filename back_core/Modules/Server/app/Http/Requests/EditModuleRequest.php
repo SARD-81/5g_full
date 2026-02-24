@@ -31,8 +31,8 @@ class EditModuleRequest extends FormRequest
                 },
             ],
 
-            'servers'            => ['nullable', 'array'],
-            'servers.*.id'       => ['required', 'integer', 'exists:servers,id',  function ($attribute, $value, $fail) {
+            'servers'            => ['sometimes', 'array'],
+            'servers.*.id'       => ['required_with:servers', 'integer', 'exists:servers,id',  function ($attribute, $value, $fail) {
                 $server = DB::table('servers')->where('id', $value)->first();
                     if (!$server) {
                         $fail("The selected server ID ($value) is invalid.");
@@ -45,9 +45,9 @@ class EditModuleRequest extends FormRequest
                     }
                 }
             ],
-            'servers.*.username' => ['required', 'string', 'min:1', 'max:255'],
-            'servers.*.password' => ['required', 'string', 'min:1', 'max:255'],
-            'servers.*.port'     => ['nullable', 'integer']
+            'servers.*.username' => ['required_with:servers.*.id', 'string', 'min:1', 'max:255'],
+            'servers.*.password' => ['required_with:servers.*.id', 'string', 'min:1', 'max:255'],
+            'servers.*.port'     => ['required_with:servers.*.id', 'integer']
         ];
     }
 

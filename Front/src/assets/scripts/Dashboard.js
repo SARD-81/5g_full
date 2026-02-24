@@ -1,5 +1,5 @@
 import { auth_name, setAuthName } from "./auth.js";
-import useApi from "./useApi.js";
+import useApi, { ContentDisposition } from "./useApi.js";
 import Toastify from "toastify-js";
 import IconBBDH from "../img/logo white with logo type.png";
 import favIconBBDH from "../img/logo white.png";
@@ -13,6 +13,57 @@ import "toastify-js/src/toastify.css";
 import { data, error } from "jquery";
 import Stepper from "bs-stepper";
 import "bs-stepper/dist/css/bs-stepper.min.css";
+
+
+
+function getExportFilenameFromDisposition(contentDisposition, fallbackFilename) {
+  if (!contentDisposition) return fallbackFilename;
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const asciiMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  if (asciiMatch?.[1]) {
+    return asciiMatch[1];
+  }
+
+  return fallbackFilename;
+}
+
+const exportLogsButton = document.getElementById("btnExportLogs");
+if (exportLogsButton) {
+  exportLogsButton.addEventListener("click", async function () {
+    const format = document.getElementById("logExportFormat")?.value || "csv";
+    const ext = format === "json" ? "json" : "csv";
+    const accept = format === "json" ? "application/json" : "text/csv";
+
+    await useApi({
+      method: "post",
+      url: "export-logs",
+      data: { format },
+      responseType: "blob",
+      accept,
+      callback: function (data) {
+        const fallbackFilename = `logs_${Date.now()}.${ext}`;
+        const filename = getExportFilenameFromDisposition(
+          ContentDisposition,
+          fallbackFilename
+        );
+
+        const blobUrl = window.URL.createObjectURL(data);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(blobUrl);
+      },
+    });
+  });
+}
 
 let project = import.meta.env.VITE_API_PROJECT;
 

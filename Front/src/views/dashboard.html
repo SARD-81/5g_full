@@ -3858,6 +3858,13 @@
         </div>
 
         <div class="tab-pane fade" id="v-log" role="tabpanel" aria-labelledby="v-log-tab" tabindex="0">
+          <div class="d-flex justify-content-end align-items-center gap-2 mt-3 mb-2">
+            <select id="logExportFormat" class="form-select form-select-sm w-auto">
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+            </select>
+            <button id="btnExportLogs" type="button" class="btn btn-sm btn-primary">Export</button>
+          </div>
           <div class="divTableResponsive">
             <div id="tableResponsiveLog" class="table-responsive">
               <table class="table table-bordered table-striped text-center mt-2" id="logTable">

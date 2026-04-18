@@ -93,33 +93,64 @@ class RouteController extends Controller
             throw $e;
         }
     }
-    public function deleteRouteServer(DeleteRouteServerRequest $request)
-    {
-        $credentials = $request->validated();
+public function deleteRouteServer(DeleteRouteServerRequest $request)
+{
+    $credentials = $request->validated();
 
-        $server   = $request['server'];
-        $username = $credentials['username'];
-        $password = $credentials['password'];
-        $port     = $credentials['port'] ?? 22;
+    $server   = $request['server'];
+    $username = $credentials['username'];
+    $password = $credentials['password'];
+    $port     = $credentials['port'] ?? 22;
 
-        try {
-            DB::beginTransaction();
+    try {
 
-            isset($credentials['interface'])
-                ? $command = 'ip route del ' . $credentials['destination_ip'] . ' via ' . $credentials['geteway_ip'] . ' dev ' . $credentials['interface_route']
-                : $command = 'ip route del ' . $credentials['destination_ip'] . ' via ' . $credentials['geteway_ip'];
+        DB::beginTransaction();
 
+        $destination = $credentials['destination_ip'];
 
-            $ssh    = new SshHelper($server->ip, $username, $password, $port);
-            $output = $ssh->runCommandModule($command, 'delete-route', 'deleteRouteServer');
+        $ssh = new SshHelper($server->ip, $username, $password, $port);
 
+        // بررسی وجود route
+        $checkOutput = trim($ssh->runCommandModule(
+            "ip route show | grep '^$destination'",
+            'check-route',
+            'deleteRouteServer'
+        ));
 
-            DB::commit();
-               return response()->json(['success' => true, 'msg' => 'show route server successfully', 'output' => $output], 200);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-                throw $e;
+        if (!$checkOutput) {
+            throw new \Exception("Route does not exist.");
         }
+
+        // حذف route
+        $deleteOutput = $ssh->runCommandModule(
+            "ip route del $destination",
+            'delete-route',
+            'deleteRouteServer'
+        );
+
+        // بررسی خطای لینوکس
+        if (str_contains($deleteOutput, 'No such process')) {
+            throw new \Exception("Route not found on server.");
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'msg'     => 'Route deleted successfully.',
+            'route'   => $checkOutput
+        ], 200);
+
+    } catch (\Exception $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'msg' => $e->getMessage()
+        ], 400);
     }
+}
+
+
 }

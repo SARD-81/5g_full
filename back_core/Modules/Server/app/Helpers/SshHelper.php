@@ -12,7 +12,7 @@ class SshHelper
 {
     protected $ssh;
 
-    public function __construct(private $server_ip, private $username, private $password, private $port = 22, private $timeout = 1)
+    public function __construct(private $server_ip, private $username, private $password, private $port = 22, private $timeout = 5)
     {
         $this->ssh = new SSH2($server_ip, $this->port, $this->timeout);
 
@@ -47,7 +47,7 @@ class SshHelper
   public function runCommand($command)
 {
     try {
-        $this->ssh->setTimeout(10);
+        $this->ssh->setTimeout(3);
 
         $this->ssh->write("sudo -S su\n");
         $this->ssh->write("{$this->password}\n");
@@ -80,28 +80,45 @@ class SshHelper
     }
 
 
+public function runCommandModule(string $command, string $typeCommand, string $method): string
+{
+    try {
+        // تایم‌اوت را می‌توانید نگه دارید، اما با exec معمولا فقط در صورت طول کشیدن خود دستور اعمال می‌شود
+        $this->ssh->setTimeout(3);
 
-    public function runCommandModule(string $command, string $typeCommand, string $method)
-    {
-        $output = $this->runCommand($command);
+        // ترکیب تمام مراحل در یک دستور خطی
+        // پسورد از طریق pipe به sudo داده می‌شود و دستور داخل bash اجرا می‌گردد
+        $fullCommand = sprintf(
+            "echo %s | sudo -S -p '' bash -c %s",
+            escapeshellarg($this->password),
+            escapeshellarg($command)
+        );
 
-        if (str_contains($output, 'FATAL') || str_contains($output, 'ERROR')) {
-            $this->logActivity('module-error', $method,
-                ['command' => $command, 'output' => $output]);
-            throw new InvalidArgumentException($output);
-        }
-        else
-            $this->logActivity($typeCommand, $method,
-                ['command' => $command, 'output' => $output]);
+        // اجرای یکباره دستور (جایگزین ۳ مرحله write و read)
+        $output = $this->ssh->exec($fullCommand);
 
+        $this->logActivity($typeCommand, $method, [
+            'command' => $command,
+            'output' => $output
+        ]);
 
         return $output;
+
+    } catch (Exception $e) {
+        $this->logActivity('module-error', $method, [
+            'command' => $command,
+            'error' => $e->getMessage()
+        ]);
+
+        throw $e;
     }
+}
+
+
     public function pingRunCommand ($command)
     {
         try {
             $this->ssh->setTimeout(5);
-
             $this->ssh->write("sudo -S su\n");
             $this->ssh->write("{$this->password}\n");
             $this->ssh->read();

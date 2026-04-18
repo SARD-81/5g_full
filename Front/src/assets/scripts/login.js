@@ -157,7 +157,7 @@ async function login() {
     errorCallback: function () {
       // generateCAPTCHA();
       disableReloadCaptcha()
-      if(!reCAPTCHA) {
+      if (!reCAPTCHA) {
         getCaptcha();
       }
       startTimerCaptcha();
@@ -184,15 +184,15 @@ window.onload = async function () {
   if (project == "BBDH") {
     await status2fa();
     await statusReCaptcha();
-    statusSMS();    
-    if(reCAPTCHA) {
+    statusSMS();
+    if (reCAPTCHA) {
       loadRecaptcha();
       document.getElementById("idLoadingLogin").style.display = "none";
     } else {
       disableReloadCaptcha()
       getCaptcha();
     }
-    
+
   } else {
     document.getElementById("chptchaOffline").classList.remove("d-none");
     document.getElementById("chptchaOffline").classList.add("d-flex");
@@ -388,7 +388,7 @@ function startTimerCaptcha() {
   timerId = setTimeout(() => {
     // generateCAPTCHA();
     disableReloadCaptcha()
-    if(!reCAPTCHA) {
+    if (!reCAPTCHA) {
       getCaptcha();
     }
     startTimerCaptcha(); // دوباره تایمر رو از اول شروع کن
@@ -401,9 +401,9 @@ document
     event.preventDefault();
     // generateCAPTCHA();
     // document.getElementById("idLoadingLogin").style.display = "flex";
-      // document.getElementById("reloadCaptcha").style.opacity = "0.5";
+    // document.getElementById("reloadCaptcha").style.opacity = "0.5";
     disableReloadCaptcha()
-    if(!reCAPTCHA) {
+    if (!reCAPTCHA) {
       getCaptcha();
     }
   });

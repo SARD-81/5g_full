@@ -418,12 +418,21 @@ async function saveDataToServer() {
       });
     }
   });
+  let finalData = updateJsonKey(oldDataContainer, newDataContainer);
+  const container = document.getElementById("jsoneditor");
 
+  const isConf = container.dataset.isConf === "true";
+  const meta = container._confMeta; // ✅ اینجا گرفتیم
+
+
+  if (isConf) {
+    finalData = jsonToConfWithComments(finalData, meta);
+  }
   await useApi({
     method: "post",
     url: "update-config-module",
     data: {
-      data: updateJsonKey(oldDataContainer, newDataContainer),
+      data: finalData,
       module_id: currentModuleId,
       // server_id: TheDesiredServer,
       servers: serverIds,
@@ -978,7 +987,7 @@ const downloadFileProcess = (data, name = null) => {
       const match = ContentDisposition.match(regex);
       filename = match[1];
     } else {
-      filename = "name.yaml";
+      filename = "failed.yaml";
       Toastify({
         text: "The file was not downloaded correctly!",
       }).showToast();
@@ -1355,6 +1364,86 @@ function findChanges(oldData, newData) {
   }
 }
 
+function parseConfToJsonWithComments(confText) {
+  const result = {};
+  const lines = confText.split("\n");
+
+  let currentSection = null;
+  const meta = []; // ✅ لوکال شد
+
+  lines.forEach((line) => {
+    const rawLine = line;
+    line = line.trim();
+
+    if (line.startsWith("#") || line.startsWith(";")) {
+      meta.push({ type: "comment", value: rawLine });
+      return;
+    }
+
+    if (!line) {
+      meta.push({ type: "empty" });
+      return;
+    }
+
+    if (line.startsWith("[") && line.endsWith("]")) {
+      const sectionName = line.slice(1, -1);
+      result[sectionName] = {};
+      currentSection = sectionName;
+
+      meta.push({ type: "section", name: sectionName });
+      return;
+    }
+
+    const [key, ...valueParts] = line.split("=");
+    const value = valueParts.join("=").trim();
+
+    if (currentSection) {
+      result[currentSection][key.trim()] = value;
+    } else {
+      result[key.trim()] = value;
+    }
+
+    meta.push({
+      type: "kv",
+      key: key.trim(),
+      section: currentSection,
+    });
+  });
+
+  // ✅ مهم: هر دو رو برگردون
+  return { json: result, meta };
+}
+function jsonToConfWithComments(json, meta) {
+  let conf = "";
+
+  meta.forEach((item) => {
+    switch (item.type) {
+      case "comment":
+        conf += item.value + "\n";
+        break;
+
+      case "empty":
+        conf += "\n";
+        break;
+
+      case "section":
+        conf += `[${item.name}]\n`;
+        break;
+
+      case "kv":
+        if (item.section) {
+          const val = json[item.section]?.[item.key] ?? "";
+          conf += `${item.key}=${val}\n`;
+        } else {
+          const val = json[item.key] ?? "";
+          conf += `${item.key}=${val}\n`;
+        }
+        break;
+    }
+  });
+
+  return conf;
+}
 let oldDataContainer, newDataContainer;
 let descriptionsData;
 let finalObject;
@@ -1362,6 +1451,28 @@ let finalObject;
 function setJsonEditor(data) {
   document.getElementById("jsoneditor").innerHTML = "";
   const container = document.getElementById("jsoneditor");
+
+  // ✅ parse data + detect conf
+  let parsedData = data;
+  let isConf = false;
+
+  if (typeof data === "string") {
+    try {
+      parsedData = JSON.parse(data);
+    } catch (e) {
+      const parsed = parseConfToJsonWithComments(data);
+      parsedData = parsed.json;
+
+      // ✅ ذخیره meta کنار isConf
+      container._confMeta = parsed.meta;
+
+      isConf = true;
+      isConf = true;
+    }
+  }
+
+  // ✅ ذخیره state
+  container.dataset.isConf = isConf;
 
   if (roleUser != "module/update") {
     const options = {
@@ -1371,13 +1482,18 @@ function setJsonEditor(data) {
         alert(err.toString());
       },
     };
+
     const editor = new JSONEditor(container, options);
-    editor.set(data);
+
+    // 🔥 FIX
+    editor.set(parsedData);
+
   } else {
     const options = {
       mode: "tree",
       onChange: function () {
         const updatedJson = editor.get();
+
         const activeNavLink = document.querySelector(".nav-link.active");
         const activeNavLinkId = activeNavLink ? activeNavLink.id : null;
 
@@ -1387,14 +1503,15 @@ function setJsonEditor(data) {
         }
 
         if (document.getElementById("updateBtn") != null) {
-          if (JSON.stringify(data) == JSON.stringify(updatedJson)) {
+          // 🔥 FIX (parsedData)
+          if (JSON.stringify(parsedData) == JSON.stringify(updatedJson)) {
             document.getElementById("updateBtn").style.bottom = "-100px";
           } else {
             document.getElementById("updateBtn").style.bottom = "0";
           }
         }
 
-        findChanges(jsonData, updatedJson);
+        findChanges(parsedData, updatedJson);
 
         oldDataContainer = CompleteJsonData;
         newDataContainer = updatedJson;
@@ -1402,14 +1519,15 @@ function setJsonEditor(data) {
     };
 
     const editor = new JSONEditor(container, options);
-    editor.set(data);
+
+    // 🔥 FIX
+    editor.set(parsedData);
 
     container.addEventListener("click", function () {
-      // findDataKeys(finalObject);
       addIconsForSpecialKeys(finalObject);
     });
 
-    let subModuleName; // از tabModuleSelect گرفته میشود
+    let subModuleName;
     let UpperCaseModuleDetails = moduleDetails.toUpperCase();
 
     if (tabModuleSelect == undefined) {
@@ -1443,15 +1561,14 @@ function setJsonEditor(data) {
       return result;
     }
 
-    // مثال استفاده:
-    const moduleName = UpperCaseModuleDetails; // از UpperCaseModuleDetails گرفته میشود
-    const jsonData = data;
+    const moduleName = UpperCaseModuleDetails;
+
+    // 🔥 FIX
+    const jsonData = parsedData;
 
     finalObject = createModuleObject(moduleName, subModuleName, jsonData);
 
     addIconsForSpecialKeys(finalObject);
-
-    // findDataKeys(finalObject, dataModules);
   }
 }
 

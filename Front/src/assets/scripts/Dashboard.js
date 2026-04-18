@@ -206,6 +206,10 @@ if (project == "BBDH") {
   document.getElementById("logo").style.margin = "0";
 }
 
+
+
+
+
 let arrForActiveSubMenu = [1];
 
 function forSubMneu() {
@@ -374,62 +378,62 @@ function showServerTabPing() {
   }
 }
 
-if (project == "BBDH") {
-  document
-    .querySelector("#V-monitoring-tab")
-    .addEventListener("shown.bs.tab", function () {
-      if (document.getElementById("closeOffcanvas")) {
-        document.getElementById("closeOffcanvas").click();
-      }
-      document.getElementById("Elk")?.classList.remove("active");
-      document.getElementById("zabbix")?.classList.add("active");
-      whichTab = "monitoring";
-      const id = this.dataset.id; // گرفتن id از data-id
-      ActiveMenu(id); // فراخوانی تابع با id مربوطه
-      if (requestShowAddress) {
-        allMonitoring();
-        showAddress();
-      }
-      requestAnimationFrame(() => {
-        // غیر فعال کردن تمام تب‌ها
-        document
-          .querySelectorAll("#monitoringTabs .nav-link")
-          .forEach((btn) => {
-            btn.classList.remove("active");
-          });
+// if (project == "BBDH") {
+//   document
+//     .querySelector("#V-monitoring-tab")
+//     .addEventListener("shown.bs.tab", function () {
+//       if (document.getElementById("closeOffcanvas")) {
+//         document.getElementById("closeOffcanvas").click();
+//       }
+//       document.getElementById("Elk")?.classList.remove("active");
+//       document.getElementById("zabbix")?.classList.add("active");
+//       whichTab = "monitoring";
+//       const id = this.dataset.id; // گرفتن id از data-id
+//       ActiveMenu(id); // فراخوانی تابع با id مربوطه
+//       if (requestShowAddress) {
+//         allMonitoring();
+//         showAddress();
+//       }
+//       requestAnimationFrame(() => {
+//         // غیر فعال کردن تمام تب‌ها
+//         document
+//           .querySelectorAll("#monitoringTabs .nav-link")
+//           .forEach((btn) => {
+//             btn.classList.remove("active");
+//           });
 
-        // غیر فعال کردن تمام tab-pane ها
-        document
-          .querySelectorAll("#monitoringTabContent .tab-pane")
-          .forEach((pane) => {
-            pane.classList.remove("show", "active");
-          });
+//         // غیر فعال کردن تمام tab-pane ها
+//         document
+//           .querySelectorAll("#monitoringTabContent .tab-pane")
+//           .forEach((pane) => {
+//             pane.classList.remove("show", "active");
+//           });
 
-        // گرفتن اولین تب و اولین محتوا
-        const firstTabButton = document.querySelector(
-          "#monitoringTabs .nav-link"
-        );
-        const firstTabPane = document.querySelector(
-          "#monitoringTabContent .tab-pane"
-        );
+//         // گرفتن اولین تب و اولین محتوا
+//         const firstTabButton = document.querySelector(
+//           "#monitoringTabs .nav-link"
+//         );
+//         const firstTabPane = document.querySelector(
+//           "#monitoringTabContent .tab-pane"
+//         );
 
-        // فعال کردن اولین تب
-        if (firstTabButton) firstTabButton.classList.add("active");
-        if (firstTabPane) firstTabPane.classList.add("show", "active");
-      });
-    });
+//         // فعال کردن اولین تب
+//         if (firstTabButton) firstTabButton.classList.add("active");
+//         if (firstTabPane) firstTabPane.classList.add("show", "active");
+//       });
+//     });
 
-  // document
-  //   .querySelector("#v-access-levels-tab")
-  //   .addEventListener("shown.bs.tab", function () {
-  //     if (document.getElementById("closeOffcanvas")) {
-  //       document.getElementById("closeOffcanvas").click();
-  //     }
-  //     whichTab = "accessLevel";
-  //     const id = this.dataset.id; // گرفتن id از data-id
-  //     subMenu(id); // فراخوانی تابع با id مربوطه
-  //   });    --------------------------------------------------deleting accessUser submenu Part----------------------
-}
+//   // document
+//   //   .querySelector("#v-access-levels-tab")
+//   //   .addEventListener("shown.bs.tab", function () {
+//   //     if (document.getElementById("closeOffcanvas")) {
+//   //       document.getElementById("closeOffcanvas").click();
+//   //     }
+//   //     whichTab = "accessLevel";
+//   //     const id = this.dataset.id; // گرفتن id از data-id
+//   //     subMenu(id); // فراخوانی تابع با id مربوطه
+//   //   });    --------------------------------------------------deleting accessUser submenu Part----------------------
+// }
 
 document.getElementById("buttonLogout").addEventListener("click", function () {
   logout();
@@ -2931,9 +2935,11 @@ function getPageByPermission(per) {
     return "#v-module";
   } else if (per.startsWith("log")) {
     return "#v-log";
-  } else if (per.startsWith("monitoring")) {
-    return "#v-monitoring";
-  } else if (per.startsWith("user")) {
+  }
+  //  else if (per.startsWith("monitoring")) {
+  //   return "#v-monitoring";
+  // } 
+  else if (per.startsWith("user")) {
     return "#v-users";
   }
 }
@@ -3186,16 +3192,16 @@ async function load() {
     document.querySelector(".tabHistory")?.remove();
   }
 
-  if (!permissionUsers.includes("monitoring")) {
-    document.getElementById("V-monitoring-tab")?.remove();
-    document.getElementById("v-monitoring")?.remove();
-    arrForActiveMenu = arrForActiveMenu.filter((item) => item != 3);
-    document.querySelector(".tabFaults")?.remove();
-    document.getElementById("v-logManagement")?.remove();
-    document.getElementById("v-performanceManagement")?.remove();
-    arrForActiveMenu = arrForActiveMenu.filter((item) => item != 12);
-    arrForActiveMenu = arrForActiveMenu.filter((item) => item != 13);
-  }
+  // if (!permissionUsers.includes("monitoring")) {
+  //   document.getElementById("V-monitoring-tab")?.remove();
+  //   document.getElementById("v-monitoring")?.remove();
+  //   arrForActiveMenu = arrForActiveMenu.filter((item) => item != 3);
+  //   document.querySelector(".tabFaults")?.remove();
+  //   document.getElementById("v-logManagement")?.remove();
+  //   document.getElementById("v-performanceManagement")?.remove();
+  //   arrForActiveMenu = arrForActiveMenu.filter((item) => item != 12);
+  //   arrForActiveMenu = arrForActiveMenu.filter((item) => item != 13);
+  // }
 
   if (project == "BBDH") {
     if (!permissionUsers.includes("subscriber")) {
@@ -3867,7 +3873,7 @@ async function savePasswordServer(id) {
 
           found = true; // یعنی این آیتم وجود داشت
         }
-        else (console.log("salam"))
+
       });
 
       if (!found) {
@@ -4422,164 +4428,318 @@ window.addEventListener("hashchange", () => {
 });
 
 // let newPage;
+// متغیرهای گلوبال
+let newPage;
 let currentPageLog;
 let showLogLoading = false;
 let requestShowLog = true;
 let desiredPageTFlog = true;
 let desiredPageLog = 1;
+let FilterBy = document.getElementById("FilterBy");
+let FilterBox = document.getElementById("FilterBox");
+document.getElementById("SearchLogBtn").style.display = "none";
+// بخش تغییر فیلتر
+FilterBy.addEventListener("change", () => {
+  FilterBox.innerHTML = ""; // پاک کردن محتوای قبلی
+  document.getElementById("SearchLogBtn").style.display = "flex";
 
+  switch (FilterBy.value) {
+    case "Name":
+      FilterBox.innerHTML = `
+        <p>UserName:</p>
+        <!-- دقت کنید: list="nameSuggestionsList" اضافه شد -->
+        <input type="text" class="NameFilter form-control" id="NameFilter" list="nameSuggestionsList" placeholder="User Name..." autocomplete="off">
+        <datalist id="nameSuggestionsList"></datalist>
+      `;
+      // حالا که اینپوت در صفحه ساخته شد، تابع پیشنهاد دهنده را فعال می‌کنیم
+      fetchSuggestions('NameFilter', 'nameSuggestionsList', 'name');
+      break;
+
+    case "Date":
+      FilterBox.innerHTML = `
+        <p>Start:</p>
+        <input type="date" class="LogDateFilter form-control" id="LogStartDateFilter">
+        <p>End:</p>
+        <input type="date" class="LogDateFilter form-control" id="LogEndDateFilter"> 
+      `;
+      break;
+
+    case "Event":
+      FilterBox.innerHTML = `
+        <p>EventName:</p>
+        <!-- دقت کنید: list="eventSuggestionsList" اضافه شد -->
+        <input type="text" class="EventFilter form-control" id="EventFilter" list="eventSuggestionsList" placeholder="Event Name..." autocomplete="off">
+        <datalist id="eventSuggestionsList"></datalist>
+      `;
+      // حالا که اینپوت در صفحه ساخته شد، تابع پیشنهاد دهنده را فعال می‌کنیم
+      fetchSuggestions('EventFilter', 'eventSuggestionsList', 'event');
+      break;
+
+    default:
+      FilterBox.innerHTML = ``;
+      // اگر حالت دیفالت انتخاب شد، بهتر است دکمه سرچ هم مخفی شود
+      document.getElementById("SearchLogBtn").style.display = "none";
+      break;
+  }
+});
+
+// تابع اصلی لاگ
+// =====================================================================
+// بخش اول: سیستم پیشنهاد دهنده (Autocomplete / Suggestions)
+// =====================================================================
+let suggestionTimeout;
+
+async function fetchSuggestions(inputId, datalistId, type) {
+  const inputElement = document.getElementById(inputId);
+  const datalistElement = document.getElementById(datalistId);
+
+  if (!inputElement || !datalistElement) {
+    console.error(`خطا: اینپوت با آیدی ${inputId} یا دیتالیست پیدا نشد!`);
+    return;
+  }
+
+  console.log(`سیستم پیشنهاد دهنده برای ${inputId} با موفقیت فعال شد.`);
+
+  inputElement.addEventListener('input', function () {
+    const term = this.value.trim();
+    console.log(`شما در حال تایپ هستید: ${term}`);
+
+    clearTimeout(suggestionTimeout);
+
+    if (term.length < 2) {
+      datalistElement.innerHTML = '';
+      return;
+    }
+
+    suggestionTimeout = setTimeout(async () => {
+      console.log(`ارسال درخواست به بک‌اند برای کلمه: ${term} و نوع: ${type}`);
+      try {
+        const response = await fetch('/api/log-suggestions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ term: term, type: type })
+        });
+
+        console.log("وضعیت پاسخ سرور:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("دیتای دریافت شده از لاراول:", data);
+
+        // پشتیبانی از هر دو فرمتی که بک‌اند ممکن است بفرستد
+        let suggestionsArray = [];
+        if (Array.isArray(data)) {
+          suggestionsArray = data; // اگر مستقیم آرایه بود
+        } else if (data.suggestions && Array.isArray(data.suggestions)) {
+          suggestionsArray = data.suggestions; // اگر داخل آبجکت بود
+        }
+
+        datalistElement.innerHTML = '';
+
+        if (suggestionsArray.length > 0) {
+          suggestionsArray.forEach(item => {
+            // حذف مقادیر خالی یا نال
+            if (item) {
+              const option = document.createElement('option');
+              option.value = item;
+              datalistElement.appendChild(option);
+            }
+          });
+          console.log("پیشنهادات با موفقیت به HTML اضافه شدند.");
+        } else {
+          console.log("لیست پیشنهادات خالی است!");
+        }
+
+      } catch (error) {
+        console.error("خطا در ارتباط با سرور:", error);
+      }
+    }, 500);
+  });
+}
+
+// =====================================================================
+// بخش دوم: تابع اصلی دریافت لاگ‌ها، اعمال فیلترها و نمایش مدال (pageLog)
+// =====================================================================
 async function pageLog(page = 1) {
   if (roleUserGetMe == "visitor") return;
   if (showLogLoading) return;
   showLogLoading = true;
-  let dataLog = [];
+  let dataLog = [""];
   let totalPages;
   requestShowLog = false;
   document.getElementById("idLoading").style.display = "flex";
+
+  // ۱. خواندن مقادیر فیلترها در لحظه
+  let currentFilterType = FilterBy?.value;
+  let nameVal = "", eventVal = "", startVal = "", endVal = "";
+
+  if (currentFilterType === "Name") {
+    nameVal = document.getElementById("NameFilter")?.value || "";
+  }
+  else if (currentFilterType === "Date") {
+    startVal = document.getElementById("LogStartDateFilter")?.value || "";
+    endVal = document.getElementById("LogEndDateFilter")?.value || "";
+  }
+  else if (currentFilterType === "Event") {
+    eventVal = document.getElementById("EventFilter")?.value || "";
+  }
+
+  // ۲. ارسال درخواست با استفاده از تابع کاستوم شما
   await useApi({
     method: "post",
-    url: `show-all-logs?sort=-id&paginate=20&page=${page}`,
+    url: `show-all-logs?page=${page}`,
+    data: {
+      sort: "-id",
+      paginate: 20,
+      name_filter: nameVal,
+      event_filter: eventVal,
+      start_date: startVal,
+      end_date: endVal
+    },
     callback: function (data) {
       desiredPageTFlog = true;
       dataLog.push(data.data.data);
+
       if (logClickTF) {
         document.getElementById("tBody2").innerHTML = "";
       }
       logClickTF = true;
 
       let endPage = Math.ceil(data.data.total / 20);
-
-      let paginationNamber;
-      // if (page == 1) {
-      paginationNamber = (page - 1) * 20;
+      let paginationNamber = (page - 1) * 20;
       paginationNamber++;
-      // } else {
-      //   paginationNamber = (page - 1) * 20;
-      //   paginationNamber++;
-      // }
 
       let lengthDataUser = data.data.data.length;
-      for (let i = 0; i < lengthDataUser; i++) {
+
+      // اگر دیتایی یافت نشد
+      if (lengthDataUser === 0) {
         let tr = document.createElement("tr");
-        for (let x = 1; x <= 5; x++) {
-          let td = document.createElement("td");
-          if (x == 1) {
-            td.innerHTML = paginationNamber++;
-          } else if (x == 2) {
-            // let span1 = document.createElement("span");
-            // let span2 = document.createElement("span");
-            // span1.setAttribute("class", "mx-2");
-            // span2.setAttribute("class", "mx-2");
-            let div = document.createElement("div");
-            div.setAttribute("class", "mt-2");
-            // span1.innerHTML =
-            //   data.data.data[i].properties?.user?.first_name || "-";
-            // span2.innerHTML =
-            //   data.data.data[i].properties?.user?.last_name || "-";
-            div.innerHTML =
-              data.data.data[i].properties?.user?.auth_name || "-";
-            // td.appendChild(span1);
-            // td.appendChild(span2);
-            td.appendChild(div);
-            div?.classList.add("fontSize");
-          } else if (x == 3) {
-            td.innerHTML = data.data.data[i].event;
-          } else if (x == 4) {
-            td.innerHTML = data.data.data[i].description;
-            const divIcon = document.createElement("div");
-            divIcon.innerHTML = `
-            <div class="btn btn-secondary btnLog py-0 px-2 pb-1 mt-2" data-id-log=${i} data-bs-toggle="modal"  data-bs-target="#modalMoreDetailsLog">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots" viewBox="0 0 16 16" 
-               >
-                <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/>
-              </svg>
-            </div>
-               `;
-            td.appendChild(divIcon);
-          } else if (x == 5) {
-            let dataFa = new Date(
-              data.data.data[i].created_at
-            ).toLocaleString();
-            td.innerHTML = dataFa;
-          }
-          tr.appendChild(td);
-        }
+        let td = document.createElement("td");
+        td.colSpan = 5;
+        td.className = "text-center py-4";
+        td.innerHTML = "در این صفحه دیتایی با این مشخصات یافت نشد!";
+        tr.appendChild(td);
         document.getElementById("tBody2").appendChild(tr);
+      } else {
+        // ساخت جدول
+        for (let i = 0; i < lengthDataUser; i++) {
+          let tr = document.createElement("tr");
+          for (let x = 1; x <= 5; x++) {
+            let td = document.createElement("td");
+            if (x == 1) {
+              td.innerHTML = paginationNamber++;
+            } else if (x == 2) {
+              let div = document.createElement("div");
+              div.setAttribute("class", "mt-2");
+              div.innerHTML = data.data.data[i].properties?.user?.auth_name || "-";
+              td.appendChild(div);
+              div?.classList.add("fontSize");
+            } else if (x == 3) {
+              td.innerHTML = data.data.data[i].event || data.data.data[i].log_name || "-";
+            } else if (x == 4) {
+              td.innerHTML = data.data.data[i].description;
+              const divIcon = document.createElement("div");
+              // دکمه باز کردن مدال با آیدی لاگ
+              divIcon.innerHTML = `
+              <div class="btn btn-secondary btnLog py-0 px-2 pb-1 mt-2" data-id-log="${i}" data-bs-toggle="modal" data-bs-target="#modalMoreDetailsLog">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots" viewBox="0 0 16 16">
+                  <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/>
+                </svg>
+              </div>`;
+              td.appendChild(divIcon);
+            } else if (x == 5) {
+              let dataFa = new Date(data.data.data[i].created_at).toLocaleString();
+              td.innerHTML = dataFa;
+            }
+            tr.appendChild(td);
+          }
+          document.getElementById("tBody2").appendChild(tr);
+        }
+
+        // ۳. مقداردهی مدال (More Details) هنگام کلیک روی دکمه‌ها
+        const btnLogs = document.querySelectorAll(".btnLog");
+        btnLogs.forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const logIndex = this.getAttribute("data-id-log");
+            const logDetail = data.data.data[logIndex];
+
+            const modalBody = document.querySelector("#modalMoreDetailsLog .modal-body");
+            if (modalBody) {
+              modalBody.innerHTML = `
+                <div class="row text-start" dir="ltr" style="font-family: monospace; font-size: 14px;">
+                  <div class="col-12 mb-2"><strong>ID:</strong> ${logDetail.id || "-"}</div>
+                  <div class="col-12 mb-2"><strong>Event:</strong> ${logDetail.event || logDetail.log_name || "-"}</div>
+                  <div class="col-12 mb-2"><strong>User:</strong> ${logDetail.properties?.user?.auth_name || "-"}</div>
+                  <div class="col-12 mb-2"><strong>Description:</strong> ${logDetail.description || "-"}</div>
+                  <div class="col-12 mb-2"><strong>Date:</strong> ${new Date(logDetail.created_at).toLocaleString()}</div>
+                  <div class="col-12 mt-3 mb-1 text-primary"><strong>Properties JSON:</strong></div>
+                  <div class="col-12">
+                    <pre class="bg-light p-3 border rounded" style="max-height: 250px; overflow-y: auto;">${JSON.stringify(logDetail.properties || {}, null, 2)}</pre>
+                  </div>
+                </div>
+              `;
+            }
+          });
+        });
       }
 
-      totalPages = endPage; // Set the total number of pages
-
+      totalPages = endPage;
       renderPagination(totalPages, currentPageLog);
 
-      function renderPagination(
-        totalPages,
-        currentPage = !urlLog ? 1 : urlLog
-      ) {
+      // توابع صفحه‌بندی
+      function renderPagination(totalPages, currentPage = !urlLog ? 1 : urlLog) {
         const pagination = document.getElementById("pagination");
         pagination.innerHTML = "";
 
-        if (totalPages != 1) {
-          // First button
+        if (totalPages != 1 && totalPages != 0) {
           const firstItem = document.createElement("li");
-          firstItem.className = `page-item ${currentPage === 1 ? "disabled" : ""
-            }`;
+          firstItem.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
           firstItem.innerHTML = `<a class="page-link" href="#" data-page="1">First Page</a>`;
           pagination.appendChild(firstItem);
 
-          // Previous button
           const prevItem = document.createElement("li");
-          prevItem.className = `page-item ${currentPage === 1 ? "disabled" : ""
-            }`;
-          prevItem.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1
-            }">Previous Page</a>`;
+          prevItem.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
+          prevItem.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}">Previous Page</a>`;
           pagination.appendChild(prevItem);
 
-          // Page numbers logic
           const startPage = currentPage === 1 ? currentPage : currentPage - 1;
-          const endPage =
-            currentPage === totalPages
-              ? currentPage
-              : Math.min(currentPage + 1, totalPages);
+          const endPage = currentPage === totalPages ? currentPage : Math.min(currentPage + 1, totalPages);
 
-          for (
-            let i = Math.max(1, startPage - 1);
-            i <= Math.min(totalPages, endPage + 1);
-            i++
-          ) {
+          for (let i = Math.max(1, startPage - 1); i <= Math.min(totalPages, endPage + 1); i++) {
             const pageItem = document.createElement("li");
-            pageItem.className = `page-item ${i === currentPage ? "active" : ""
-              }`;
-            pageItem.innerHTML = `<a class="page-link ${i === currentPage ? "active-page" : ""
-              }" href="#" data-page="${i}">${i}</a>`;
+            pageItem.className = `page-item ${i === currentPage ? "active" : ""}`;
+            pageItem.innerHTML = `<a class="page-link ${i === currentPage ? "active-page" : ""}" href="#" data-page="${i}">${i}</a>`;
             pagination.appendChild(pageItem);
           }
 
-          // Next button
           const nextItem = document.createElement("li");
-          nextItem.className = `page-item ${currentPage === totalPages ? "disabled" : ""
-            }`;
-          nextItem.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1
-            }">Next Page</a>`;
+          nextItem.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
+          nextItem.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}">Next Page</a>`;
           pagination.appendChild(nextItem);
 
-          // Last button
           const lastItem = document.createElement("li");
-          lastItem.className = `page-item ${currentPage === totalPages ? "disabled" : ""
-            }`;
+          lastItem.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
           lastItem.innerHTML = `<a class="page-link" href="#" data-page="${totalPages}">Last Page</a>`;
           pagination.appendChild(lastItem);
 
           const currentUrl = new URL(window.location);
-          currentUrl.searchParams.set("log", !currentPage ? 1 : currentPage); // Set the module in URL
+          currentUrl.searchParams.set("log", !currentPage ? 1 : currentPage);
           window.history.pushState({}, "", currentUrl);
         }
       }
     },
   });
+
   showLogLoading = false;
   document.getElementById("idLoading").style.display = "none";
 
-  // Add click event listeners to all links
+  const pagination = document.getElementById("pagination");
   pagination.querySelectorAll(".page-link").forEach((link) => {
     link.addEventListener("click", function (e) {
       e.preventDefault();
@@ -4595,161 +4755,104 @@ async function pageLog(page = 1) {
           desiredPageTFlog = false;
         }
         currentPageLog = newPage;
-        pageLog(newPage);
-        document.querySelector(".paginationLog").innerHTML = "";
+
         document.getElementById("tBody2").innerHTML = "";
+        pageLog(newPage);
       }
-    });
-  });
-
-  document.querySelectorAll(".btnLog").forEach((element) => {
-    element.addEventListener("click", function () {
-      // const jsonData = dataLog[0];
-      // const id = this.dataset.idLog;
-      // const resultAcctive = jsonData[id];
-
-      // const displayDiv = document.getElementById("formLog");
-      // if (result) {
-      //   displayDiv.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
-      // } else {
-      //   displayDiv.innerHTML = "<p>No data found for the given ID.</p>";
-      // }
-
-      // تابع اصلی برای نمایش داده‌ها بر اساس ID
-      const id = this.dataset.idLog;
-      const jsonData = dataLog[0]; // بارگذاری داده‌ها
-      const result = jsonData[id];
-
-      const displayDiv = document.getElementById("formLog");
-      displayDiv.innerHTML = ""; // پاک کردن محتوای قبلی
-
-      if (result) {
-        displayDynamicData(result, displayDiv);
-      } else {
-        displayDiv.innerHTML =
-          '<p class="highlight">No data found for the given ID.</p>';
-      }
-
-      // async function loadData() {
-      //   try {
-      //     const response = await fetch(`${dataLog[0]}`); // مسیر فایل JSON یا API
-      //     if (!response.ok) {
-      //       throw new Error("Network response was not ok");
-      //     }
-      //     const data = await response.json();
-      //     return data;
-      //   } catch (error) {
-      //     console.error("Error loading data:", error);
-      //     return [];
-      //   }
-      // }
-
-      // تابع برای نمایش داده‌ها به صورت دینامیک
-      function displayDynamicData(data, parentElement, level = 0) {
-        const list = document.createElement("ul"); // ایجاد لیست
-        list.style.marginLeft = `${level * 5}px`; // فاصله برای سطوح تو در تو
-        let dataFa;
-
-        for (const key in data) {
-          if (
-            key != "id" &&
-            key != "subject_type" &&
-            key != "subject_id" &&
-            key != "causer_type" &&
-            key != "causer_id" &&
-            key != "batch_uuid"
-          ) {
-            if (data.hasOwnProperty(key)) {
-              const value = data[key];
-              const listItem = document.createElement("li"); // ایجاد آیتم لیست
-
-              // اگر key برابر با "changes" بود، یک کلاس CSS اضافه کنید
-              if (key === "changes") {
-                listItem?.classList.add("changes-highlight");
-              }
-
-              if (typeof value === "object" && value !== null) {
-                listItem.innerHTML = `<strong>${key}:</strong>`;
-                list.appendChild(listItem);
-                displayDynamicData(value, listItem, level + 1); // بازگشت برای سطوح تو در تو
-              } else if (typeof value === "string" && isJsonString(value)) {
-                listItem.innerHTML = `<strong>${key}:</strong>`;
-                list.appendChild(listItem);
-                const parsedValue = JSON.parse(value);
-                displayDynamicData(parsedValue, listItem, level + 1);
-              } else {
-                if (key == "updated_at" || key == "created_at") {
-                  dataFa = new Date(value).toLocaleString();
-                } else {
-                  dataFa = value;
-                }
-                listItem.innerHTML = `<strong>${key}:</strong> <span class="highlight me-2">${dataFa}</span>`;
-                list.appendChild(listItem);
-              }
-            }
-          }
-        }
-
-        parentElement.appendChild(list); // اضافه کردن لیست به والد
-      }
-
-      function isJsonString(str) {
-        try {
-          JSON.parse(str);
-        } catch (e) {
-          return false;
-        }
-        return true;
-      }
-
-      // let idLog = this.dataset.idLog;
-      // document.getElementById("id").innerHTML = dataLog[0][idLog].id;
-      // document.getElementById("logName").innerHTML = dataLog[0][idLog].log_name;
-
-      // if (dataLog[0][idLog].properties.member === undefined) {
-      //   document.getElementById("divMember").style.display = "none";
-      // } else {
-      //   document.getElementById("divMember").style.display = "block";
-      //   document.getElementById("idUser").innerHTML =
-      //     dataLog[0][idLog].properties.member?.id || "---";
-      //   document.getElementById("authNameUser").innerHTML =
-      //     dataLog[0][idLog].properties.member?.auth_name || "---";
-      //   document.getElementById("firstNameUser").innerHTML =
-      //     dataLog[0][idLog].properties.member?.first_name || "---";
-      //   document.getElementById("lastNameUser").innerHTML =
-      //     dataLog[0][idLog].properties.member?.last_name || "---";
-      // }
-
-      // if (dataLog[0][idLog].properties.password === undefined) {
-      //   document.getElementById("divPassword").style.display = "none";
-      // } else {
-      //   document.getElementById("divPassword").style.display = "block";
-      //   document.getElementById("password").innerHTML =
-      //     dataLog[0][idLog].properties?.password || "---";
-      // }
-
-      // if (dataLog[0][idLog].properties.server === undefined) {
-      //   document.getElementById("divServer").style.display = "none";
-      // } else {
-      //   document.getElementById("divServer").style.display = "block";
-      //   document.getElementById("ipServer").innerHTML =
-      //     dataLog[0][idLog].properties?.server?.ip || "---";
-      //   document.getElementById("nameServer").innerHTML =
-      //     dataLog[0][idLog].properties?.server?.name || "---";
-      // }
-
-      // if (dataLog[0][idLog].properties.module_name === undefined) {
-      //   document.getElementById("divConfigServer").style.display = "none";
-      // } else {
-      //   document.getElementById("divConfigServer").style.display = "block";
-      //   document.getElementById("nameModule").innerHTML =
-      //     dataLog[0][idLog].properties?.module_name || "---";
-      //   document.getElementById("typeModule").innerHTML =
-      //     dataLog[0][idLog].properties?.module_type || "---";
-      // }
     });
   });
 }
+
+
+
+
+// رویداد مدال جزئیات لاگ
+document.querySelectorAll(".btnLog").forEach((element) => {
+  element.addEventListener("click", function () {
+    const id = this.dataset.idLog;
+    const jsonData = dataLog[0];
+    const result = jsonData[id];
+
+    const displayDiv = document.getElementById("formLog");
+    displayDiv.innerHTML = "";
+
+    if (result) {
+      displayDynamicData(result, displayDiv);
+    } else {
+      displayDiv.innerHTML = '<p class="highlight">No data found for the given ID.</p>';
+    }
+
+    function displayDynamicData(data, parentElement, level = 0) {
+      const list = document.createElement("ul");
+      list.style.marginLeft = `${level * 5}px`;
+      let dataFa;
+
+      for (const key in data) {
+        if (
+          key != "id" &&
+          key != "subject_type" &&
+          key != "subject_id" &&
+          key != "causer_type" &&
+          key != "causer_id" &&
+          key != "batch_uuid"
+        ) {
+          if (data.hasOwnProperty(key)) {
+            const value = data[key];
+            const listItem = document.createElement("li");
+
+            if (key === "changes") {
+              listItem?.classList.add("changes-highlight");
+            }
+
+            if (typeof value === "object" && value !== null) {
+              listItem.innerHTML = `<strong>${key}:</strong>`;
+              list.appendChild(listItem);
+              displayDynamicData(value, listItem, level + 1);
+            } else if (typeof value === "string" && isJsonString(value)) {
+              listItem.innerHTML = `<strong>${key}:</strong>`;
+              list.appendChild(listItem);
+              const parsedValue = JSON.parse(value);
+              displayDynamicData(parsedValue, listItem, level + 1);
+            } else {
+              if (key == "updated_at" || key == "created_at") {
+                dataFa = new Date(value).toLocaleString();
+              } else {
+                dataFa = value;
+              }
+              listItem.innerHTML = `<strong>${key}:</strong> <span class="highlight me-2">${dataFa}</span>`;
+              list.appendChild(listItem);
+            }
+          }
+        }
+      }
+      parentElement.appendChild(list);
+    }
+
+    function isJsonString(str) {
+      try {
+        JSON.parse(str);
+      } catch (e) {
+        return false;
+      }
+      return true;
+    }
+  });
+});
+
+
+// -------------------------------------------------------------
+// دکمه جستجو برای اعمال فیلتر (بسیار مهم)
+// شما باید یک دکمه در HTML خود با آیدی SearchLogBtn قرار دهید
+// -------------------------------------------------------------
+let searchBtn = document.getElementById("SearchLogBtn");
+if (searchBtn) {
+  searchBtn.addEventListener("click", () => {
+    document.getElementById("tBody2").innerHTML = ""; // پاک کردن جدول
+    currentPageLog = 1; // بازگشت به صفحه اول هنگام جستجوی جدید
+    pageLog(1);
+  });
+}
+
 
 /// درست کردن تمامی فانکشن ها todo
 
@@ -6917,18 +7020,18 @@ async function showTabContent(hash) {
         desiredPageUser = urlUser;
         permissionShow();
         break;
-      case "#v-monitoring":
-        // if ([window.top](blocked) !== window.self) {
-        //   window.top.location = window.self.location;
-        // }
-        allMonitoring();
-        showAddress();
-        ActiveMenu(3);
-        document.getElementById("Elk")?.classList.remove("active");
-        document.getElementById("zabbix")?.classList.add("active");
-        document.getElementById("tab1")?.classList.add("show");
-        document.getElementById("tab1")?.classList.add("active");
-        break;
+      // case "#v-monitoring":
+      //   // if ([window.top](blocked) !== window.self) {
+      //   //   window.top.location = window.self.location;
+      //   // }
+      //   allMonitoring();
+      //   showAddress();
+      //   ActiveMenu(3);
+      //   document.getElementById("Elk")?.classList.remove("active");
+      //   document.getElementById("zabbix")?.classList.add("active");
+      //   document.getElementById("tab1")?.classList.add("show");
+      //   document.getElementById("tab1")?.classList.add("active");
+      //   break;
       case "#v-log":
         if (project == "RRU") {
           document
@@ -7509,7 +7612,7 @@ async function interfacePing() {
 
       // 4) پیدا کردن اینترفیس‌ها (regex)
       let regex = /^\s*(\d+):\s*([^:]+):/;
-      let interfaces = [];
+      let interfaces = ["Default"];
 
       lines.forEach((line) => {
         let match = line.match(regex);
@@ -9657,9 +9760,9 @@ function showViewFromHash() {
     case "#v-route":
       document.querySelector("#v-route-tab").click();
       break;
-    case "#v-monitoring":
-      document.querySelector("#V-monitoring-tab").click();
-      break;
+    // case "#v-monitoring":
+    //   document.querySelector("#V-monitoring-tab").click();
+    //   break;
     case "#v-facePlate":
       document.querySelector("#v-facePlate-tab").click();
       break;
@@ -9690,272 +9793,272 @@ document.getElementById("deletRoute").addEventListener("click", () => {
   document.getElementById("interfaceRouteRemove").value = "";
 });
 
-async function allMonitoring() {
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
-  await useApi({
-    url: "get-all-monitoring",
-    callback: function (data) {
-      for (let i = 0; i < data.monitoring.length; i++) {
-        addMonitoringTab(
-          data.monitoring[i].title,
-          data.monitoring[i].address,
-          data.monitoring[i].id
-        );
-      }
-    },
-  });
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 1)";
-}
+// async function allMonitoring() {
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 0.5)";
+//   await useApi({
+//     url: "get-all-monitoring",
+//     callback: function (data) {
+//       for (let i = 0; i < data.monitoring.length; i++) {
+//         addMonitoringTab(
+//           data.monitoring[i].title,
+//           data.monitoring[i].address,
+//           data.monitoring[i].id
+//         );
+//       }
+//     },
+//   });
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 1)";
+// }
 
-document.getElementById("buttonAddMonitoring").addEventListener("click", () => {
-  createMonitoring();
-});
+// document.getElementById("buttonAddMonitoring").addEventListener("click", () => {
+//   createMonitoring();
+// });
 
-async function createMonitoring() {
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
+// async function createMonitoring() {
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 0.5)";
 
-  let title = document.getElementById("moduleAddTitle").value;
-  let address = document.getElementById("moduleAddAddress").value;
+//   let title = document.getElementById("moduleAddTitle").value;
+//   let address = document.getElementById("moduleAddAddress").value;
 
-  await useApi({
-    method: "post",
-    url: "create-monitoring",
-    data: { title, address },
-    callback: function (data) {
-      addMonitoringTab(
-        data.monitoring.title,
-        data.monitoring.address,
-        data.monitoring.id
-      );
-    },
-  });
+//   await useApi({
+//     method: "post",
+//     url: "create-monitoring",
+//     data: { title, address },
+//     callback: function (data) {
+//       addMonitoringTab(
+//         data.monitoring.title,
+//         data.monitoring.address,
+//         data.monitoring.id
+//       );
+//     },
+//   });
 
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 1)";
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 1)";
 
-  document.getElementById("moduleAddTitle").value = "";
-  document.getElementById("moduleAddAddress").value = "";
-  document.getElementById("cancelMonitoring").click();
-}
+//   document.getElementById("moduleAddTitle").value = "";
+//   document.getElementById("moduleAddAddress").value = "";
+//   document.getElementById("cancelMonitoring").click();
+// }
 
-let currentEditingTabId = null;
-let currentDeletingTabId = null;
-let idMonitoring;
+// let currentEditingTabId = null;
+// let currentDeletingTabId = null;
+// let idMonitoring;
 
-document
-  .getElementById("buttonEditMonitoring")
-  .addEventListener("click", () => {
-    editMonitoring();
-  });
+// document
+//   .getElementById("buttonEditMonitoring")
+//   .addEventListener("click", () => {
+//     editMonitoring();
+//   });
 
-async function editMonitoring() {
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
+// async function editMonitoring() {
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 0.5)";
 
-  let title = document.getElementById("moduleEditTitle").value;
-  let address = document.getElementById("moduleEditAddress").value;
+//   let title = document.getElementById("moduleEditTitle").value;
+//   let address = document.getElementById("moduleEditAddress").value;
 
-  await useApi({
-    method: "put",
-    url: `edit-monitoring/${idMonitoring}`,
-    data: {
-      title,
-      address,
-    },
-    callback: function () {
-      if (!currentEditingTabId) return;
+//   await useApi({
+//     method: "put",
+//     url: `edit-monitoring/${idMonitoring}`,
+//     data: {
+//       title,
+//       address,
+//     },
+//     callback: function () {
+//       if (!currentEditingTabId) return;
 
-      const newTitle = document.getElementById("moduleEditTitle").value.trim();
-      const newAddress = document
-        .getElementById("moduleEditAddress")
-        .value.trim();
-      if (!newTitle || !newAddress) return;
+//       const newTitle = document.getElementById("moduleEditTitle").value.trim();
+//       const newAddress = document
+//         .getElementById("moduleEditAddress")
+//         .value.trim();
+//       if (!newTitle || !newAddress) return;
 
-      // تصحیح آدرس برای iframe
-      let finalURL = newAddress;
-      if (
-        !newAddress.startsWith("http://") &&
-        !newAddress.startsWith("https://")
-      ) {
-        finalURL = "http://" + newAddress;
-      }
+//       // تصحیح آدرس برای iframe
+//       let finalURL = newAddress;
+//       if (
+//         !newAddress.startsWith("http://") &&
+//         !newAddress.startsWith("https://")
+//       ) {
+//         finalURL = "http://" + newAddress;
+//       }
 
-      // تغییر عنوان تب
-      const tabButton = document.querySelector(
-        `[data-bs-target="#${currentEditingTabId}"]`
-      );
-      if (tabButton) {
-        tabButton.innerText = newTitle;
-      }
+//       // تغییر عنوان تب
+//       const tabButton = document.querySelector(
+//         `[data-bs-target="#${currentEditingTabId}"]`
+//       );
+//       if (tabButton) {
+//         tabButton.innerText = newTitle;
+//       }
 
-      // تغییر آدرس iframe
-      const iframe = document.getElementById(`iframe_${currentEditingTabId}`);
-      if (iframe) {
-        iframe.src = finalURL;
-      }
+//       // تغییر آدرس iframe
+//       const iframe = document.getElementById(`iframe_${currentEditingTabId}`);
+//       if (iframe) {
+//         iframe.src = finalURL;
+//       }
 
-      // تغییر مقدار input زیر iframe
-      const inputAddress = document.getElementById(
-        `url_input_${currentEditingTabId}`
-      );
-      if (inputAddress) {
-        inputAddress.value = finalURL;
-      }
+//       // تغییر مقدار input زیر iframe
+//       const inputAddress = document.getElementById(
+//         `url_input_${currentEditingTabId}`
+//       );
+//       if (inputAddress) {
+//         inputAddress.value = finalURL;
+//       }
 
-      document.getElementById("cancelEditMonitoring").click();
+//       document.getElementById("cancelEditMonitoring").click();
 
-      currentEditingTabId = null;
-    },
-  });
+//       currentEditingTabId = null;
+//     },
+//   });
 
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 1)";
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 1)";
 
-  document.getElementById("moduleAddTitle").value = "";
-  document.getElementById("moduleAddAddress").value = "";
-  document.getElementById("cancelMonitoring").click();
-}
+//   document.getElementById("moduleAddTitle").value = "";
+//   document.getElementById("moduleAddAddress").value = "";
+//   document.getElementById("cancelMonitoring").click();
+// }
 
-document.getElementById("deleteTabMonitoring").addEventListener("click", () => {
-  deleteMonitoring();
-});
+// document.getElementById("deleteTabMonitoring").addEventListener("click", () => {
+//   deleteMonitoring();
+// });
 
-async function deleteMonitoring() {
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
-  await useApi({
-    method: "delete",
-    url: `delete-monitoring/${idMonitoring}`,
-    callback: function () {
-      if (!currentDeletingTabId) return;
+// async function deleteMonitoring() {
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 0.5)";
+//   await useApi({
+//     method: "delete",
+//     url: `delete-monitoring/${idMonitoring}`,
+//     callback: function () {
+//       if (!currentDeletingTabId) return;
 
-      // حذف دکمه تب
-      const tabLi = document.querySelector(
-        `button[data-bs-target="#${currentDeletingTabId}"]`
-      )?.parentElement;
-      if (tabLi) tabLi.remove();
+//       // حذف دکمه تب
+//       const tabLi = document.querySelector(
+//         `button[data-bs-target="#${currentDeletingTabId}"]`
+//       )?.parentElement;
+//       if (tabLi) tabLi.remove();
 
-      // حذف محتوای تب
-      const tabPane = document.getElementById(currentDeletingTabId);
-      if (tabPane) tabPane.remove();
+//       // حذف محتوای تب
+//       const tabPane = document.getElementById(currentDeletingTabId);
+//       if (tabPane) tabPane.remove();
 
-      // انتخاب یک تب دیگر برای فعال شدن (اگر موجود بود)
-      const firstTabBtn = document.querySelector("#monitoringTabs .nav-link");
-      if (firstTabBtn) firstTabBtn.click();
+//       // انتخاب یک تب دیگر برای فعال شدن (اگر موجود بود)
+//       const firstTabBtn = document.querySelector("#monitoringTabs .nav-link");
+//       if (firstTabBtn) firstTabBtn.click();
 
-      currentDeletingTabId = null;
-    },
-  });
+//       currentDeletingTabId = null;
+//     },
+//   });
 
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 1)";
-}
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 1)";
+// }
 
-function addMonitoringTab(title, address, idTab) {
-  const tabs = document.getElementById("monitoringTabs");
-  const tabContent = document.getElementById("monitoringTabContent");
+// function addMonitoringTab(title, address, idTab) {
+//   const tabs = document.getElementById("monitoringTabs");
+//   const tabContent = document.getElementById("monitoringTabContent");
 
-  // اگر آدرس http نداشت اضافه کنیم
-  if (!address.startsWith("http://") && !address.startsWith("https://")) {
-    address = "http://" + address;
-  }
+//   // اگر آدرس http نداشت اضافه کنیم
+//   if (!address.startsWith("http://") && !address.startsWith("https://")) {
+//     address = "http://" + address;
+//   }
 
-  const id = "tab_" + Date.now();
+//   const id = "tab_" + Date.now();
 
-  const li = document.createElement("li");
-  li.setAttribute("id", idTab);
-  li.className = "nav-item";
-  li.innerHTML = `
-    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#${id}">
-      ${title}
-    </button>
-  `;
-  tabs.insertBefore(li, document.getElementById("addTabBtn").parentElement);
+//   const li = document.createElement("li");
+//   li.setAttribute("id", idTab);
+//   li.className = "nav-item";
+//   li.innerHTML = `
+//     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#${id}">
+//       ${title}
+//     </button>
+//   `;
+//   tabs.insertBefore(li, document.getElementById("addTabBtn").parentElement);
 
-  const div = document.createElement("div");
-  div.className = "tab-pane fade";
-  div.id = id;
-  div.innerHTML = `
-    <div class="d-flex w-100 align-items-center justify-content-center">
-      <img src="../assets/img/Monitor-cuate.svg" class="imgMonitoring" />
-    </div>
+//   const div = document.createElement("div");
+//   div.className = "tab-pane fade";
+//   div.id = id;
+//   div.innerHTML = `
+//     <div class="d-flex w-100 align-items-center justify-content-center">
+//       <img src="../assets/img/Monitor-cuate.svg" class="imgMonitoring" />
+//     </div>
 
-    <div class="d-flex divInputMonitoring mt-2">
-      <input type="text" id="url_input_${id}" value="${address}" placeholder="Enter URL" class="form-control mb-1 w-50" disabled/>
-      <button
-        class="btn btn-primary mb-1 ms-3 buttonMonitoring">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            fill="currentColor"
-            class="bi bi-eye-fill me-1"
-            viewBox="0 0 16 16"
-          >
-          <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
-          <path
-            d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"
-          />
-        </svg>
-          Go
-      </button>
-    </div>
-  `;
+//     <div class="d-flex divInputMonitoring mt-2">
+//       <input type="text" id="url_input_${id}" value="${address}" placeholder="Enter URL" class="form-control mb-1 w-50" disabled/>
+//       <button
+//         class="btn btn-primary mb-1 ms-3 buttonMonitoring">
+//           <svg
+//             xmlns="http://www.w3.org/2000/svg"
+//             width="20"
+//             height="20"
+//             fill="currentColor"
+//             class="bi bi-eye-fill me-1"
+//             viewBox="0 0 16 16"
+//           >
+//           <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
+//           <path
+//             d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"
+//           />
+//         </svg>
+//           Go
+//       </button>
+//     </div>
+//   `;
 
-  tabContent.appendChild(div);
-  // فعال کردن تب جدید
-  li.querySelector("button").click();
+//   tabContent.appendChild(div);
+//   // فعال کردن تب جدید
+//   li.querySelector("button").click();
 
-  const button = div.querySelector(".buttonMonitoring");
+//   const button = div.querySelector(".buttonMonitoring");
 
-  button.addEventListener("click", () => {
-    let addressUrl = document.getElementById(`url_input_${id}`).value;
-    window.open(addressUrl, "_blank");
-  });
+//   button.addEventListener("click", () => {
+//     let addressUrl = document.getElementById(`url_input_${id}`).value;
+//     window.open(addressUrl, "_blank");
+//   });
 
-  // رویداد دابل کلیک برای باز کردن مودال ویرایش
-  li.querySelector("button").addEventListener("dblclick", () => {
-    idMonitoring = idTab;
-    currentEditingTabId = id;
+//   // رویداد دابل کلیک برای باز کردن مودال ویرایش
+//   li.querySelector("button").addEventListener("dblclick", () => {
+//     idMonitoring = idTab;
+//     currentEditingTabId = id;
 
-    const currentTitle = li.querySelector("button").innerText.trim();
-    document.getElementById("moduleEditTitle").value = currentTitle;
+//     const currentTitle = li.querySelector("button").innerText.trim();
+//     document.getElementById("moduleEditTitle").value = currentTitle;
 
-    // دریافت آدرس فعلی iframe
-    const input = document.getElementById(`url_input_${id}`).value;
-    const currentAddress = input;
-    document.getElementById("moduleEditAddress").value = currentAddress;
+//     // دریافت آدرس فعلی iframe
+//     const input = document.getElementById(`url_input_${id}`).value;
+//     const currentAddress = input;
+//     document.getElementById("moduleEditAddress").value = currentAddress;
 
-    document.getElementById("EditMonitoring").click();
-  });
+//     document.getElementById("EditMonitoring").click();
+//   });
 
-  li.querySelector("button").addEventListener("contextmenu", (e) => {
-    e.preventDefault(); // جلوگیری از نمایش منوی راست‌کلیک مرورگر
-    idMonitoring = idTab;
+//   li.querySelector("button").addEventListener("contextmenu", (e) => {
+//     e.preventDefault(); // جلوگیری از نمایش منوی راست‌کلیک مرورگر
+//     idMonitoring = idTab;
 
-    currentDeletingTabId = id;
+//     currentDeletingTabId = id;
 
-    // گرفتن عنوان تب
-    const tabTitle = li.querySelector("button").innerText.trim();
+//     // گرفتن عنوان تب
+//     const tabTitle = li.querySelector("button").innerText.trim();
 
-    // نمایش عنوان در داخل مودال
-    document.getElementById("spanDeleteMonitoring").innerText = tabTitle;
+//     // نمایش عنوان در داخل مودال
+//     document.getElementById("spanDeleteMonitoring").innerText = tabTitle;
 
-    // نمایش مودال
-    document.getElementById("DeleteMonitoring").click();
-  });
-}
+//     // نمایش مودال
+//     document.getElementById("DeleteMonitoring").click();
+//   });
+// }
 
 let testKpi;
 

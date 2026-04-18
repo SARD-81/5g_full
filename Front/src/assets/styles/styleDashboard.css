@@ -2105,3 +2105,75 @@ button.iconAccessLevel {
 .imgMonitoring {
   width: 580px;
 }
+
+
+.LogDateFilter {
+  padding: 10px 14px;
+  font-size: 15px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  outline: none;
+  background-color: #fff;
+  color: #333;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.LogDateFilter:hover {
+  border-color: #6366f1;
+}
+
+.LogDateFilter:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.LogDateFilter::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: 0.2s;
+}
+
+.LogDateFilter::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+#FilterBy {
+  width: 100px;
+  background: inherit;
+  color: black;
+}
+
+#FilterBox>p {
+  padding-top: 10px;
+}
+
+.FilterByText {
+  padding-top: 10px;
+}
+
+.NameFilter {
+  border-radius: 8px;
+  height: 30px;
+  margin-top: 10px;
+  outline: none;
+  border: 1px solid black;
+}
+
+.NameFilter:focus {
+  background-color: rgb(169, 169, 169);
+  color: white;
+}
+
+.EventFilter {
+  border-radius: 8px;
+  height: 30px;
+  margin-top: 10px;
+  outline: none;
+  border: 1px solid black;
+}
+
+.EventFilter:focus {
+  background-color: rgb(169, 169, 169);
+  color: white;
+}

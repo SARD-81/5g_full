@@ -98,23 +98,93 @@ class LogController extends ApiController
         ]);
     }
 
-    private function logsQuery(Request $request)
-    {
-        return Activity::query()
-            // search to name and description log
-            ->when($request->input('search', ''), function ($query, $search) {
-                return $query->where(function ($query) use ($search) {
-                    $query->where('log_name', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
-                });
-            })
-            // show log-type
-            ->when($request->input('type-log', ''), function ($query, $code) {
-                return $query->where('properties', 'like', "%\"type-log\":\"{$code}\"%");
-            })
-            // if is set server_id to Auth user
-            ->when(!empty(Auth::user()?->server_id), function ($query) {
-                return $query->where('properties->server_id', Auth::user()->server_id);
+   private function logsQuery(Request $request)
+{
+    return Activity::query()
+        // search to name and description log (کد قبلی شما)
+        ->when($request->input('search', ''), function ($query, $search) {
+            return $query->where(function ($query) use ($search) {
+                $query->where('log_name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
-    }
+        })
+        // show log-type (کد قبلی شما)
+        ->when($request->input('type-log', ''), function ($query, $code) {
+            return $query->where('properties', 'like', "%\"type-log\":\"{$code}\"%");
+        })
+        
+        // --- [بخش اضافه شده برای فیلترهای جدید] ---
+        
+        // فیلتر بر اساس نام کاربر (جستجو در ستون JSON)
+        ->when($request->input('name_filter', ''), function ($query, $name) {
+            // استفاده از سینتکس بومی لاراول برای جستجو در JSON
+            return $query->where('properties->user->auth_name', 'like', "%{$name}%");
+        })
+        // فیلتر بر اساس نام رویداد (Event)
+        ->when($request->input('event_filter', ''), function ($query, $event) {
+            return $query->where('event', 'like', "%{$event}%");
+        })
+        // فیلتر بر اساس تاریخ شروع
+        ->when($request->input('start_date', ''), function ($query, $startDate) {
+            return $query->whereDate('created_at', '>=', $startDate);
+        })
+        // فیلتر بر اساس تاریخ پایان
+        ->when($request->input('end_date', ''), function ($query, $endDate) {
+            return $query->whereDate('created_at', '<=', $endDate);
+        })
+        
+        // ----------------------------------------
+
+        // if is set server_id to Auth user (کد قبلی شما)
+        ->when(!empty(Auth::user()?->server_id), function ($query) {
+            return $query->where('properties->server_id', Auth::user()->server_id);
+        });
 }
+    public function getSuggestions(Request $request)
+    {
+        $term = $request->input('term'); // کلمه‌ای که کاربر تایپ کرده
+        $type = $request->input('type'); // نوع فیلتر: 'name' یا 'event'
+
+        // اگر کلمه کمتر از 2 حرف بود، جستجو نکن (برای کاهش فشار به دیتابیس)
+        if (empty($term) || mb_strlen($term) < 2) {
+            return response()->json(['suggestions' => []]);
+        }
+
+        $suggestions = [];
+
+        if ($type === 'event') {
+            // جستجو در ستون معمولی (event)
+            $suggestions = Activity::query()
+                ->where('event', 'like', "%{$term}%")
+                ->select('event')
+                ->distinct() // جلوگیری از مقادیر تکراری
+                ->limit(10)  // فقط 10 پیشنهاد اول
+                ->pluck('event')
+                ->toArray();
+
+        } elseif ($type === 'name') {
+            // جستجو در ستون JSON
+            // برای جلوگیری از کندی، ابتدا 50 رکورد مشابه را می‌گیریم
+            $logs = Activity::query()
+                ->where('properties->user->auth_name', 'like', "%{$term}%")
+                ->select('properties')
+                ->limit(50)
+                ->get();
+
+            $names = [];
+            foreach ($logs as $log) {
+                // استخراج نام از JSON
+                $name = data_get($log->properties, 'user.auth_name');
+                if ($name && mb_stripos($name, $term) !== false) {
+                    $names[] = $name;
+                }
+            }
+            // حذف نام‌های تکراری و محدود کردن به 10 عدد
+            $suggestions = array_slice(array_values(array_unique($names)), 0, 10);
+        }
+
+        return response()->json(['suggestions' => $suggestions]);
+    }
+
+}
+

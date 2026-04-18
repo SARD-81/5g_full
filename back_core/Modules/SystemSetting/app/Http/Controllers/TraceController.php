@@ -24,6 +24,27 @@ class TraceController extends Controller
     }
 
 //          start trace
+// ------------------------
+// Interface Mapping
+// ------------------------
+    private function mapInterface(string $int): array
+    {
+        $map = [
+            'eth0' => ['display' => 'BBU01-GE0/0', 'os' => 'eth0'],
+            'eth1' => ['display' => 'BBU01-GE0/1', 'os' => 'eth1'],
+            'eno1' => ['display' => 'CORE01-GE1/0', 'os' => 'eno1'],
+            'any'  => ['display' => 'any', 'os' => 'any'],
+        ];
+
+        return $map[$int] ?? ['display' => $int, 'os' => $int];
+    }
+
+    private function mapInterfaceList(?array $list): array
+    {
+        $list = $list ?? [];
+        return array_map(fn($i) => $this->mapInterface(trim($i)), $list);
+    }
+
     private function processRuner($process, $server)
     {
         $process->setTimeout(300);
@@ -168,14 +189,18 @@ class TraceController extends Controller
                 $serverIndex = array_search($server['id'], array_column($credentials['servers'], 'id'));
                 $username = $credentials['servers'][$serverIndex]['username'];
                 $password = $credentials['servers'][$serverIndex]['password'];
-                $interface = $credentials['servers'][$serverIndex]['interface'] ?? [];
+                $rawInterfaces = $credentials['servers'][$serverIndex]['interface'] ?? [];
+                $mapped = $this->mapInterfaceList($rawInterfaces);
+                $interfaces_os = array_column($mapped, 'os');
+                $interfaces_display = array_column($mapped, 'display');
                 $port = $credentials['servers'][$serverIndex]['port'] ?? 22;
 
                 $moduleName = isset($credentials['servers'][$serverIndex]['module_ids'])
                     ? Module::whereIn('id', $credentials['servers'][$serverIndex]['module_ids'])->pluck('name')->toArray()
                     : null;
 
-                $commands = $this->commandHelperStartServer($username, $password, $server, $interface, $moduleName);
+                $commands = $this->commandHelperStartServer($username, $password, $server, $interfaces_os, $moduleName);
+
 
                 $sshHelper = new sshHelper($server['ip'], $username, $password, $port, 7);
                 $sshHelper->testConnection();
@@ -194,6 +219,7 @@ class TraceController extends Controller
                         'exit_code' => $started['exit_code']
                     ];
                 }
+                $results[$ip]['interfaces_display'] = $interfaces_display;
             }
 
             foreach ($processes as $ip => $list) {
@@ -235,13 +261,18 @@ class TraceController extends Controller
     {
         $moduleName = $server->modules()->pluck('name')->toArray();
         $impledModuleName = !empty($moduleName) ? implode(' ', $moduleName) : null;
-        $impledInterfaceName = !empty($interface) ? implode(' -i ', $interface) : 'any';
+        $impledInterfaceName = !empty($interface) ? '-i ' . implode(' -i ', $interface) : 'any';
+
 
         $scriptPath = env('TRACE_SCRIPT_PATH'); // مسیر اسکریپت‌ها
         $downloadPath = env('TRACE_LOCAL_DOWNLOAD_PATH'); // مسیر دانلود محلی
         $logFilePath = env('TRACE_LOG_FILE_PATH'); // مسیر لاگ‌های اصلی
+        $ifaceForFile = !empty($interface)
+        ? implode('_', array_map(fn($s) => preg_replace('/[^A-Za-z0-9_\-]/', '_', $s), $interface))
+        : 'any';
 
-        $remotePath = '/tmp/' . $server['ip'] . '_' . $impledInterfaceName . '.pcapng';
+        $remotePath = '/tmp/' . $server['ip'] . '_' . $ifaceForFile . '.pcapng';
+
 
 
         $logFiles = array_map(function ($name) use ($logFilePath) {
@@ -268,7 +299,8 @@ class TraceController extends Controller
 
         $commandScpPcapFile = "sshpass -p '{$password}' scp -o StrictHostKeyChecking=no {$username}@{$server['ip']}:'{$remotePath}' {$downloadPath}";
 
-        $commandMergePcap = 'cd ' . $downloadPath . ' && mergecap -w final.pcapng ' . $server['ip'] . '_' . $impledInterfaceName . '.pcapng';
+        $commandMergePcap = 'cd ' . $downloadPath . ' && mergecap -w final.pcapng ' . $server['ip'] . '_' . $ifaceForFile . '.pcapng';
+
 
         $scpLogCommand = "sshpass -p '{$password}' scp -o StrictHostKeyChecking=no " .
             "{$username}@{$server['ip']}:{$remoteLogPaths} {$downloadPath}";
@@ -324,7 +356,10 @@ class TraceController extends Controller
             $serverIndex = array_search($server['id'], array_column($credentials['servers'], 'id'));
             $username = $credentials['servers'][$serverIndex]['username'];
             $password = $credentials['servers'][$serverIndex]['password'];
-            $interface = $credentials['servers'][$serverIndex]['interface'] ?? [];
+            $rawInterfaces = $credentials['servers'][$serverIndex]['interface'] ?? [];
+            $mapped = $this->mapInterfaceList($rawInterfaces);
+            $interfaces_os = array_column($mapped, 'os');
+            $interfaces_display = array_column($mapped, 'display');
             $port = $credentials['servers'][$serverIndex]['port'] ?? 22;
 
             $moduleIdentifier = $credentials['servers'][$serverIndex]['module_identifier'] ?? null;
@@ -333,7 +368,7 @@ class TraceController extends Controller
                 ? Module::whereIn('id', $credentials['servers'][$serverIndex]['module_ids'])->pluck('name')->toArray()
                 : null;
 
-            $commands = $this->commandHelperStopServer($username, $password, $server, $interface, $moduleIdentifier, $credentials['current_server_password'], $moduleName);
+            $commands = $this->commandHelperStopServer($username, $password, $server, $interfaces_os, $moduleName);
 
             $sshHelper = new sshHelper($server['ip'], $username, $password, $port, 7);
             $sshHelper->testConnection();
@@ -360,6 +395,8 @@ class TraceController extends Controller
                     'exit_code' => $started['exit_code']
                 ];
             }
+            $results[$ip]['interfaces_display'] = $interfaces_display;
+
         }
 
         foreach ($processes as $ip => $list) {

@@ -183,7 +183,7 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0">
+            <!-- <div class="accordion-item bg-transparent border-0">
               <h2 class="accordion-header my-lg-3">
                 <button
                   class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus3"
@@ -192,7 +192,7 @@
                   <span class="ms-xxl-2">Monitoring</span>
                 </button>
               </h2>
-            </div>
+            </div> -->
 
             <div class="accordion-item bg-transparent border-0" id="facepalte">
               <h2 class="accordion-header my-lg-3">
@@ -3859,6 +3859,16 @@
 
         <div class="tab-pane fade" id="v-log" role="tabpanel" aria-labelledby="v-log-tab" tabindex="0">
           <div class="d-flex justify-content-end align-items-center gap-2 mt-3 mb-2">
+            <p class="FilterByText">Filter By:</p>
+            <select name="FilterBy" class="form-select-sm" id="FilterBy">
+              <option value="Date">DATE</option>
+              <option value="Name">NAME</option>
+              <option value="Event">EVENT</option>
+            </select>
+            <button id="SearchLogBtn" type="button" class="btn btn-sm btn-primary">Search</button>
+            <div class="d-flex FilterBox" id="FilterBox">
+
+            </div>
             <select id="logExportFormat" class="form-select form-select-sm w-auto">
               <option value="csv">CSV</option>
               <option value="json">JSON</option>

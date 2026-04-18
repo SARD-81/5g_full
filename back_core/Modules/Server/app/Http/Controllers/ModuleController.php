@@ -28,6 +28,7 @@ use Modules\Server\Models\Server;
 use Modules\Server\Service\Parser\YamlParserService;
 use Modules\Server\Utility\CommandOutputAnalyzerService;
 use Modules\Server\Utility\LogModuleService;
+use Modules\Server\Utility\ModuleIdentity;
 
 class ModuleController extends ApiController
 {
@@ -153,6 +154,7 @@ class ModuleController extends ApiController
               'module_id' => $module->id,
               'module_name' => $module->name,
               'module_type' => $module->type,
+              'module_service_key' => $module->service_key,
               
               'server_detaile' => $module->servers->map(fn($server) => [
                   'id' => $server->id,
@@ -193,6 +195,7 @@ class ModuleController extends ApiController
             $module = Module::create([
                 'name' => $credential['name'],
                 'type' => $credential['type'],
+                'service_key' => ModuleIdentity::normalizeKey($credential['name']),
             ]);
 
 
@@ -220,7 +223,7 @@ class ModuleController extends ApiController
                 $outputCommand = $this->sendConfigToServer(
                     $username,
                     $password,
-                    $credential['name'],
+                    $module->service_key,
                     $yamlContent,
                     $server,
                     'create-module',
@@ -286,57 +289,92 @@ class ModuleController extends ApiController
     public function deleteModule (deleteModuleRequest $request)
     {
         $credentials = $request->validated();
-        $module = Module::find($credentials['module_id']);
+        $module = Module::with('servers')->findOrFail($credentials['module_id']);
 
         try {
+            DB::beginTransaction();
 
-            $serverModule = $module->servers()->get();
-            if (!$serverModule) {
-                $module->delete();
-                return response()->json(['msg' => 'Module Deleted', 'module' => $module]);
+            $serverModule = $module->servers;
+            foreach ($serverModule as $server) {
+                $this->chackPermissionModule($server);
             }
 
+            if ($serverModule->isNotEmpty()) {
+                $connectionMap = collect($credentials['servers'] ?? [])->keyBy('id');
 
-            foreach ($serverModule as $server)
-                $this->chackPermissionModule($server);
+                foreach ($serverModule as $server) {
+                    $connection = $connectionMap->get($server->id);
+                    if (!$connection) {
+                        throw ValidationException::withMessages([
+                            'servers' => "Missing SSH credentials for server {$server->id}.",
+                        ]);
+                    }
 
+                    $this->cleanupRemoteModuleArtifacts($module, $server, $connection);
+                }
+            }
 
             $module->delete();
 
-
-            activity('create-module')
+            activity('delete-module')
                 ->causedBy(Auth::user())
-                ->event('create-module')
+                ->event('delete-module')
                 ->withProperties([
                     'type-log' => 'server',
                     'route' => request()->fullUrl(),
                     'user' => Auth::user()->makeHidden(['roles', 'permissions'])->toArray(),
                     'user_role' => Auth::user()->roles()->pluck('name')->first(),
-                    'method' => 'createModule',
+                    'method' => 'deleteModule',
                     'module' => [
-                        'name' => $module['name'],
-                        'type' => $module['type'],
-                        'server_id' => $serverModule,
+                        'id' => $module->id,
+                        'name' => $module->name,
+                        'service_key' => $module->service_key,
+                        'type' => $module->type,
                     ],
+                    'servers' => $serverModule->pluck('id')->values()->all(),
                 ])
-                ->log('A new module has been created');
+                ->log('Module deleted after remote cleanup');
 
-                DB::commit();
+            DB::commit();
             return response()->json(['msg' => 'Module Deleted', 'module' => $module]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-                return response()->json(['success' => false, 'msg' => $e->getMessage()], 422);
+            return response()->json(['success' => false, 'msg' => $e->getMessage()], 422);
         }
     }
 
+    private function cleanupRemoteModuleArtifacts(Module $module, Server $server, array $connection): void
+    {
+        $username = $connection['username'];
+        $password = $connection['password'];
+        $port = (int) ($connection['port'] ?? 22);
+
+        $sshHelper = new sshHelper($server->ip, $username, $password, $port);
+        $serviceUnit = ModuleIdentity::serviceUnitName($module);
+        $configFilePath = $server->path_config . ModuleIdentity::configFileName($module);
+
+        $cleanupCommands = [
+            "if systemctl list-unit-files | grep -q '^{$serviceUnit}'; then systemctl stop {$serviceUnit}; fi",
+            "if systemctl list-unit-files | grep -q '^{$serviceUnit}'; then systemctl disable {$serviceUnit}; fi",
+            "rm -f " . escapeshellarg($configFilePath),
+        ];
+
+        foreach ($cleanupCommands as $command) {
+            $output = $sshHelper->runCommandModule($command, 'delete-module-cleanup', 'deleteModule');
+            $commandWarning = ! empty($output) ? CommandOutputAnalyzerService::extractErrors($output) : null;
+            if ($commandWarning) {
+                throw ValidationException::withMessages($commandWarning);
+            }
+        }
+    }
 
 
         // update Config Module
     private function sendConfigToServer(
         string $username,
         string $password,
-        string $moduleName,
+        string $serviceKey,
         string $yamlContent,
         Server $server,
         string $typeCommand,
@@ -353,8 +391,8 @@ class ModuleController extends ApiController
         $sshHelper = new sshHelper($server->ip, $username, $password, $port);
 
         // update module
-        $commandUpdateFileModule = 'echo ' . escapeshellarg($yamlContent) . ' > ' . $server['path_config'] . $moduleName . '.yaml';
-        return $sshHelper->runCommandModule($commandUpdateFileModule, $typeCommand, $method, $server);
+        $commandUpdateFileModule = 'echo ' . escapeshellarg($yamlContent) . ' > ' . $server['path_config'] . $serviceKey . '.yaml';
+        return $sshHelper->runCommandModule($commandUpdateFileModule, $typeCommand, $method);
 
         // restart module
 //        $commandRestart = $server['path_run_config'] . 'bbdh-' . $moduleName . 'd' . ' restart';
@@ -398,7 +436,7 @@ class ModuleController extends ApiController
 
                 $module = $server->modules()->wherePivot('module_id', $request['module_id'])->first();
 
-                $this->chackPermissionModule($module, $server);
+                $this->chackPermissionModule($server);
 
                 $updatedModule = $this->updateModuleConfigInDatabase($module['id'], $request->input('data'), $server);
 
@@ -407,7 +445,7 @@ class ModuleController extends ApiController
                 $outputCommand = $this->sendConfigToServer(
                     $username,
                     $password,
-                    $module['name'],
+                    $module['service_key'],
                     $yamlContent,
                     $server,
                     'update-module',
@@ -492,7 +530,7 @@ class ModuleController extends ApiController
 
                 // پیدا کردن پیوت ماژول
                 $modulePivot = $server->modules()->wherePivot('module_id', $request['module_id'])->first();
-                $this->chackPermissionModule($modulePivot, $server);
+                $this->chackPermissionModule($server);
 
                 // --- STEP 1: Data Preparation (Memory Only) ---
                 // آماده‌سازی داده‌ها دقیقاً مشابه متد updateModuleConfigInDatabase
@@ -518,7 +556,7 @@ class ModuleController extends ApiController
                 $outputCommand = $this->sendConfigToServer(
                     $username,
                     $password,
-                    $modulePivot['name'],
+                    $modulePivot['service_key'],
                     $yamlContent,
                     $server,
                     'update-module',
@@ -657,7 +695,7 @@ class ModuleController extends ApiController
                 $outputCommand = $this->sendConfigToServer(
                     $username,
                     $password,
-                    $module->name,
+                    $module->service_key,
                     $yamlContent,
                     $server,
                     'substitute-module-config-file',
@@ -667,7 +705,7 @@ class ModuleController extends ApiController
 
                 $pivotData->save();
 
-                $commandWarning = ! empty($output) ? CommandOutputAnalyzerService::extractErrors($output) : null;
+                $commandWarning = ! empty($outputCommand) ? CommandOutputAnalyzerService::extractErrors($outputCommand) : null;
                 if ($commandWarning) throw ValidationException::withMessages($commandWarning);
 
 
@@ -707,7 +745,7 @@ class ModuleController extends ApiController
             $outputCommand = $this->sendConfigToServer(
                 $username,
                 $password,
-                'default_module',
+                $module->service_key,
                 $yamlContent,
                 $server,
                 'substitute-module-config-file',
@@ -749,7 +787,7 @@ class ModuleController extends ApiController
             $this->sendConfigToServer(
                 $username,
                 $password,
-                $module['name'],
+                $module['service_key'],
                 $yamlContent,
                 $server,
                 'add-module-to-selected-server',
@@ -774,7 +812,7 @@ class ModuleController extends ApiController
 
 
         $this->addModules($module, $serversToAdd, $request, $port);
-        $this->deleteModules($serversToDelete, $module, $request, $port);
+        $this->deleteModules($serversToDelete, $module);
     }
     public function editModule(EditModuleRequest $request)
     {
@@ -883,7 +921,7 @@ class ModuleController extends ApiController
         $server = Server::find($credentials['server_id']);
 
 
-        $command = 'cat ' . $server->path_config . $module->name . '.yaml' ;
+        $command = 'cat ' . $server->path_config . ModuleIdentity::configFileName($module); // technical identity
 
         if ($server['is_down'] == server::OFF)
             throw ValidationException::withMessages(['server' => 'server is off']);
@@ -917,7 +955,7 @@ class ModuleController extends ApiController
             return response($output, 200, [
                 'Content-Type' => 'application/octet-stream',
                 'Content-Disposition' => "attachment; filename={$module->name}.yaml",
-                'X-Name-Header' => "{$module->name}.yaml",
+                'X-Name-Header' => ModuleIdentity::configFileName($module),
                 'Content-Length' => strlen($output),
             ]);
 
@@ -941,7 +979,7 @@ class ModuleController extends ApiController
             $outputCommand = $this->sendConfigToServer(
                 $credential['username'],
                 $credential['password'],
-                $request['module']['name'],
+                $request['module']['service_key'],
                 $yamlContent, $request['server'],
                 'undo-config-module',
                 'undoConfigModule',
@@ -1004,7 +1042,7 @@ class ModuleController extends ApiController
             $outputCommand = $this->sendConfigToServer(
                 $credential['username'],
                 $credential['password'],
-                $request['module']['name'],
+                $request['module']['service_key'],
                 $yamlContent, $request['server'],
                 'undo-initial-config-module',
                 'undoToInitialConfigModule',

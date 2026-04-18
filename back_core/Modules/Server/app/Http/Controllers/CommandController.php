@@ -12,6 +12,7 @@ use Modules\Server\Http\Requests\SshServer\SshServerRequest;
 use Modules\Server\Models\Module;
 use Modules\Server\Models\Server;
 use Modules\Server\Utility\CommandOutputAnalyzerService;
+use Modules\Server\Utility\ModuleIdentity;
 use Modules\SystemSetting\Http\Requests\ShowInterfaceVmRequest;
 
 class CommandController extends Controller
@@ -92,7 +93,7 @@ class CommandController extends Controller
         try {
             $sshHelper = new SshHelper($server->ip, $username, $password, $port, $timeout);
 
-            $outputCommand = $sshHelper->runCommandModule($command, $typeCommand, $method, $server);
+            $outputCommand = $sshHelper->runCommandModule($command, $typeCommand, $method);
 
             $errors = CommandOutputAnalyzerService::extractErrors($outputCommand);
             if (!empty($errors)) {
@@ -105,8 +106,6 @@ class CommandController extends Controller
             throw $e;
 
         } catch (\InvalidArgumentException $e) {
-            DB::rollBack();
-
             $message = $e->getMessage();
             $message = preg_replace('/\x1b\[[0-9;]*m/', '', $message);
             $message = preg_replace('/\r?\n.*?\[root@localhost.*?$/', '', $message);
@@ -123,7 +122,6 @@ class CommandController extends Controller
             throw ValidationException::withMessages(['message' => $separatedMessages]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             throw ValidationException::withMessages(['message' => $e->getMessage()]);
         }
     }
@@ -135,7 +133,7 @@ class CommandController extends Controller
         $server = Server::find($credentials['server_id']);
         $module = Module::find($credentials['module_id']);
 
-        $command = 'systemctl restart ' . 'bbdh-' . $module['name'] . 'd';
+        $command = 'systemctl restart ' . ModuleIdentity::serviceUnitName($module);
 
         $output = $this->runCommandModuleToServer(
             $credentials,
@@ -155,7 +153,7 @@ class CommandController extends Controller
         $server = Server::find($credentials['server_id']);
         $module = Module::find($credentials['module_id']);
 
-        $command = 'systemctl start ' . 'bbdh-' . $module['name'] . 'd';
+        $command = 'systemctl start ' . ModuleIdentity::serviceUnitName($module);
 
         $output = $this->runCommandModuleToServer(
             $credentials,
@@ -175,7 +173,7 @@ class CommandController extends Controller
         $server = Server::find($credentials['server_id']);
         $module = Module::find($credentials['module_id']);
 
-        $command = 'systemctl stop ' . 'bbdh-' . $module['name'] . 'd';
+        $command = 'systemctl stop ' . ModuleIdentity::serviceUnitName($module);
 
         $output = $this->runCommandModuleToServer(
             $credentials,
@@ -195,7 +193,7 @@ class CommandController extends Controller
         $server = Server::find($credentials['server_id']);
         $module = Module::find($credentials['module_id']);
 
-        $command = 'systemctl status ' . 'bbdh-' . $module['name'] . 'd';
+        $command = 'systemctl status ' . ModuleIdentity::serviceUnitName($module);
 
         $output = $this->runCommandModuleToServer(
             $credentials,

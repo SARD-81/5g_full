@@ -209,7 +209,7 @@ class ModuleLifecycleIdentityTest extends TestCase
 
         $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
         $sshMock->shouldReceive('__construct')->andReturnNull();
-        $sshMock->shouldReceive('runCommandModule')->times(3)->andReturn('');
+        $sshMock->shouldReceive('runCommandModule')->times(7)->andReturn('');
 
         $this->deleteJson('/api/delete-module', [
             'module_id' => $module->id,
@@ -217,6 +217,169 @@ class ModuleLifecycleIdentityTest extends TestCase
         ])->assertOk();
 
         $this->assertDatabaseMissing('modules', ['id' => $module->id]);
+    }
+
+    public function test_delete_cleanup_uses_service_key_for_yaml_and_run_config_artifacts(): void
+    {
+        $user = $this->createUserWithPermissions(['module/delete']);
+        $server = $this->createServer('Srv-Delete-Identity');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $server->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'Display Module', 'service_key' => 'stable-key', 'type' => '5gc']);
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $commands = [];
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->times(7)
+            ->andReturnUsing(function ($command) use (&$commands) {
+                $commands[] = $command;
+                return '';
+            });
+
+        $this->deleteJson('/api/delete-module', [
+            'module_id' => $module->id,
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertOk();
+
+        $this->assertContains("rm -f '/tmp/config/stable-key.yaml'", $commands);
+        $this->assertContains("rm -f '/tmp/run/stable-key.yaml'", $commands);
+        $this->assertContains("rm -f '/tmp/run/bbdh-stable-keyd'", $commands);
+        $this->assertContains("rm -f '/tmp/run/bbdh-stable-keyd.service'", $commands);
+        $this->assertContains("rm -f '/tmp/run/bbdh-stable-keyd.sh'", $commands);
+    }
+
+    public function test_edit_remove_server_cleans_remote_before_detach(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        $serverA = $this->createServer('Srv-Edit-A');
+        $serverB = $this->createServer('Srv-Edit-B');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverA->name, 'web'));
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverB->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'PCRF', 'service_key' => 'stable-edit', 'type' => '5gc']);
+        $module->servers()->attach($serverA->id, ['initial_config' => '{}', 'current_config' => '{}']);
+        $module->servers()->attach($serverB->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $commands = [];
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->times(7)
+            ->andReturnUsing(function ($command) use (&$commands) {
+                $commands[] = $command;
+                return '';
+            });
+
+        $this->postJson('/api/edit-module', [
+            'module_id' => $module->id,
+            'servers' => [
+                ['id' => $serverA->id, 'username' => 'u-a', 'password' => 'p-a', 'port' => 22],
+            ],
+            'servers_to_remove' => [
+                ['id' => $serverB->id, 'username' => 'u-b', 'password' => 'p-b', 'port' => 22],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('module_server', ['module_id' => $module->id, 'server_id' => $serverA->id]);
+        $this->assertDatabaseMissing('module_server', ['module_id' => $module->id, 'server_id' => $serverB->id]);
+        $this->assertContains("rm -f '/tmp/run/bbdh-stable-editd'", $commands);
+    }
+
+    public function test_edit_remove_server_cleanup_failure_prevents_detach(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        $serverA = $this->createServer('Srv-Edit-Fail-A');
+        $serverB = $this->createServer('Srv-Edit-Fail-B');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverA->name, 'web'));
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverB->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'PCRF', 'service_key' => 'stable-fail', 'type' => '5gc']);
+        $module->servers()->attach($serverA->id, ['initial_config' => '{}', 'current_config' => '{}']);
+        $module->servers()->attach($serverB->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->once()
+            ->andReturn('Permission denied');
+
+        $this->postJson('/api/edit-module', [
+            'module_id' => $module->id,
+            'servers' => [
+                ['id' => $serverA->id, 'username' => 'u-a', 'password' => 'p-a', 'port' => 22],
+            ],
+            'servers_to_remove' => [
+                ['id' => $serverB->id, 'username' => 'u-b', 'password' => 'p-b', 'port' => 22],
+            ],
+        ])->assertStatus(422);
+
+        $this->assertDatabaseHas('module_server', ['module_id' => $module->id, 'server_id' => $serverA->id]);
+        $this->assertDatabaseHas('module_server', ['module_id' => $module->id, 'server_id' => $serverB->id]);
+    }
+
+    public function test_edit_remove_server_requires_credentials_for_removed_servers(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        $serverA = $this->createServer('Srv-Edit-Validation-A');
+        $serverB = $this->createServer('Srv-Edit-Validation-B');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverA->name, 'web'));
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverB->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'PCRF', 'service_key' => 'stable-validation', 'type' => '5gc']);
+        $module->servers()->attach($serverA->id, ['initial_config' => '{}', 'current_config' => '{}']);
+        $module->servers()->attach($serverB->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $this->postJson('/api/edit-module', [
+            'module_id' => $module->id,
+            'servers' => [
+                ['id' => $serverA->id, 'username' => 'u-a', 'password' => 'p-a', 'port' => 22],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors(['servers_to_remove']);
+    }
+
+    public function test_edit_remove_server_cleanup_uses_service_key_after_display_name_change(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        $serverA = $this->createServer('Srv-Edit-Rename-A');
+        $serverB = $this->createServer('Srv-Edit-Rename-B');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverA->name, 'web'));
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverB->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'Before Rename', 'service_key' => 'immutable-key', 'type' => '5gc']);
+        $module->update(['name' => 'After Rename']);
+        $module->servers()->attach($serverA->id, ['initial_config' => '{}', 'current_config' => '{}']);
+        $module->servers()->attach($serverB->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $commands = [];
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->times(7)
+            ->andReturnUsing(function ($command) use (&$commands) {
+                $commands[] = $command;
+                return '';
+            });
+
+        $this->postJson('/api/edit-module', [
+            'module_id' => $module->id,
+            'servers' => [
+                ['id' => $serverA->id, 'username' => 'u-a', 'password' => 'p-a', 'port' => 22],
+            ],
+            'servers_to_remove' => [
+                ['id' => $serverB->id, 'username' => 'u-b', 'password' => 'p-b', 'port' => 22],
+            ],
+            'name' => 'Display Name Changed Again',
+        ])->assertOk();
+
+        $this->assertContains("rm -f '/tmp/config/immutable-key.yaml'", $commands);
+        $this->assertContains("rm -f '/tmp/run/bbdh-immutable-keyd'", $commands);
     }
 
     public function test_create_then_rename_does_not_break_start_command(): void

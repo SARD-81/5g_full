@@ -352,12 +352,21 @@ class ModuleController extends ApiController
 
         $sshHelper = new sshHelper($server->ip, $username, $password, $port);
         $serviceUnit = ModuleIdentity::serviceUnitName($module);
-        $configFilePath = $server->path_config . ModuleIdentity::configFileName($module);
+        $configFilePath = $this->buildRemotePath($server->path_config, ModuleIdentity::configFileName($module));
+        $runConfigPath = $this->buildRemotePath($server->path_run_config, ModuleIdentity::configFileName($module));
+        $runLauncherPath = $this->buildRemotePath($server->path_run_config, $serviceUnit);
+        $runServicePath = $this->buildRemotePath($server->path_run_config, $serviceUnit . '.service');
+        $runHelperScriptPath = $this->buildRemotePath($server->path_run_config, $serviceUnit . '.sh');
+        $safeServiceUnit = escapeshellarg($serviceUnit);
 
         $cleanupCommands = [
-            "if systemctl list-unit-files | grep -q '^{$serviceUnit}'; then systemctl stop {$serviceUnit}; fi",
-            "if systemctl list-unit-files | grep -q '^{$serviceUnit}'; then systemctl disable {$serviceUnit}; fi",
+            "systemctl stop {$safeServiceUnit} >/dev/null 2>&1 || true",
+            "systemctl disable {$safeServiceUnit} >/dev/null 2>&1 || true",
             "rm -f " . escapeshellarg($configFilePath),
+            "rm -f " . escapeshellarg($runConfigPath),
+            "rm -f " . escapeshellarg($runLauncherPath),
+            "rm -f " . escapeshellarg($runServicePath),
+            "rm -f " . escapeshellarg($runHelperScriptPath),
         ];
 
         foreach ($cleanupCommands as $command) {
@@ -367,6 +376,11 @@ class ModuleController extends ApiController
                 throw ValidationException::withMessages($commandWarning);
             }
         }
+    }
+
+    private function buildRemotePath(string $basePath, string $fileName): string
+    {
+        return rtrim($basePath, '/') . '/' . ltrim($fileName, '/');
     }
 
 
@@ -797,13 +811,26 @@ class ModuleController extends ApiController
 
         }
     }
-    private function deleteModules(array $serverIds, Module $module)
+    private function deleteModules(array $serverIds, Module $module, array $serversToRemoveCredentials)
     {
+        $serverCredentialsMap = collect($serversToRemoveCredentials)->keyBy('id');
+
         foreach ($serverIds as $serverId) {
-                $module->servers()->detach($serverId);
+            $server = Server::find($serverId);
+            $this->chackPermissionModule($server);
+
+            $connection = $serverCredentialsMap->get($serverId);
+            if (!$connection) {
+                throw ValidationException::withMessages([
+                    'servers_to_remove' => "SSH credentials for removed server {$serverId} are required to clean up remote artifacts before detaching.",
+                ]);
+            }
+
+            $this->cleanupRemoteModuleArtifacts($module, $server, $connection);
+            $module->servers()->detach($serverId);
         }
     }
-    private function syncModuleWithServers(Module $module, array $serverIds, $request, int $port)
+    private function syncModuleWithServers(Module $module, array $serverIds, Request $request, array $credentials)
     {
         $existingServerIds = $module->servers->pluck('id')->toArray();
 
@@ -811,8 +838,8 @@ class ModuleController extends ApiController
         $serversToAdd = array_diff($serverIds, $existingServerIds);
 
 
-        $this->addModules($module, $serversToAdd, $request, $port);
-        $this->deleteModules($serversToDelete, $module);
+        $this->addModules($module, $serversToAdd, $request, $credentials['port'] ?? 22);
+        $this->deleteModules($serversToDelete, $module, $credentials['servers_to_remove'] ?? []);
     }
     public function editModule(EditModuleRequest $request)
     {
@@ -839,7 +866,7 @@ class ModuleController extends ApiController
                     if ($server['is_down'] === Server::OFF) throw ValidationException::withMessages(['msg' => 'server : ' . $server['name'] . ' is off']);
                 }
 
-                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
+                $this->syncModuleWithServers($module, $serverIds, $request, $credentials);
 
                 // update file
                 if ($configFile) {

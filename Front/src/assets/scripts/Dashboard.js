@@ -3866,7 +3866,6 @@ async function savePasswordServer(id) {
 
       dataServer.forEach((server) => {
         if (server.id == dataIdPassword) {
-          debugger
           server.username = document
             .getElementById("usernameServer")
             .value.trim();
@@ -3884,6 +3883,11 @@ async function savePasswordServer(id) {
         dataServer.push(newServer);
       }
       localStorage.setItem("dataServer", JSON.stringify(dataServer));
+      persistScopedServerCredentials(localStorage, id, {
+        username,
+        password,
+        port: Number.isInteger(port) ? port : 22,
+      });
       Toastify({
         text: "The username and password have been successfully registered.",
         style: {

@@ -3365,6 +3365,8 @@ async function server(x) {
     callback: function () {
       localStorage.setItem("userNameServer", username);
       localStorage.setItem("passwordServer", password);
+      localStorage.setItem("port", String(port || 22));
+      localStorage.setItem("serverCredentialServerId", String(x));
       if (project == "BBDH") {
         location.href = "../views/settingServer.html";
       } else {

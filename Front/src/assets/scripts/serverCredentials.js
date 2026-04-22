@@ -1,9 +1,50 @@
 export const SERVER_CREDENTIAL_SCOPE_KEY = "serverCredentialServerId";
+export const SERVER_CREDENTIALS_MAP_KEY = "serverCredentialsByServer";
+
+function readCredentialMap(localStorageRef) {
+  const raw = localStorageRef.getItem(SERVER_CREDENTIALS_MAP_KEY);
+  if (!raw) return {};
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      return parsed;
+    }
+  } catch (error) {
+    return {};
+  }
+
+  return {};
+}
+
+export function getBackendCommandError(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  if (payload.error_code) {
+    return {
+      code: payload.error_code,
+      message: payload.message || "Request failed.",
+      details: payload.details || {},
+    };
+  }
+
+  if (payload.error && payload.error.code) {
+    return {
+      code: payload.error.code,
+      message: payload.error.message || payload.message || "Request failed.",
+      details: payload.error.details || payload.details || {},
+    };
+  }
+
+  return null;
+}
 
 export function resolveValidatedServerCredentials(localStorageRef, selectedServerId) {
-  const username = localStorageRef.getItem("userNameServer");
-  const password = localStorageRef.getItem("passwordServer");
-  const portRaw = localStorageRef.getItem("port");
+  const serverKey = String(selectedServerId || "");
+  const byServer = readCredentialMap(localStorageRef);
+  const scoped = byServer[serverKey] || null;
+  const username = scoped?.username || localStorageRef.getItem("userNameServer");
+  const password = scoped?.password || localStorageRef.getItem("passwordServer");
+  const portRaw = scoped?.port || localStorageRef.getItem("port");
   const scopedServerId = localStorageRef.getItem(SERVER_CREDENTIAL_SCOPE_KEY);
 
   if (!selectedServerId) {
@@ -52,11 +93,14 @@ export function resolveValidatedServerCredentials(localStorageRef, selectedServe
 export function mapServiceError(errorCode, fallbackMessage = "Request failed.") {
   const messages = {
     server_off: "The selected server is offline.",
-    ssh_login_failed: "SSH login failed. Username/password/port is invalid.",
-    ssh_connection_failed: "SSH connection to server failed.",
+    ssh_login_failed: "SSH login failed. Please verify username, password, or port.",
+    ssh_connection_failed: "Could not establish SSH connection to the server.",
     sudo_failed: "SSH connected, but sudo/systemctl execution failed.",
-    service_not_found: "Service unit was not found on the server.",
-    service_command_failed: "Service command failed on the remote server.",
+    service_not_found: "The expected service unit was not found on the server.",
+    service_command_failed:
+      "The service command reached the server but failed to execute successfully.",
+    command_timeout: "The remote command timed out before completion.",
+    unexpected_remote_error: "An unexpected remote command error occurred.",
     validation_failed: "The request is invalid. Please review credentials and server/module selection.",
   };
 

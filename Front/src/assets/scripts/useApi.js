@@ -1,6 +1,10 @@
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 import axios from "axios";
+import {
+  shouldRunDefaultErrorHandler,
+  shouldSkipDefaultErrorHandler,
+} from "./useApiErrorFlow.js";
 
 export const setCookie = (cname, cvalue, exdays = 7) => {
   const d = new Date();
@@ -113,6 +117,7 @@ export default async function (props) {
     headers,
     accept,
     setToken,
+    suppressDefaultErrorHandler,
   } = {
     method: props.method || "get",
     url: props.url || "",
@@ -125,6 +130,7 @@ export default async function (props) {
     headers: props.headers || {},
     accept: props.accept || "application/json",
     setToken: props.setToken == false ? props.setToken : "true",
+    suppressDefaultErrorHandler: props.suppressDefaultErrorHandler || false,
   };
 
   // const { getCookie } = useAuth;
@@ -185,10 +191,13 @@ export default async function (props) {
     console.log("DATA:", error.response?.data);
     console.log("HEADERS:", error.response?.headers);
 
-    if (errorCallback && typeof errorCallback === "function")
-      errorCallback(error.response?.data, error.response);
+    const shouldRunDefaultErrorHandler = runErrorCallbackAndResolveDefaultHandling({
+      error,
+      errorCallback,
+      suppressDefaultErrorHandler,
+    });
 
-    handleError(error);
+    if (shouldRunDefaultErrorHandler) handleError(error);
   }
 
   finally {
@@ -197,6 +206,24 @@ export default async function (props) {
     if (finallyCallback && typeof finallyCallback === "function")
       finallyCallback();
   }
+}
+
+export { shouldRunDefaultErrorHandler, shouldSkipDefaultErrorHandler };
+
+function runErrorCallbackAndResolveDefaultHandling({
+  error,
+  errorCallback,
+  suppressDefaultErrorHandler,
+}) {
+  let errorCallbackResult;
+  if (errorCallback && typeof errorCallback === "function") {
+    errorCallbackResult = errorCallback(error.response?.data, error.response);
+  }
+
+  return shouldRunDefaultErrorHandler({
+    errorCallbackResult,
+    suppressDefaultErrorHandler,
+  });
 }
 
 const handleError = (error) => {

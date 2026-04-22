@@ -13,6 +13,7 @@ import "toastify-js/src/toastify.css";
 import { data, error } from "jquery";
 import Stepper from "bs-stepper";
 import "bs-stepper/dist/css/bs-stepper.min.css";
+import { persistScopedServerCredentials } from "./serverCredentials.js";
 
 
 
@@ -3363,22 +3364,11 @@ async function server(x) {
       ...(!!port ? { port } : {}),
     },
     callback: function () {
-      localStorage.setItem("userNameServer", username);
-      localStorage.setItem("passwordServer", password);
-      localStorage.setItem("port", String(port || 22));
-      localStorage.setItem("serverCredentialServerId", String(x));
-      const credentialsByServer = JSON.parse(
-        localStorage.getItem("serverCredentialsByServer") || "{}"
-      );
-      credentialsByServer[String(x)] = {
+      persistScopedServerCredentials(localStorage, x, {
         username,
         password,
         port: Number(port || 22),
-      };
-      localStorage.setItem(
-        "serverCredentialsByServer",
-        JSON.stringify(credentialsByServer)
-      );
+      });
       if (project == "BBDH") {
         location.href = "../views/settingServer.html";
       } else {
@@ -7893,7 +7883,9 @@ async function configBackup() {
 
 document.getElementById("setBackup").addEventListener("click", () => {
   let password = document.getElementById("backupPassword").value;
-  localStorage.setItem("passwordServer", password);
+  persistScopedServerCredentials(localStorage, localStorage.getItem("server"), {
+    password,
+  });
 
   let day_backup = document.getElementById("dayBackup").value;
   let time_backup = document.getElementById("timeBackup").value;

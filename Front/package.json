@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite --host",
-    "test:unit": "node tests/serverCredentials.test.mjs"
+    "test:unit": "node tests/serverCredentials.test.mjs && node tests/useApiErrorFlow.test.mjs && node tests/settingServerCredentialUsage.test.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",

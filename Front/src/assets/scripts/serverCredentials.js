@@ -17,6 +17,34 @@ function readCredentialMap(localStorageRef) {
   return {};
 }
 
+export function persistScopedServerCredentials(
+  localStorageRef,
+  serverId,
+  credentials = {}
+) {
+  const serverKey = String(serverId || "");
+  if (!serverKey) return;
+
+  const normalizedPort = Number(credentials.port || 22);
+  const normalizedCredentials = {
+    username: credentials.username || localStorageRef.getItem("userNameServer") || "",
+    password: credentials.password || localStorageRef.getItem("passwordServer") || "",
+    port: Number.isInteger(normalizedPort) ? normalizedPort : 22,
+  };
+
+  localStorageRef.setItem("userNameServer", normalizedCredentials.username);
+  localStorageRef.setItem("passwordServer", normalizedCredentials.password);
+  localStorageRef.setItem("port", String(normalizedCredentials.port));
+  localStorageRef.setItem(SERVER_CREDENTIAL_SCOPE_KEY, serverKey);
+
+  const credentialsByServer = readCredentialMap(localStorageRef);
+  credentialsByServer[serverKey] = normalizedCredentials;
+  localStorageRef.setItem(
+    SERVER_CREDENTIALS_MAP_KEY,
+    JSON.stringify(credentialsByServer)
+  );
+}
+
 export function getBackendCommandError(payload) {
   if (!payload || typeof payload !== "object") return null;
   if (payload.error_code) {

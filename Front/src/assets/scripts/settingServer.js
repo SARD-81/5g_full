@@ -342,6 +342,10 @@ async function backToBefore() {
         },
       }).showToast();
     },
+    errorCallback: function (errorPayload) {
+      return showModuleActionError(errorPayload, { statusTargetId: "textStatus" });
+    },
+    suppressDefaultErrorHandler: true,
   });
   document.getElementById("idLoading").style.display = "none";
 }
@@ -394,6 +398,10 @@ async function returnToTheFirstState() {
         },
       }).showToast();
     },
+    errorCallback: function (errorPayload) {
+      return showModuleActionError(errorPayload, { statusTargetId: "textStatus" });
+    },
+    suppressDefaultErrorHandler: true,
   });
   document.getElementById("idLoading").style.display = "none";
 }
@@ -974,7 +982,7 @@ async function ExportModules(id) {
       "Content-Type": "multipart/form-data",
     },
     data: {
-      server_id: localStorage.getItem("server"),
+      server_id: selectedServerId,
       module_id: id,
       username: credentialResult.credentials.username,
       password: credentialResult.credentials.password,
@@ -985,6 +993,10 @@ async function ExportModules(id) {
       console.log("YAML received from server:\n", text);
       downloadFileProcess(data);
     },
+    errorCallback: function (errorPayload) {
+      return showModuleActionError(errorPayload, { statusTargetId: "textStatus" });
+    },
+    suppressDefaultErrorHandler: true,
   });
   document.getElementById("idLoading").style.display = "none";
 }
@@ -1017,6 +1029,39 @@ document.getElementById("startModule").addEventListener("click", () => {
   StartModules(moduleIdUrl);
 });
 
+function mapModuleActionSuccessMessage(actionType) {
+  const messages = {
+    start: "Module started successfully.",
+    stop: "Module stopped successfully.",
+    restart: "Module restarted successfully.",
+    status: "Module status retrieved successfully.",
+  };
+
+  return messages[actionType] || "Module action completed successfully.";
+}
+
+function showModuleActionError(errorPayload, options = {}) {
+  const { statusTargetId = null } = options;
+  const backendError = getBackendCommandError(errorPayload) || {};
+  const uiMessage = mapServiceError(
+    backendError.code,
+    backendError.message || "Request failed."
+  );
+
+  if (statusTargetId && document.getElementById(statusTargetId)) {
+    document.getElementById(statusTargetId).textContent = uiMessage;
+  }
+
+  Toastify({
+    text: uiMessage,
+    style: {
+      background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+    },
+  }).showToast();
+
+  return { handled: true };
+}
+
 async function StartModules(id) {
   if (roleUserGetMe == "visitor") return;
   document.getElementById("idLoading").style.display = "flex";
@@ -1038,7 +1083,7 @@ async function StartModules(id) {
     },
     callback: async function (data) {
       Toastify({
-        text: "The module started successfully.",
+        text: mapModuleActionSuccessMessage("start"),
         style: {
           background:
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
@@ -1046,14 +1091,9 @@ async function StartModules(id) {
       }).showToast();
     },
     errorCallback: function (errorPayload) {
-      const backendError = getBackendCommandError(errorPayload) || {};
-      Toastify({
-        text: mapServiceError(backendError.code, backendError.message),
-        style: {
-          background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
-        },
-      }).showToast();
+      return showModuleActionError(errorPayload);
     },
+    suppressDefaultErrorHandler: true,
   });
   document.getElementById("idLoading").style.display = "none";
 }
@@ -1085,7 +1125,7 @@ async function StopModules(id) {
     },
     callback: async function (data) {
       Toastify({
-        text: "The module stopped successfully.",
+        text: mapModuleActionSuccessMessage("stop"),
         style: {
           background:
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
@@ -1093,14 +1133,9 @@ async function StopModules(id) {
       }).showToast();
     },
     errorCallback: function (errorPayload) {
-      const backendError = getBackendCommandError(errorPayload) || {};
-      Toastify({
-        text: mapServiceError(backendError.code, backendError.message),
-        style: {
-          background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
-        },
-      }).showToast();
+      return showModuleActionError(errorPayload);
     },
+    suppressDefaultErrorHandler: true,
   });
   document.getElementById("idLoading").style.display = "none";
 }
@@ -1132,7 +1167,7 @@ async function RestartModules(id) {
     },
     callback: async function () {
       Toastify({
-        text: `${moduleDetails} module was successfully restarted.`,
+        text: mapModuleActionSuccessMessage("restart"),
         style: {
           background:
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
@@ -1140,14 +1175,9 @@ async function RestartModules(id) {
       }).showToast();
     },
     errorCallback: function (errorPayload) {
-      const backendError = getBackendCommandError(errorPayload) || {};
-      Toastify({
-        text: mapServiceError(backendError.code, backendError.message),
-        style: {
-          background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
-        },
-      }).showToast();
+      return showModuleActionError(errorPayload);
     },
+    suppressDefaultErrorHandler: true,
     // errorCallback: function (data) {
     //   let message = data.data.error.message;
 
@@ -1243,7 +1273,7 @@ async function StatusModules(id) {
       }
 
       Toastify({
-        text: "Service status fetched successfully.",
+        text: mapModuleActionSuccessMessage("status"),
         style: {
           background:
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
@@ -1251,19 +1281,9 @@ async function StatusModules(id) {
       }).showToast();
     },
     errorCallback: function (errorPayload) {
-      const backendError = getBackendCommandError(errorPayload) || {};
-      const uiMessage = mapServiceError(
-        backendError.code,
-        backendError.message || "Request failed."
-      );
-      document.getElementById("textStatus").textContent = uiMessage;
-      Toastify({
-        text: uiMessage,
-        style: {
-          background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
-        },
-      }).showToast();
+      return showModuleActionError(errorPayload, { statusTargetId: "textStatus" });
     },
+    suppressDefaultErrorHandler: true,
     // errorCallback: function (data) {
     //   let message = data.data.error.message;
 

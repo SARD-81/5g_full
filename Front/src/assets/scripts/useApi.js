@@ -5,6 +5,7 @@ import {
   shouldRunDefaultErrorHandler,
   shouldSkipDefaultErrorHandler,
 } from "./useApiErrorFlow.js";
+import { processTransportError } from "./useApiTransport.js";
 
 export const setCookie = (cname, cvalue, exdays = 7) => {
   const d = new Date();
@@ -191,13 +192,12 @@ export default async function (props) {
     console.log("DATA:", error.response?.data);
     console.log("HEADERS:", error.response?.headers);
 
-    const shouldRunDefaultErrorHandler = runErrorCallbackAndResolveDefaultHandling({
+    await processTransportError({
       error,
       errorCallback,
       suppressDefaultErrorHandler,
+      defaultErrorHandler: handleError,
     });
-
-    if (shouldRunDefaultErrorHandler) handleError(error);
   }
 
   finally {
@@ -210,21 +210,6 @@ export default async function (props) {
 
 export { shouldRunDefaultErrorHandler, shouldSkipDefaultErrorHandler };
 
-function runErrorCallbackAndResolveDefaultHandling({
-  error,
-  errorCallback,
-  suppressDefaultErrorHandler,
-}) {
-  let errorCallbackResult;
-  if (errorCallback && typeof errorCallback === "function") {
-    errorCallbackResult = errorCallback(error.response?.data, error.response);
-  }
-
-  return shouldRunDefaultErrorHandler({
-    errorCallbackResult,
-    suppressDefaultErrorHandler,
-  });
-}
 
 const handleError = (error) => {
   // const router = useRouter();

@@ -33,6 +33,11 @@ for (const actionName of requiredCredentialGuardedActions) {
     /resolveServerCredentialsForAction\(/,
     `${actionName} must use resolveServerCredentialsForAction`
   );
+  assert.doesNotMatch(
+    blockMatch[0],
+    /localStorage\.getItem\("userNameServer"\)|localStorage\.getItem\("passwordServer"\)|localStorage\.getItem\("port"\)/,
+    `${actionName} should not read raw SSH credentials from localStorage`
+  );
 }
 
 assert.doesNotMatch(
@@ -55,6 +60,11 @@ assert.match(
   dashboardSource,
   /persistScopedServerCredentials\(localStorage,\s*x,\s*\{/,
   "server selection flow should persist scoped credentials"
+);
+assert.match(
+  dashboardSource,
+  /async function savePasswordServer\(id\)[\s\S]*?persistScopedServerCredentials\(localStorage,\s*id,\s*\{/,
+  "credential modal save/update flow must persist scoped credentials"
 );
 assert.match(
   dashboardSource,

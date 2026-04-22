@@ -97,4 +97,31 @@ const persistedMap = JSON.parse(persistedStorage.getItem("serverCredentialsBySer
 assert.equal(persistedMap["77"].username, "new-user");
 assert.equal(persistedMap["77"].port, 2022);
 
+const switchedServerStorage = new FakeStorage({
+  serverCredentialServerId: "10",
+  serverCredentialsByServer: JSON.stringify({
+    "10": { username: "srv10", password: "pass10", port: 22 },
+    "20": { username: "srv20", password: "pass20", port: 2022 },
+  }),
+});
+const selectedServer20Result = resolveValidatedServerCredentials(
+  switchedServerStorage,
+  "20"
+);
+assert.equal(selectedServer20Result.valid, false);
+assert.match(selectedServer20Result.reason, /different server/i);
+
+persistScopedServerCredentials(switchedServerStorage, "20", {
+  username: "srv20",
+  password: "pass20",
+  port: 2022,
+});
+const refreshedServer20Result = resolveValidatedServerCredentials(
+  switchedServerStorage,
+  "20"
+);
+assert.equal(refreshedServer20Result.valid, true);
+assert.equal(refreshedServer20Result.credentials.username, "srv20");
+assert.equal(refreshedServer20Result.credentials.port, 2022);
+
 console.log("serverCredentials tests passed");

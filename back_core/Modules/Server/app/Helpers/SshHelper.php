@@ -3,9 +3,8 @@
 namespace Modules\Server\Helpers;
 
 use Exception;
-use Illuminate\Validation\ValidationException;
+use Modules\Server\Exceptions\CommandExecutionException;
 use phpseclib3\Net\SSH2;
-use InvalidArgumentException;
 use Illuminate\Support\Facades\Auth;
 
 class SshHelper
@@ -14,11 +13,25 @@ class SshHelper
 
     public function __construct(private $server_ip, private $username, private $password, private $port = 22, private $timeout = 5)
     {
-        $this->ssh = new SSH2($server_ip, $this->port, $this->timeout);
+        try {
+            $this->ssh = new SSH2($server_ip, $this->port, $this->timeout);
+        } catch (\Throwable $exception) {
+            throw new CommandExecutionException(
+                'ssh_connection_failed',
+                'Unable to establish SSH connection to remote server.',
+                ['exception' => $exception->getMessage()],
+                502
+            );
+        }
 
         if (!$this->ssh->login($username, $password)) {
             $this->logActivity('failed-connection-server', 'constructor');
-                throw ValidationException::withMessages(['server-login' => 'Your server login credentials are incorrect.']);
+            throw new CommandExecutionException(
+                'ssh_login_failed',
+                'SSH login failed. Username/password/port is invalid.',
+                ['host' => $this->server_ip, 'port' => $this->port],
+                401
+            );
         }
     }
 
@@ -83,19 +96,22 @@ class SshHelper
 public function runCommandModule(string $command, string $typeCommand, string $method): string
 {
     try {
-        // تایم‌اوت را می‌توانید نگه دارید، اما با exec معمولا فقط در صورت طول کشیدن خود دستور اعمال می‌شود
         $this->ssh->setTimeout(5);
-
-        // ترکیب تمام مراحل در یک دستور خطی
-        // پسورد از طریق pipe به sudo داده می‌شود و دستور داخل bash اجرا می‌گردد
         $fullCommand = sprintf(
-            "echo %s | sudo -S -p '' bash -c %s",
+            "echo %s | sudo -S -p '' bash -lc %s 2>&1; echo '__CMD_EXIT__:'$?",
             escapeshellarg($this->password),
             escapeshellarg($command)
         );
 
-        // اجرای یکباره دستور (جایگزین ۳ مرحله write و read)
         $output = $this->ssh->exec($fullCommand);
+        if ($output === false) {
+            throw new CommandExecutionException(
+                'ssh_connection_failed',
+                'SSH command execution failed because the remote channel was interrupted.',
+                ['command' => $command],
+                502
+            );
+        }
 
         $this->logActivity($typeCommand, $method, [
             'command' => $command,
@@ -104,13 +120,20 @@ public function runCommandModule(string $command, string $typeCommand, string $m
 
         return $output;
 
+    } catch (CommandExecutionException $exception) {
+        throw $exception;
     } catch (Exception $e) {
         $this->logActivity('module-error', $method, [
             'command' => $command,
             'error' => $e->getMessage()
         ]);
 
-        throw $e;
+        throw new CommandExecutionException(
+            'ssh_connection_failed',
+            'SSH command execution failed unexpectedly.',
+            ['command' => $command, 'exception' => $e->getMessage()],
+            502
+        );
     }
 }
 

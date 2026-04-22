@@ -3,15 +3,14 @@
 namespace Modules\Server\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use Modules\Server\Exceptions\CommandExecutionException;
 use Modules\Server\Helpers\SshHelper;
 use Modules\Server\Http\Requests\Module\restartServiceModuleRequest;
 use Modules\Server\Http\Requests\SshServer\SshServerRequest;
 use Modules\Server\Models\Module;
 use Modules\Server\Models\Server;
-use Modules\Server\Utility\CommandOutputAnalyzerService;
 use Modules\Server\Utility\ModuleIdentity;
 use Modules\SystemSetting\Http\Requests\ShowInterfaceVmRequest;
 
@@ -76,134 +75,178 @@ class CommandController extends Controller
         string $typeCommand,
         string $method,
         int $timeout = 5
-    ) {
+    ): string {
         $username = $credentials['username'] ?? null;
         $password = $credentials['password'] ?? null;
-
-        // ✅ IMPORTANT: read port from credentials (coming from frontend)
         $port = isset($credentials['port']) ? (int) $credentials['port'] : 22;
 
-        // optional debug log (remove later if you want)
-        // Log::info("SSH CONNECT -> IP={$server->ip} PORT={$port} USER={$username}");
-
         if ($server->is_down == Server::OFF) {
-            throw ValidationException::withMessages(['server' => 'this server off']);
+            throw new CommandExecutionException(
+                'server_off',
+                "The selected server ({$server->name}) is offline.",
+                ['server_id' => $server->id],
+                422
+            );
         }
 
+        $sshHelper = new SshHelper($server->ip, $username, $password, $port, $timeout);
+        $outputCommand = $sshHelper->runCommandModule($command, $typeCommand, $method);
+
+        return $this->assertCommandOutputHasNoFailures($outputCommand, $command, $server);
+    }
+
+    private function assertCommandOutputHasNoFailures(string $rawOutput, string $command, Server $server): string
+    {
+        $rawOutput = (string) $rawOutput;
+        $cleanOutput = preg_replace('/\x1b\[[0-9;?]*[a-zA-Z]/', '', $rawOutput) ?? $rawOutput;
+
+        $exitCode = 0;
+        if (preg_match('/__CMD_EXIT__:(\d+)/', $cleanOutput, $matches)) {
+            $exitCode = (int) $matches[1];
+            $cleanOutput = trim(preg_replace('/__CMD_EXIT__:\d+\s*$/', '', $cleanOutput) ?? $cleanOutput);
+        }
+
+        $lower = mb_strtolower($cleanOutput);
+
+        if (str_contains($lower, 'sudo:') || str_contains($lower, 'a password is required') || str_contains($lower, 'is not in the sudoers file')) {
+            throw new CommandExecutionException(
+                'sudo_failed',
+                'SSH connected, but sudo/systemctl execution failed.',
+                ['command' => $command, 'output' => $cleanOutput, 'server_id' => $server->id]
+            );
+        }
+
+        if (preg_match('/(unit\s+.+\s+could\s+not\s+be\s+found|not-found|loaded:\s+not-found)/i', $cleanOutput)) {
+            throw new CommandExecutionException(
+                'service_not_found',
+                'Service unit was not found on the server.',
+                ['command' => $command, 'output' => $cleanOutput, 'server_id' => $server->id]
+            );
+        }
+
+        if ($exitCode !== 0) {
+            throw new CommandExecutionException(
+                'service_command_failed',
+                'Service command failed on the remote server.',
+                ['command' => $command, 'output' => $cleanOutput, 'exit_code' => $exitCode, 'server_id' => $server->id]
+            );
+        }
+
+        return $cleanOutput;
+    }
+
+    private function serviceResponse(callable $callback): JsonResponse
+    {
         try {
-            $sshHelper = new SshHelper($server->ip, $username, $password, $port, $timeout);
-
-            $outputCommand = $sshHelper->runCommandModule($command, $typeCommand, $method);
-
-            $errors = CommandOutputAnalyzerService::extractErrors($outputCommand);
-            if (!empty($errors)) {
-                throw ValidationException::withMessages($errors);
-            }
-
-            return $outputCommand;
-
-        } catch (ValidationException $e) {
-            throw $e;
-
-        } catch (\InvalidArgumentException $e) {
-            $message = $e->getMessage();
-            $message = preg_replace('/\x1b\[[0-9;]*m/', '', $message);
-            $message = preg_replace('/\r?\n.*?\[root@localhost.*?$/', '', $message);
-
-            preg_match_all('/\b(FATAL|ERROR):\s.*?(?=\s\(.*?\)|$)/m', $message, $matches);
-
-            $formattedMessages = $matches[0] ?? [];
-            $separatedMessages = [];
-
-            foreach ($formattedMessages as $index => $msg) {
-                $separatedMessages["Error-" . ($index + 1)] = $msg;
-            }
-
-            throw ValidationException::withMessages(['message' => $separatedMessages]);
-
-        } catch (\Exception $e) {
-            throw ValidationException::withMessages(['message' => $e->getMessage()]);
+            return $callback();
+        } catch (CommandExecutionException $exception) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => $exception->errorCode,
+                    'message' => $exception->getMessage(),
+                    'details' => $exception->details,
+                ],
+            ], $exception->httpStatus);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'validation_failed',
+                    'message' => 'Validation failed.',
+                    'details' => $exception->errors(),
+                ],
+            ], 422);
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'service_command_failed',
+                    'message' => 'Service command failed on the remote server.',
+                    'details' => ['exception' => $exception->getMessage()],
+                ],
+            ], 500);
         }
     }
 
     public function restartServiceModule(restartServiceModuleRequest $request)
     {
-        $credentials = $request->validated();
+        return $this->serviceResponse(function () use ($request) {
+            $credentials = $request->validated();
+            $server = Server::findOrFail($credentials['server_id']);
+            $module = Module::findOrFail($credentials['module_id']);
+            $command = 'systemctl restart ' . ModuleIdentity::serviceUnitName($module);
 
-        $server = Server::find($credentials['server_id']);
-        $module = Module::find($credentials['module_id']);
+            $output = $this->runCommandModuleToServer(
+                $credentials,
+                $command,
+                $server,
+                'restartModel',
+                'restartServiceModule'
+            );
 
-        $command = 'systemctl restart ' . ModuleIdentity::serviceUnitName($module);
-
-        $output = $this->runCommandModuleToServer(
-            $credentials,
-            $command,
-            $server,
-            'restartModel',
-            'restartServiceModule'
-        );
-
-        return response()->json(['success' => true, 'message' => $output]);
+            return response()->json(['success' => true, 'data' => ['output' => $output]]);
+        });
     }
 
     public function startServiceModule(restartServiceModuleRequest $request)
     {
-        $credentials = $request->validated();
+        return $this->serviceResponse(function () use ($request) {
+            $credentials = $request->validated();
+            $server = Server::findOrFail($credentials['server_id']);
+            $module = Module::findOrFail($credentials['module_id']);
+            $command = 'systemctl start ' . ModuleIdentity::serviceUnitName($module);
 
-        $server = Server::find($credentials['server_id']);
-        $module = Module::find($credentials['module_id']);
+            $output = $this->runCommandModuleToServer(
+                $credentials,
+                $command,
+                $server,
+                'startModule',
+                'startServiceModule'
+            );
 
-        $command = 'systemctl start ' . ModuleIdentity::serviceUnitName($module);
-
-        $output = $this->runCommandModuleToServer(
-            $credentials,
-            $command,
-            $server,
-            'startModule',
-            'startServiceModule'
-        );
-
-        return response()->json(['success' => true, 'message' => $output]);
+            return response()->json(['success' => true, 'data' => ['output' => $output]]);
+        });
     }
 
     public function stopServiceModule(restartServiceModuleRequest $request)
     {
-        $credentials = $request->validated();
+        return $this->serviceResponse(function () use ($request) {
+            $credentials = $request->validated();
+            $server = Server::findOrFail($credentials['server_id']);
+            $module = Module::findOrFail($credentials['module_id']);
+            $command = 'systemctl stop ' . ModuleIdentity::serviceUnitName($module);
 
-        $server = Server::find($credentials['server_id']);
-        $module = Module::find($credentials['module_id']);
+            $output = $this->runCommandModuleToServer(
+                $credentials,
+                $command,
+                $server,
+                'stopModule',
+                'stopServiceModule'
+            );
 
-        $command = 'systemctl stop ' . ModuleIdentity::serviceUnitName($module);
-
-        $output = $this->runCommandModuleToServer(
-            $credentials,
-            $command,
-            $server,
-            'stopModule',
-            'stopServiceModule'
-        );
-
-        return response()->json(['success' => true, 'message' => $output]);
+            return response()->json(['success' => true, 'data' => ['output' => $output]]);
+        });
     }
 
     public function statusServiceModule(restartServiceModuleRequest $request)
     {
-        $credentials = $request->validated();
+        return $this->serviceResponse(function () use ($request) {
+            $credentials = $request->validated();
+            $server = Server::findOrFail($credentials['server_id']);
+            $module = Module::findOrFail($credentials['module_id']);
+            $command = 'systemctl status ' . ModuleIdentity::serviceUnitName($module);
 
-        $server = Server::find($credentials['server_id']);
-        $module = Module::find($credentials['module_id']);
+            $output = $this->runCommandModuleToServer(
+                $credentials,
+                $command,
+                $server,
+                'statusModule',
+                'statusServiceModule'
+            );
 
-        $command = 'systemctl status ' . ModuleIdentity::serviceUnitName($module);
-
-        $output = $this->runCommandModuleToServer(
-            $credentials,
-            $command,
-            $server,
-            'statusModule',
-            'statusServiceModule'
-        );
-
-        return response()->json(['success' => true, 'message' => $output]);
+            return response()->json(['success' => true, 'data' => ['output' => $output]]);
+        });
     }
 
        public function PingServer(SshServerRequest $request)

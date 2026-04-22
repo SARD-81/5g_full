@@ -9,6 +9,10 @@ import favIconMCI from "../img/logo-mci-02 (1).svg";
 import specialKeys, { dataModules } from "./dataModule.js"; // وارد کردن داده‌ها از data.js// data.js
 import { error } from "jquery";
 import VersioningModule from "./VersioningModules.js";
+import {
+  mapServiceError,
+  resolveValidatedServerCredentials,
+} from "./serverCredentials.js";
 let project = import.meta.env.VITE_API_PROJECT;
 
 if (project == "BBDH") {
@@ -1010,19 +1014,32 @@ async function StartModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  let userName = localStorage.getItem("userNameServer");
-  let password = localStorage.getItem("passwordServer");
-  let port = localStorage.getItem("port");
+  const selectedServerId = localStorage.getItem("server");
+  const credentialResult = resolveValidatedServerCredentials(
+    localStorage,
+    selectedServerId
+  );
+
+  if (!credentialResult.valid) {
+    document.getElementById("idLoading").style.display = "none";
+    Toastify({
+      text: credentialResult.reason,
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
 
   await useApi({
     method: "post",
     url: `start-service-config`,
     data: {
-      server_id: localStorage.getItem("server"),
+      server_id: selectedServerId,
       module_id: id,
-      username: userName,
-      password: password,
-      ...(!!port ? { port } : {}),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
     },
     callback: async function (data) {
       Toastify({
@@ -1030,6 +1047,15 @@ async function StartModules(id) {
         style: {
           background:
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+        },
+      }).showToast();
+    },
+    errorCallback: function (errorResponse) {
+      const backendError = errorResponse?.data?.error || {};
+      Toastify({
+        text: mapServiceError(backendError.code, backendError.message),
+        style: {
+          background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
         },
       }).showToast();
     },
@@ -1048,19 +1074,32 @@ async function StopModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  let userName = localStorage.getItem("userNameServer");
-  let password = localStorage.getItem("passwordServer");
-  let port = localStorage.getItem("port");
+  const selectedServerId = localStorage.getItem("server");
+  const credentialResult = resolveValidatedServerCredentials(
+    localStorage,
+    selectedServerId
+  );
+
+  if (!credentialResult.valid) {
+    document.getElementById("idLoading").style.display = "none";
+    Toastify({
+      text: credentialResult.reason,
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
 
   await useApi({
     method: "post",
     url: `stop-service-config`,
     data: {
-      server_id: localStorage.getItem("server"),
+      server_id: selectedServerId,
       module_id: id,
-      username: userName,
-      password: password,
-      ...(!!port ? { port } : {}),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
     },
     callback: async function (data) {
       Toastify({
@@ -1068,6 +1107,15 @@ async function StopModules(id) {
         style: {
           background:
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+        },
+      }).showToast();
+    },
+    errorCallback: function (errorResponse) {
+      const backendError = errorResponse?.data?.error || {};
+      Toastify({
+        text: mapServiceError(backendError.code, backendError.message),
+        style: {
+          background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
         },
       }).showToast();
     },
@@ -1086,19 +1134,32 @@ async function RestartModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  let userName = localStorage.getItem("userNameServer");
-  let password = localStorage.getItem("passwordServer");
-  let port = localStorage.getItem("port");
+  const selectedServerId = localStorage.getItem("server");
+  const credentialResult = resolveValidatedServerCredentials(
+    localStorage,
+    selectedServerId
+  );
+
+  if (!credentialResult.valid) {
+    document.getElementById("idLoading").style.display = "none";
+    Toastify({
+      text: credentialResult.reason,
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
 
   await useApi({
     method: "post",
     url: `restart-service-config`,
     data: {
-      server_id: localStorage.getItem("server"),
+      server_id: selectedServerId,
       module_id: id,
-      username: userName,
-      password: password,
-      ...(!!port ? { port } : {}),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
     },
     callback: async function () {
       Toastify({
@@ -1106,6 +1167,15 @@ async function RestartModules(id) {
         style: {
           background:
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+        },
+      }).showToast();
+    },
+    errorCallback: function (errorResponse) {
+      const backendError = errorResponse?.data?.error || {};
+      Toastify({
+        text: mapServiceError(backendError.code, backendError.message),
+        style: {
+          background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
         },
       }).showToast();
     },
@@ -1156,23 +1226,38 @@ async function StatusModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  let userName = localStorage.getItem("userNameServer");
-  let password = localStorage.getItem("passwordServer");
-  let port = localStorage.getItem("port");
+  const selectedServerId = localStorage.getItem("server");
+  const credentialResult = resolveValidatedServerCredentials(
+    localStorage,
+    selectedServerId
+  );
+
+  if (!credentialResult.valid) {
+    document.getElementById("idLoading").style.display = "none";
+    document.getElementById("textStatus").textContent = credentialResult.reason;
+    Toastify({
+      text: credentialResult.reason,
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
 
   await useApi({
     method: "post",
     url: `status-service-config`,
     data: {
-      server_id: localStorage.getItem("server"),
+      server_id: selectedServerId,
       module_id: id,
-      username: userName,
-      password: password,
-      ...(!!port ? { port } : {}),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
     },
     callback: async function (data) {
-      if (data.message) {
-        let msg = data?.message?.replace(/\x1b\[[0-9;?]*[hlmKG]/g, "");
+      const backendOutput = data?.data?.output || "";
+      if (backendOutput) {
+        let msg = backendOutput?.replace(/\x1b\[[0-9;?]*[hlmKG]/g, "");
 
         // رنگی کردن کلمات
         msg = msg
@@ -1196,28 +1281,8 @@ async function StatusModules(id) {
 
         document.getElementById("textStatus").innerHTML = msg;
       } else {
-        let msg = data?.replace(/\x1b\[[0-9;?]*[hlmKG]/g, "");
-
-        msg = msg
-          .replace(/\bfailed\b/gi, `<span style="color:red;">failed</span>`)
-          .replace(
-            /\b(running|exited)\b/gi,
-            `<span style="color:darkgreen;">$1</span>`
-          )
-          .replace(
-            /\b(activating|reloading)\b/gi,
-            `<span style="color:gold;">$1</span>`
-          )
-          .replace(
-            /\b(inactive|dead)\b/gi,
-            `<span style="color:gray;">$1</span>`
-          )
-          .replace(
-            /\b(not-found|bad)\b/gi,
-            `<span style="color:red;">$1</span>`
-          );
-
-        document.getElementById("textStatus").innerHTML = msg;
+        document.getElementById("textStatus").textContent =
+          "No service status output was returned from server.";
       }
 
       Toastify({
@@ -1228,9 +1293,13 @@ async function StatusModules(id) {
         },
       }).showToast();
     },
-    errorCallback: function () {
-      document.getElementById("textStatus").textContent =
-        "SSH was not successful.";
+    errorCallback: function (errorResponse) {
+      const backendError = errorResponse?.data?.error || {};
+      const uiMessage = mapServiceError(
+        backendError.code,
+        backendError.message || "Request failed."
+      );
+      document.getElementById("textStatus").textContent = uiMessage;
     },
     // errorCallback: function (data) {
     //   let message = data.data.error.message;

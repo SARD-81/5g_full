@@ -7,6 +7,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 use Mockery;
+use Modules\Server\Exceptions\CommandExecutionException;
 use Modules\Server\Models\Module;
 use Modules\Server\Models\Server;
 use Modules\User\Models\Permission;
@@ -171,6 +172,88 @@ class ModuleLifecycleIdentityTest extends TestCase
             'password' => 'p',
             'port' => 22,
         ])->assertOk();
+    }
+
+    private function makeServicePayload(Module $module, Server $server): array
+    {
+        return [
+            'module_id' => $module->id,
+            'server_id' => $server->id,
+            'username' => 'u',
+            'password' => 'p',
+            'port' => 22,
+        ];
+    }
+
+    public function test_wrong_ssh_credentials_returns_ssh_login_failed_code(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'MME', 'service_key' => 'mme', 'type' => '5gc']);
+        $server = $this->createServer('Srv-Auth-Fail');
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')
+            ->andThrow(new CommandExecutionException('ssh_login_failed', 'SSH login failed. Username/password/port is invalid.', [], 401));
+
+        $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
+            ->assertStatus(401)
+            ->assertJsonPath('error.code', 'ssh_login_failed');
+    }
+
+    public function test_missing_remote_service_unit_returns_service_not_found_code(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'MME', 'service_key' => 'mme', 'type' => '5gc']);
+        $server = $this->createServer('Srv-Service-Missing');
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->andReturn("Unit bbdh-mmed.service could not be found.\n__CMD_EXIT__:5");
+
+        $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'service_not_found');
+    }
+
+    public function test_systemctl_failure_returns_service_command_failed_code(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'MME', 'service_key' => 'mme', 'type' => '5gc']);
+        $server = $this->createServer('Srv-Systemctl-Fail');
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->andReturn("Failed to start bbdh MME Daemon.\n__CMD_EXIT__:1");
+
+        $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'service_command_failed');
+    }
+
+    public function test_missing_credentials_returns_validation_failed_code(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        Sanctum::actingAs($user);
+        $module = Module::query()->create(['name' => 'MME', 'service_key' => 'mme', 'type' => '5gc']);
+        $server = $this->createServer('Srv-Validation');
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $this->postJson('/api/start-service-config', [
+            'module_id' => $module->id,
+            'server_id' => $server->id,
+        ])->assertStatus(422)
+            ->assertJsonPath('error.code', 'validation_failed');
     }
 
     public function test_duplicate_create_does_not_overwrite_existing_yaml_target(): void

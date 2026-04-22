@@ -96,9 +96,9 @@ class SshHelper
 public function runCommandModule(string $command, string $typeCommand, string $method): string
 {
     try {
-        $this->ssh->setTimeout(5);
+        $this->ssh->setTimeout($this->timeout);
         $fullCommand = sprintf(
-            "echo %s | sudo -S -p '' bash -lc %s 2>&1; echo '__CMD_EXIT__:'$?",
+            "TMP_OUT=$(mktemp) && TMP_ERR=$(mktemp) && echo %s | sudo -S -p '' bash -lc %s >\"$TMP_OUT\" 2>\"$TMP_ERR\"; __RC=$?; printf '__CMD_STDOUT_START__\\n'; cat \"$TMP_OUT\"; printf '\\n__CMD_STDOUT_END__\\n__CMD_STDERR_START__\\n'; cat \"$TMP_ERR\"; printf '\\n__CMD_STDERR_END__\\n__CMD_EXIT__:%s\\n' \"$__RC\"; rm -f \"$TMP_OUT\" \"$TMP_ERR\"",
             escapeshellarg($this->password),
             escapeshellarg($command)
         );
@@ -113,12 +113,73 @@ public function runCommandModule(string $command, string $typeCommand, string $m
             );
         }
 
+        if (method_exists($this->ssh, 'isTimeout') && $this->ssh->isTimeout()) {
+            throw new CommandExecutionException(
+                'command_timeout',
+                'Remote command timed out before completion.',
+                ['command' => $command],
+                504
+            );
+        }
+
+        $result = $this->parseCommandOutput((string) $output);
+        $combinedOutput = trim($result['stdout'] . "\n" . $result['stderr']);
+        $lowerOutput = mb_strtolower($combinedOutput);
+
+        if ($combinedOutput === '') {
+            throw new CommandExecutionException(
+                'unexpected_remote_error',
+                'Remote server returned an empty response.',
+                ['command' => $command, 'exit_code' => $result['exit_code']],
+                502
+            );
+        }
+
+        if (preg_match('/(permission denied|a terminal is required|no tty present|sudoers|incorrect password|authentication failure)/i', $combinedOutput)) {
+            throw new CommandExecutionException(
+                'sudo_failed',
+                'SSH connected, but sudo/systemctl execution failed.',
+                ['command' => $command, 'output' => $combinedOutput, 'exit_code' => $result['exit_code']]
+            );
+        }
+
+        if (preg_match('/(unit\s+.+\s+could\s+not\s+be\s+found|loaded:\s+not-found|not-found)/i', $combinedOutput)) {
+            throw new CommandExecutionException(
+                'service_not_found',
+                'The expected service unit was not found on the server.',
+                ['command' => $command, 'output' => $combinedOutput, 'exit_code' => $result['exit_code']]
+            );
+        }
+
+        if (preg_match('/(connection reset|connection closed|broken pipe|transport endpoint|unable to open channel)/i', $lowerOutput)) {
+            throw new CommandExecutionException(
+                'ssh_connection_failed',
+                'Could not establish SSH command channel to remote server.',
+                ['command' => $command, 'output' => $combinedOutput],
+                502
+            );
+        }
+
+        if ($result['exit_code'] !== 0) {
+            $errorCode = str_contains($command, 'systemctl') ? 'service_command_failed' : 'unexpected_remote_error';
+            throw new CommandExecutionException(
+                $errorCode,
+                $errorCode === 'service_command_failed'
+                    ? 'The service command reached the server but failed to execute successfully.'
+                    : 'Remote command execution failed.',
+                ['command' => $command, 'output' => $combinedOutput, 'exit_code' => $result['exit_code']]
+            );
+        }
+
         $this->logActivity($typeCommand, $method, [
             'command' => $command,
-            'output' => $output
+            'output' => $combinedOutput,
+            'stdout' => $result['stdout'],
+            'stderr' => $result['stderr'],
+            'exit_code' => $result['exit_code'],
         ]);
 
-        return $output;
+        return $combinedOutput;
 
     } catch (CommandExecutionException $exception) {
         throw $exception;
@@ -136,6 +197,28 @@ public function runCommandModule(string $command, string $typeCommand, string $m
         );
     }
 }
+
+    private function parseCommandOutput(string $output): array
+    {
+        $stdout = $output;
+        $stderr = '';
+        $exitCode = 0;
+
+        if (preg_match('/__CMD_STDOUT_START__\n(?P<stdout>.*)\n__CMD_STDOUT_END__\n__CMD_STDERR_START__\n(?P<stderr>.*)\n__CMD_STDERR_END__\n__CMD_EXIT__:(?P<code>\d+)/s', $output, $matches)) {
+            $stdout = trim($matches['stdout']);
+            $stderr = trim($matches['stderr']);
+            $exitCode = (int) $matches['code'];
+        } elseif (preg_match('/__CMD_EXIT__:(\d+)/', $output, $matches)) {
+            $exitCode = (int) $matches[1];
+            $stdout = trim((string) preg_replace('/__CMD_EXIT__:\d+\s*$/', '', $output));
+        }
+
+        return [
+            'stdout' => $stdout,
+            'stderr' => $stderr,
+            'exit_code' => $exitCode,
+        ];
+    }
 
 
     public function pingRunCommand ($command)

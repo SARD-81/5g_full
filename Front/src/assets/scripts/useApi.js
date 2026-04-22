@@ -186,7 +186,7 @@ export default async function (props) {
     console.log("HEADERS:", error.response?.headers);
 
     if (errorCallback && typeof errorCallback === "function")
-      errorCallback(error.response);
+      errorCallback(error.response?.data, error.response);
 
     handleError(error);
   }
@@ -206,8 +206,21 @@ const handleError = (error) => {
   const MSG =
     error.response.data.msg ||
     error.response.data.message ||
+    error.response.data.error?.message ||
     error.msg ||
     error.message;
+
+  if (error.response.data.error_code) {
+    const structuredMessage =
+      error.response.data.message || error.response.data.error_code;
+    Toastify({
+      text: structuredMessage,
+      style: {
+        background: "linear-gradient(to right,rgb(255, 0, 0),rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
 
   if (data.errors !== undefined && typeof data.errors === "object") {
     // Case 1: Object of errors

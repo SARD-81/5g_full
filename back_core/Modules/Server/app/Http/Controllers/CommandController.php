@@ -90,49 +90,7 @@ class CommandController extends Controller
         }
 
         $sshHelper = new SshHelper($server->ip, $username, $password, $port, $timeout);
-        $outputCommand = $sshHelper->runCommandModule($command, $typeCommand, $method);
-
-        return $this->assertCommandOutputHasNoFailures($outputCommand, $command, $server);
-    }
-
-    private function assertCommandOutputHasNoFailures(string $rawOutput, string $command, Server $server): string
-    {
-        $rawOutput = (string) $rawOutput;
-        $cleanOutput = preg_replace('/\x1b\[[0-9;?]*[a-zA-Z]/', '', $rawOutput) ?? $rawOutput;
-
-        $exitCode = 0;
-        if (preg_match('/__CMD_EXIT__:(\d+)/', $cleanOutput, $matches)) {
-            $exitCode = (int) $matches[1];
-            $cleanOutput = trim(preg_replace('/__CMD_EXIT__:\d+\s*$/', '', $cleanOutput) ?? $cleanOutput);
-        }
-
-        $lower = mb_strtolower($cleanOutput);
-
-        if (str_contains($lower, 'sudo:') || str_contains($lower, 'a password is required') || str_contains($lower, 'is not in the sudoers file')) {
-            throw new CommandExecutionException(
-                'sudo_failed',
-                'SSH connected, but sudo/systemctl execution failed.',
-                ['command' => $command, 'output' => $cleanOutput, 'server_id' => $server->id]
-            );
-        }
-
-        if (preg_match('/(unit\s+.+\s+could\s+not\s+be\s+found|not-found|loaded:\s+not-found)/i', $cleanOutput)) {
-            throw new CommandExecutionException(
-                'service_not_found',
-                'Service unit was not found on the server.',
-                ['command' => $command, 'output' => $cleanOutput, 'server_id' => $server->id]
-            );
-        }
-
-        if ($exitCode !== 0) {
-            throw new CommandExecutionException(
-                'service_command_failed',
-                'Service command failed on the remote server.',
-                ['command' => $command, 'output' => $cleanOutput, 'exit_code' => $exitCode, 'server_id' => $server->id]
-            );
-        }
-
-        return $cleanOutput;
+        return $sshHelper->runCommandModule($command, $typeCommand, $method);
     }
 
     private function serviceResponse(callable $callback): JsonResponse
@@ -142,29 +100,23 @@ class CommandController extends Controller
         } catch (CommandExecutionException $exception) {
             return response()->json([
                 'success' => false,
-                'error' => [
-                    'code' => $exception->errorCode,
-                    'message' => $exception->getMessage(),
-                    'details' => $exception->details,
-                ],
+                'error_code' => $exception->errorCode,
+                'message' => $exception->getMessage(),
+                'details' => $exception->details,
             ], $exception->httpStatus);
         } catch (ValidationException $exception) {
             return response()->json([
                 'success' => false,
-                'error' => [
-                    'code' => 'validation_failed',
-                    'message' => 'Validation failed.',
-                    'details' => $exception->errors(),
-                ],
+                'error_code' => 'validation_failed',
+                'message' => 'Validation failed.',
+                'details' => $exception->errors(),
             ], 422);
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'error' => [
-                    'code' => 'service_command_failed',
-                    'message' => 'Service command failed on the remote server.',
-                    'details' => ['exception' => $exception->getMessage()],
-                ],
+                'error_code' => 'unexpected_remote_error',
+                'message' => 'An unexpected remote command error occurred.',
+                'details' => ['exception' => $exception->getMessage()],
             ], 500);
         }
     }
@@ -185,7 +137,7 @@ class CommandController extends Controller
                 'restartServiceModule'
             );
 
-            return response()->json(['success' => true, 'data' => ['output' => $output]]);
+            return response()->json(['success' => true, 'message' => 'Service restart command executed successfully.', 'data' => ['output' => $output]]);
         });
     }
 
@@ -205,7 +157,7 @@ class CommandController extends Controller
                 'startServiceModule'
             );
 
-            return response()->json(['success' => true, 'data' => ['output' => $output]]);
+            return response()->json(['success' => true, 'message' => 'Service start command executed successfully.', 'data' => ['output' => $output]]);
         });
     }
 
@@ -225,7 +177,7 @@ class CommandController extends Controller
                 'stopServiceModule'
             );
 
-            return response()->json(['success' => true, 'data' => ['output' => $output]]);
+            return response()->json(['success' => true, 'message' => 'Service stop command executed successfully.', 'data' => ['output' => $output]]);
         });
     }
 
@@ -245,7 +197,7 @@ class CommandController extends Controller
                 'statusServiceModule'
             );
 
-            return response()->json(['success' => true, 'data' => ['output' => $output]]);
+            return response()->json(['success' => true, 'message' => 'Service status command executed successfully.', 'data' => ['output' => $output]]);
         });
     }
 

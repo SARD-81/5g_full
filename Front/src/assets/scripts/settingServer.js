@@ -10,6 +10,7 @@ import specialKeys, { dataModules } from "./dataModule.js"; // وارد کردن
 import { error } from "jquery";
 import VersioningModule from "./VersioningModules.js";
 import {
+  getBackendCommandError,
   mapServiceError,
   resolveValidatedServerCredentials,
 } from "./serverCredentials.js";
@@ -299,9 +300,11 @@ async function backToBefore() {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  let userName = localStorage.getItem("userNameServer");
-  let password = localStorage.getItem("passwordServer");
-  let port = localStorage.getItem("port");
+  const credentialResult = resolveServerCredentialsForAction(TheDesiredServer, {
+    requireRecovery: true,
+    statusTargetId: "textStatus",
+  });
+  if (!credentialResult.valid) return;
 
   await useApi({
     method: "post",
@@ -309,9 +312,9 @@ async function backToBefore() {
     data: {
       server_id: TheDesiredServer,
       module_id: currentModuleId,
-      username: userName,
-      password: password,
-      ...(!!port ? { port } : {}),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
     },
     callback: async function (data) {
       UpdateJsons = false;
@@ -354,9 +357,11 @@ async function returnToTheFirstState() {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  let userName = localStorage.getItem("userNameServer");
-  let password = localStorage.getItem("passwordServer");
-  let port = localStorage.getItem("port");
+  const credentialResult = resolveServerCredentialsForAction(TheDesiredServer, {
+    requireRecovery: true,
+    statusTargetId: "textStatus",
+  });
+  if (!credentialResult.valid) return;
 
   await useApi({
     method: "post",
@@ -364,9 +369,9 @@ async function returnToTheFirstState() {
     data: {
       server_id: TheDesiredServer,
       module_id: currentModuleId,
-      username: userName,
-      password: password,
-      ...(!!port ? { port } : {}),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
     },
     callback: async function (data) {
       UpdateJsons = false;
@@ -954,9 +959,12 @@ async function ExportModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  let userName = localStorage.getItem("userNameServer");
-  let password = localStorage.getItem("passwordServer");
-  let port = localStorage.getItem("port");
+  const selectedServerId = localStorage.getItem("server");
+  const credentialResult = resolveServerCredentialsForAction(selectedServerId, {
+    requireRecovery: true,
+    statusTargetId: "textStatus",
+  });
+  if (!credentialResult.valid) return;
 
   await useApi({
     method: "post",
@@ -968,9 +976,9 @@ async function ExportModules(id) {
     data: {
       server_id: localStorage.getItem("server"),
       module_id: id,
-      username: userName,
-      password: password,
-      ...(!!port ? { port } : {}),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
     },
     callback: async function (data) {
       const text = await data.text(); // blob → text
@@ -1015,21 +1023,8 @@ async function StartModules(id) {
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
   const selectedServerId = localStorage.getItem("server");
-  const credentialResult = resolveValidatedServerCredentials(
-    localStorage,
-    selectedServerId
-  );
-
-  if (!credentialResult.valid) {
-    document.getElementById("idLoading").style.display = "none";
-    Toastify({
-      text: credentialResult.reason,
-      style: {
-        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
-      },
-    }).showToast();
-    return;
-  }
+  const credentialResult = resolveServerCredentialsForAction(selectedServerId);
+  if (!credentialResult.valid) return;
 
   await useApi({
     method: "post",
@@ -1050,8 +1045,8 @@ async function StartModules(id) {
         },
       }).showToast();
     },
-    errorCallback: function (errorResponse) {
-      const backendError = errorResponse?.data?.error || {};
+    errorCallback: function (errorPayload) {
+      const backendError = getBackendCommandError(errorPayload) || {};
       Toastify({
         text: mapServiceError(backendError.code, backendError.message),
         style: {
@@ -1075,21 +1070,8 @@ async function StopModules(id) {
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
   const selectedServerId = localStorage.getItem("server");
-  const credentialResult = resolveValidatedServerCredentials(
-    localStorage,
-    selectedServerId
-  );
-
-  if (!credentialResult.valid) {
-    document.getElementById("idLoading").style.display = "none";
-    Toastify({
-      text: credentialResult.reason,
-      style: {
-        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
-      },
-    }).showToast();
-    return;
-  }
+  const credentialResult = resolveServerCredentialsForAction(selectedServerId);
+  if (!credentialResult.valid) return;
 
   await useApi({
     method: "post",
@@ -1110,8 +1092,8 @@ async function StopModules(id) {
         },
       }).showToast();
     },
-    errorCallback: function (errorResponse) {
-      const backendError = errorResponse?.data?.error || {};
+    errorCallback: function (errorPayload) {
+      const backendError = getBackendCommandError(errorPayload) || {};
       Toastify({
         text: mapServiceError(backendError.code, backendError.message),
         style: {
@@ -1135,21 +1117,8 @@ async function RestartModules(id) {
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
   const selectedServerId = localStorage.getItem("server");
-  const credentialResult = resolveValidatedServerCredentials(
-    localStorage,
-    selectedServerId
-  );
-
-  if (!credentialResult.valid) {
-    document.getElementById("idLoading").style.display = "none";
-    Toastify({
-      text: credentialResult.reason,
-      style: {
-        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
-      },
-    }).showToast();
-    return;
-  }
+  const credentialResult = resolveServerCredentialsForAction(selectedServerId);
+  if (!credentialResult.valid) return;
 
   await useApi({
     method: "post",
@@ -1170,8 +1139,8 @@ async function RestartModules(id) {
         },
       }).showToast();
     },
-    errorCallback: function (errorResponse) {
-      const backendError = errorResponse?.data?.error || {};
+    errorCallback: function (errorPayload) {
+      const backendError = getBackendCommandError(errorPayload) || {};
       Toastify({
         text: mapServiceError(backendError.code, backendError.message),
         style: {
@@ -1227,22 +1196,10 @@ async function StatusModules(id) {
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
   const selectedServerId = localStorage.getItem("server");
-  const credentialResult = resolveValidatedServerCredentials(
-    localStorage,
-    selectedServerId
-  );
-
-  if (!credentialResult.valid) {
-    document.getElementById("idLoading").style.display = "none";
-    document.getElementById("textStatus").textContent = credentialResult.reason;
-    Toastify({
-      text: credentialResult.reason,
-      style: {
-        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
-      },
-    }).showToast();
-    return;
-  }
+  const credentialResult = resolveServerCredentialsForAction(selectedServerId, {
+    statusTargetId: "textStatus",
+  });
+  if (!credentialResult.valid) return;
 
   await useApi({
     method: "post",
@@ -1286,20 +1243,26 @@ async function StatusModules(id) {
       }
 
       Toastify({
-        text: "SSH was successful.",
+        text: "Service status fetched successfully.",
         style: {
           background:
             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
         },
       }).showToast();
     },
-    errorCallback: function (errorResponse) {
-      const backendError = errorResponse?.data?.error || {};
+    errorCallback: function (errorPayload) {
+      const backendError = getBackendCommandError(errorPayload) || {};
       const uiMessage = mapServiceError(
         backendError.code,
         backendError.message || "Request failed."
       );
       document.getElementById("textStatus").textContent = uiMessage;
+      Toastify({
+        text: uiMessage,
+        style: {
+          background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+        },
+      }).showToast();
     },
     // errorCallback: function (data) {
     //   let message = data.data.error.message;
@@ -1333,6 +1296,31 @@ async function StatusModules(id) {
     // },
   });
   document.getElementById("idLoading").style.display = "none";
+}
+
+function resolveServerCredentialsForAction(serverId, options = {}) {
+  const { statusTargetId = null, requireRecovery = false } = options;
+  const result = resolveValidatedServerCredentials(localStorage, serverId);
+
+  if (!result.valid) {
+    document.getElementById("idLoading").style.display = "none";
+    if (statusTargetId && document.getElementById(statusTargetId)) {
+      document.getElementById(statusTargetId).textContent = result.reason;
+    }
+
+    Toastify({
+      text: result.reason,
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+
+    if (requireRecovery && document.getElementById("offcanvasWithBothOptions")) {
+      window.location.href = "../views/dashboard.html";
+    }
+  }
+
+  return result;
 }
 
 /*************** */

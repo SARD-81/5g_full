@@ -200,7 +200,44 @@ class ModuleLifecycleIdentityTest extends TestCase
 
         $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
             ->assertStatus(401)
-            ->assertJsonPath('error.code', 'ssh_login_failed');
+            ->assertJsonPath('error_code', 'ssh_login_failed');
+    }
+
+    public function test_ssh_transport_failure_returns_ssh_connection_failed_code(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'AMF', 'service_key' => 'amf', 'type' => '5gc']);
+        $server = $this->createServer('Srv-Conn-Fail');
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')
+            ->andThrow(new CommandExecutionException('ssh_connection_failed', 'Unable to establish SSH connection to remote server.', [], 502));
+
+        $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
+            ->assertStatus(502)
+            ->assertJsonPath('error_code', 'ssh_connection_failed');
+    }
+
+    public function test_sudo_failure_returns_sudo_failed_code(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'SMF', 'service_key' => 'smf', 'type' => '5gc']);
+        $server = $this->createServer('Srv-Sudo-Fail');
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->andThrow(new CommandExecutionException('sudo_failed', 'SSH connected, but sudo/systemctl execution failed.', [], 422));
+
+        $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'sudo_failed');
     }
 
     public function test_missing_remote_service_unit_returns_service_not_found_code(): void
@@ -219,7 +256,7 @@ class ModuleLifecycleIdentityTest extends TestCase
 
         $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
             ->assertStatus(422)
-            ->assertJsonPath('error.code', 'service_not_found');
+            ->assertJsonPath('error_code', 'service_not_found');
     }
 
     public function test_systemctl_failure_returns_service_command_failed_code(): void
@@ -238,7 +275,26 @@ class ModuleLifecycleIdentityTest extends TestCase
 
         $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
             ->assertStatus(422)
-            ->assertJsonPath('error.code', 'service_command_failed');
+            ->assertJsonPath('error_code', 'service_command_failed');
+    }
+
+    public function test_timeout_returns_command_timeout_code(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'NSSF', 'service_key' => 'nssf', 'type' => '5gc']);
+        $server = $this->createServer('Srv-Timeout');
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->andThrow(new CommandExecutionException('command_timeout', 'Remote command timed out before completion.', [], 504));
+
+        $this->postJson('/api/start-service-config', $this->makeServicePayload($module, $server))
+            ->assertStatus(504)
+            ->assertJsonPath('error_code', 'command_timeout');
     }
 
     public function test_missing_credentials_returns_validation_failed_code(): void
@@ -253,7 +309,7 @@ class ModuleLifecycleIdentityTest extends TestCase
             'module_id' => $module->id,
             'server_id' => $server->id,
         ])->assertStatus(422)
-            ->assertJsonPath('error.code', 'validation_failed');
+            ->assertJsonPath('error_code', 'validation_failed');
     }
 
     public function test_duplicate_create_does_not_overwrite_existing_yaml_target(): void

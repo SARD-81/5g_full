@@ -3367,6 +3367,18 @@ async function server(x) {
       localStorage.setItem("passwordServer", password);
       localStorage.setItem("port", String(port || 22));
       localStorage.setItem("serverCredentialServerId", String(x));
+      const credentialsByServer = JSON.parse(
+        localStorage.getItem("serverCredentialsByServer") || "{}"
+      );
+      credentialsByServer[String(x)] = {
+        username,
+        password,
+        port: Number(port || 22),
+      };
+      localStorage.setItem(
+        "serverCredentialsByServer",
+        JSON.stringify(credentialsByServer)
+      );
       if (project == "BBDH") {
         location.href = "../views/settingServer.html";
       } else {

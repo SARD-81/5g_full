@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  getBackendCommandError,
   mapServiceError,
   resolveValidatedServerCredentials,
 } from "../src/assets/scripts/serverCredentials.js";
@@ -42,12 +43,35 @@ assert.match(missingResult.reason, /missing/i);
 
 assert.equal(
   mapServiceError("service_not_found", "fallback"),
-  "Service unit was not found on the server."
+  "The expected service unit was not found on the server."
 );
 assert.equal(
   mapServiceError("ssh_login_failed", "fallback"),
-  "SSH login failed. Username/password/port is invalid."
+  "SSH login failed. Please verify username, password, or port."
 );
 assert.equal(mapServiceError("unknown", "fallback"), "fallback");
+assert.equal(
+  mapServiceError("ssh_connection_failed", "fallback"),
+  "Could not establish SSH connection to the server."
+);
+
+const perServerStorage = new FakeStorage({
+  serverCredentialsByServer: JSON.stringify({
+    "10": { username: "srv-user", password: "srv-pass", port: 2022 },
+  }),
+});
+const perServerResult = resolveValidatedServerCredentials(perServerStorage, "10");
+assert.equal(perServerResult.valid, true);
+assert.equal(perServerResult.credentials.username, "srv-user");
+assert.equal(perServerResult.credentials.port, 2022);
+
+const commandError = getBackendCommandError({
+  success: false,
+  error_code: "sudo_failed",
+  message: "SSH connected, but sudo/systemctl execution failed.",
+  details: { command: "systemctl status x" },
+});
+assert.equal(commandError.code, "sudo_failed");
+assert.equal(commandError.details.command, "systemctl status x");
 
 console.log("serverCredentials tests passed");

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   getBackendCommandError,
   mapServiceError,
+  persistScopedServerCredentials,
   resolveValidatedServerCredentials,
 } from "../src/assets/scripts/serverCredentials.js";
 
@@ -12,6 +13,10 @@ class FakeStorage {
 
   getItem(key) {
     return this.values[key] ?? null;
+  }
+
+  setItem(key, value) {
+    this.values[key] = value;
   }
 }
 
@@ -73,5 +78,23 @@ const commandError = getBackendCommandError({
 });
 assert.equal(commandError.code, "sudo_failed");
 assert.equal(commandError.details.command, "systemctl status x");
+
+const persistedStorage = new FakeStorage({
+  userNameServer: "old-user",
+  passwordServer: "old-pass",
+  port: "22",
+});
+persistScopedServerCredentials(persistedStorage, "77", {
+  username: "new-user",
+  password: "new-pass",
+  port: 2022,
+});
+assert.equal(persistedStorage.getItem("serverCredentialServerId"), "77");
+assert.equal(persistedStorage.getItem("userNameServer"), "new-user");
+assert.equal(persistedStorage.getItem("passwordServer"), "new-pass");
+assert.equal(persistedStorage.getItem("port"), "2022");
+const persistedMap = JSON.parse(persistedStorage.getItem("serverCredentialsByServer"));
+assert.equal(persistedMap["77"].username, "new-user");
+assert.equal(persistedMap["77"].port, 2022);
 
 console.log("serverCredentials tests passed");

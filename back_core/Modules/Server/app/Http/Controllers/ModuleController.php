@@ -404,12 +404,18 @@ class ModuleController extends ApiController
 
         $sshHelper = new sshHelper($server->ip, $username, $password, $port);
 
-        // update module
-        $commandUpdateFileModule = 'echo ' . escapeshellarg($yamlContent) . ' > ' . $server['path_config'] . $serviceKey . '.yaml';
+                // update module
+        // مسیر فایل را با دقت می‌سازیم تا مشکل اسلش اضافی یا کم حل شود
+        $filePath = rtrim($server['path_config'], '/') . '/' . $serviceKey . '.yaml';
+        
+        // ابتدا فایل قبلی حذف و سپس فایل جدید ساخته می‌شود
+        $commandUpdateFileModule = 'rm -f ' . escapeshellarg($filePath) . ' && echo ' . escapeshellarg($yamlContent) . ' > ' . escapeshellarg($filePath);
+        
         return $sshHelper->runCommandModule($commandUpdateFileModule, $typeCommand, $method);
 
+
         // restart module
-//        $commandRestart = $server['path_run_config'] . 'bbdh-' . $moduleName . 'd' . ' restart';
+        // $commandRestart = $server['path_run_config'] . 'bbdh-' . $moduleName . 'd' . ' restart';
         // $output = $sshHelper->restartModule($commandRestart );
 
     }

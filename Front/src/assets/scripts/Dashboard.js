@@ -6104,69 +6104,101 @@ function iconDeleteModule() {
       const trElement = e.closest("tr");
       const dataId = trElement.getAttribute("data-id");
 
-      let valueNameModule = document.querySelector(`#tr${e.id} .td2`).innerHTML;
-      document.getElementById("spanRemoveModule").innerHTML = valueNameModule;
+      // استفاده از کلیدهای صحیح: moduleID و moduleName
+      const module = modulesInfo.find(m => m.moduleID == dataId);
+
+      // رفع مشکل undefined
+      document.getElementById("spanRemoveModule").innerHTML = module ? module.moduleName : "";
       trModuleRemove = `#tr${e.id}`;
       moduleIdRemove = dataId;
+
+      const container = document.getElementById("server-credentials-container");
+      container.innerHTML = ""; 
+
+      // ساخت فرم‌ها بر اساس آرایه serverIDs
+      if (module && module.serverIDs) {
+        // اطمینان از اینکه سرور آیدی‌ها به شکل آرایه هستند
+        let serverArray = Array.isArray(module.serverIDs) 
+            ? module.serverIDs 
+            : (typeof module.serverIDs === 'string' ? module.serverIDs.split(',') : [module.serverIDs]);
+
+        serverArray.forEach(serverId => {
+          if (!serverId || serverId === "null" || serverId === "") return;
+          
+          const serverForm = `
+            <div class="mb-3 border p-2 rounded">
+              <h6 class="text-primary mb-2">Server ID: ${serverId}</h6>
+              <div class="form-group">
+                <label class="form-label mb-1" style="font-size: 13px;">SSH Username</label>
+                <input type="text" class="form-control form-control-sm server-username-input" data-server-id="${serverId}" placeholder="e.g. root">
+              </div>
+              <div class="form-group mt-2">
+                <label class="form-label mb-1" style="font-size: 13px;">SSH Password</label>
+                <input type="password" class="form-control form-control-sm server-password-input" data-server-id="${serverId}" placeholder="Enter password">
+              </div>
+            </div>
+          `;
+          container.insertAdjacentHTML('beforeend', serverForm);
+        });
+      }
     });
   });
 }
 
-document
-  .getElementById("subDeletModule")
-  .addEventListener("click", function () {
-    DeleteModules();
-  });
+
+document.getElementById("subDeletModule").onclick = function () {
+  DeleteModules();
+};
+
 
 let pageModule;
 
 async function DeleteModules() {
   if (roleUserGetMe == "visitor") return;
+
+  // جمع‌آوری مقادیر فرم‌های SSH سرورها
+  const serversCredentials = [];
+  const usernameInputs = document.querySelectorAll('.server-username-input');
+
+  usernameInputs.forEach(input => {
+    const serverId = input.getAttribute('data-server-id');
+    const passwordInput = document.querySelector(`.server-password-input[data-server-id="${serverId}"]`);
+    
+    serversCredentials.push({
+      id: serverId,
+      username: input.value,
+      password: passwordInput.value
+    });
+  });
+
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
+    
   await useApi({
     url: `delete-module`,
     method: "delete",
-    data: { module_id: moduleIdRemove },
+    data: { 
+      module_id: moduleIdRemove,
+      servers: serversCredentials // ارسال آرایه سرورها حاوی یوزرنیم و پسورد
+    },
     callback: function (data) {
       modulesInfo = modulesInfo.filter(
-        (item) => item.moduleID !== data.module.id
+        (item) => item.moduleID != moduleIdRemove && item.id != moduleIdRemove
       );
-      document.querySelector(`${trModuleRemove}`)?.remove();
-      let items = arrRowShowModule.filter((item) => item != data.module.id);
-      pageModule = items;
-      arrRowShowModule = items;
-      let endPageShowUser = Number(arrRowShowModule.length) + pageShowModule;
-      let counter = 0;
-      for (let x = pageShowModule - 1; x < endPageShowUser - 1; x++) {
-        let targetId = arrRowShowModule[counter]; // مقدار data-id که می‌خواهید انتخاب کنید
-        counter++;
-        document.querySelector(`[data-id="${targetId}"] .td1`).innerHTML = x;
-      }
-      Toastify({
-        text: data.msg,
-        style: {
-          background:
-            "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
-        },
-      }).showToast();
+
+      document.getElementById("subDeletModule").dataset.bsDismiss = "modal";
+      document.getElementById("subDeletModule").click();
+      document.querySelector(trModuleRemove).remove();
+      modulesCountElement.innerHTML = +modulesCountElement.innerHTML - 1;
+      document.getElementById("idLoading").style.display = "none";
+      showToast("Module deleted successfully", "success");
+    },
+    onError: function (error) {
+      document.getElementById("idLoading").style.display = "none";
+      showToast(error.message, "error");
     },
   });
-  let lengthTbody3 = document.getElementById("tBody3").rows.length;
-  if (!lengthTbody3) {
-    document.getElementById("divImgModule").style.display = "block";
-  } else {
-    document.getElementById("divImgModule").style.display = "none";
-  }
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
-
-  if (pageModule.length == 0) {
-    document.getElementById("idLoading").style.display = "flex";
-    removeModuleParam();
-    showModuls(1);
-  }
 }
 
 function removeModuleParam() {

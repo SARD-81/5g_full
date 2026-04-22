@@ -47,7 +47,7 @@ class SshHelper
   public function runCommand($command)
 {
     try {
-        $this->ssh->setTimeout(3);
+        $this->ssh->setTimeout(5);
 
         $this->ssh->write("sudo -S su\n");
         $this->ssh->write("{$this->password}\n");
@@ -84,7 +84,7 @@ public function runCommandModule(string $command, string $typeCommand, string $m
 {
     try {
         // تایم‌اوت را می‌توانید نگه دارید، اما با exec معمولا فقط در صورت طول کشیدن خود دستور اعمال می‌شود
-        $this->ssh->setTimeout(3);
+        $this->ssh->setTimeout(5);
 
         // ترکیب تمام مراحل در یک دستور خطی
         // پسورد از طریق pipe به sudo داده می‌شود و دستور داخل bash اجرا می‌گردد

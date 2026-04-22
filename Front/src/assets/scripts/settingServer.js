@@ -445,6 +445,7 @@ async function saveDataToServer() {
       document.getElementById("mainTabs").innerHTML = "";
       // document.querySelectorId("jsoneditor").innerHTML = "";
       jsonData = data.config;
+
       await generateFormFromJson(jsonData);
       setEventListeners();
       let status = 0;
@@ -1367,108 +1368,198 @@ function findChanges(oldData, newData) {
 function parseConfToJsonWithComments(confText) {
   const result = {};
   const lines = confText.split("\n");
-
   let currentSection = null;
-  const meta = []; // ✅ لوکال شد
+  const meta = [];
 
-  lines.forEach((line) => {
-    const rawLine = line;
-    line = line.trim();
+  // تابع کمکی برای مدیریت کلیدهای تکراری (تبدیل به آرایه)
+  const addValue = (obj, key, val) => {
+    if (obj.hasOwnProperty(key)) {
+      if (Array.isArray(obj[key])) {
+        obj[key].push(val);
+      } else {
+        obj[key] = [obj[key], val];
+      }
+    } else {
+      obj[key] = val;
+    }
+  };
 
+  lines.forEach((rawLine) => {
+    const line = rawLine.trim();
+
+    // ۱. کامنت‌ها
     if (line.startsWith("#") || line.startsWith(";")) {
-      meta.push({ type: "comment", value: rawLine });
+      meta.push({ type: "comment", raw: rawLine });
       return;
     }
 
+    // ۲. خطوط خالی
     if (!line) {
-      meta.push({ type: "empty" });
+      meta.push({ type: "empty", raw: rawLine });
       return;
     }
 
+    // ۳. سکشن‌ها
     if (line.startsWith("[") && line.endsWith("]")) {
       const sectionName = line.slice(1, -1);
-      result[sectionName] = {};
+      if (!result[sectionName]) {
+        result[sectionName] = {};
+      }
       currentSection = sectionName;
-
-      meta.push({ type: "section", name: sectionName });
+      meta.push({ type: "section", name: sectionName, raw: rawLine });
       return;
     }
 
-    const [key, ...valueParts] = line.split("=");
-    const value = valueParts.join("=").trim();
+    // ۴. کلید و مقدار (جدا کردن فقط بر اساس اولین مساوی)
+    const equalIndex = rawLine.indexOf("=");
+    if (equalIndex !== -1) {
+      const rawKeyPart = rawLine.substring(0, equalIndex);
+      const rawValuePart = rawLine.substring(equalIndex + 1);
 
-    if (currentSection) {
-      result[currentSection][key.trim()] = value;
+      const key = rawKeyPart.trim();
+      const value = rawValuePart.trim();
+
+
+      // استخراج فاصله‌های خالی دقیق برای بازسازی بدون نقص
+      const prefix = rawKeyPart.substring(0, rawKeyPart.indexOf(key));
+      const suffixKey = rawKeyPart.substring(rawKeyPart.indexOf(key) + key.length);
+      const raw = rawValuePart.trim();
+
+      // حذف بک‌اسلش فقط از اول و آخر
+      const cleaned = raw.replace(/^\\|\\$/g, "");
+
+      // حالا استخراج مقدار داخل کوتیشن
+      const valueMatch = rawValuePart.match(/"([^"]*)"/);
+
+
+
+      const valuePrefix = valueMatch ? valueMatch[1] : "";
+
+      const valueSuffix = rawValuePart.substring(valuePrefix.length + value.length);
+
+      if (currentSection) {
+        addValue(result[currentSection], key, value);
+      } else {
+        addValue(result, key, value);
+      }
+
+      meta.push({
+        type: "kv",
+        key: key,
+        section: currentSection,
+        rawFormat: { prefix, suffixKey, valuePrefix, valueSuffix }
+      });
     } else {
-      result[key.trim()] = value;
+      // خطوط ناشناخته (بدون مساوی)
+      meta.push({ type: "raw", raw: rawLine });
     }
-
-    meta.push({
-      type: "kv",
-      key: key.trim(),
-      section: currentSection,
-    });
   });
 
-  // ✅ مهم: هر دو رو برگردون
   return { json: result, meta };
 }
 function jsonToConfWithComments(json, meta) {
   let conf = "";
+  const keyCounters = {}; // برای رهگیری ایندکس کلیدهای تکراری (آرایه‌ها)
 
   meta.forEach((item) => {
-    switch (item.type) {
-      case "comment":
-        conf += item.value + "\n";
-        break;
+    if (item.type === "comment" || item.type === "empty" || item.type === "raw" || item.type === "section") {
+      // بازگرداندن دقیق متن اصلی خط
+      conf += item.raw + "\n";
+    } else if (item.type === "kv") {
+      let val = "";
+      let jsonRef = item.section ? json[item.section] : json;
 
-      case "empty":
-        conf += "\n";
-        break;
+      if (jsonRef && jsonRef[item.key] !== undefined) {
+        const dataVal = jsonRef[item.key];
 
-      case "section":
-        conf += `[${item.name}]\n`;
-        break;
-
-      case "kv":
-        if (item.section) {
-          const val = json[item.section]?.[item.key] ?? "";
-          conf += `${item.key}=${val}\n`;
+        // اگر کلید تکراری بود و به آرایه تبدیل شده بود
+        if (Array.isArray(dataVal)) {
+          const counterKey = `${item.section || 'root'}_${item.key}`;
+          keyCounters[counterKey] = keyCounters[counterKey] || 0;
+          val = dataVal[keyCounters[counterKey]];
+          keyCounters[counterKey]++;
+          if (val === undefined) val = "";
         } else {
-          const val = json[item.key] ?? "";
-          conf += `${item.key}=${val}\n`;
+          val = dataVal;
         }
-        break;
+      }
+
+      // قرار دادن دقیق مقادیر در بین فاصله‌های اصلی
+      const fmt = item.rawFormat;
+      conf += `${fmt.prefix}${item.key}${fmt.suffixKey}=${fmt.valuePrefix}${val}${fmt.valueSuffix}\n`;
+
     }
   });
 
+  // حذف آخرین اینتر اضافی که موقع بازسازی اضافه می‌شود (اختیاری)
+  if (conf.endsWith("\n")) {
+    conf = conf.slice(0, -1);
+  }
+
   return conf;
 }
+function extractValuesWithRegex(data) {
+  const regex = /"([^"]*)"/g;
+
+  if (typeof data === "string") {
+    const matches = [];
+    let match;
+    while ((match = regex.exec(data)) !== null) {
+      matches.push(match[1]);
+    }
+    // اگر فقط یک مقدار پیدا شد همان را برمی‌گرداند، اگر چندتا بود به صورت آرایه برمی‌گرداند
+    return matches.length === 1 ? matches[0] : (matches.length > 0 ? matches : data);
+  } else if (Array.isArray(data)) {
+    return data.map(item => extractValuesWithRegex(item));
+  } else if (data !== null && typeof data === "object") {
+    const newData = {};
+    for (let key in data) {
+      newData[key] = extractValuesWithRegex(data[key]);
+    }
+    return newData;
+  }
+  return data;
+}
+
 let oldDataContainer, newDataContainer;
 let descriptionsData;
 let finalObject;
 
 function setJsonEditor(data) {
+
   document.getElementById("jsoneditor").innerHTML = "";
   const container = document.getElementById("jsoneditor");
 
-  // ✅ parse data + detect conf
   let parsedData = data;
   let isConf = false;
+  let rawText = data;
 
-  if (typeof data === "string") {
+  // ✅ ۱. بررسی اینکه آیا داده درون کلید content قرار دارد یا خیر
+  if (typeof data === "object" && data !== null && data.content && typeof data.content === "string") {
+    rawText = data.content;
+  }
+
+  // ✅ ۲. تلاش برای پارس کردن متن خام (یا به عنوان JSON یا به عنوان فایل conf)
+  if (typeof rawText === "string") {
     try {
-      parsedData = JSON.parse(data);
+      parsedData = JSON.parse(rawText);
+
     } catch (e) {
-      const parsed = parseConfToJsonWithComments(data);
+      const parsed = parseConfToJsonWithComments(rawText);
       parsedData = parsed.json;
 
-      // ✅ ذخیره meta کنار isConf
+      // ذخیره meta کنار isConf
       container._confMeta = parsed.meta;
-
-      isConf = true;
+      // اگر داده اولیه دارای content بود، آن را ذخیره می‌کنیم تا موقع سیو کردن خراب نشود
+      container._confOriginalKey = (typeof data === "object" && data.content) ? "content" : null;
       isConf = true;
     }
+  }
+
+  // 🌟 ADDED: اعمال ریجکس روی مقادیر استخراج شده اگر فایل از نوع conf باشد
+  // اگر میخواهید روی فایل‌های JSON هم اعمال شود، شرط if (isConf) را بردارید
+  if (isConf) {
+    parsedData = extractValuesWithRegex(parsedData);
   }
 
   // ✅ ذخیره state
@@ -1482,7 +1573,7 @@ function setJsonEditor(data) {
         alert(err.toString());
       },
     };
-
+    console.log(options)
     const editor = new JSONEditor(container, options);
 
     // 🔥 FIX
@@ -1621,6 +1712,7 @@ function addIconsForSpecialKeys(jsonData) {
       (p) => p.key === keyName && !pathToDOMMap.has(p.path)
     );
     if (match) {
+      // console.log(pathToDOMMap)
       pathToDOMMap.set(match.path, { element: valueCell, keyElement: el });
     }
   });
@@ -1629,7 +1721,6 @@ function addIconsForSpecialKeys(jsonData) {
   for (const [path, description] of specialKeyMap.entries()) {
     const domInfo = pathToDOMMap.get(path);
     if (!domInfo) continue;
-
     const { element: valueCell } = domInfo;
 
     // اگر قبلاً آیکون گذاشتیم، رد شو
@@ -1875,6 +1966,7 @@ function updateJsonKey(oldData, newData) {
   // اگر کلید وجود نداشته باشد یا مقدار جدید با مقدار قبلی یکسان باشد، مقدار قدیمی را برگردان
   if (UpdateJsons) {
     oldData = newData;
+
   } else {
     console.log(oldData, tabName);
 

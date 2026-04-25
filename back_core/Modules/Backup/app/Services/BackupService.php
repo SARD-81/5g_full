@@ -38,10 +38,10 @@ class BackupService
 
                 // ایجاد فایل YAML هر ماژول با استفاده از YamlParserService اصلاح‌شده
                 foreach ($server->modules as $module) {
-                    $configFile = "{$serverFolder}/{$module->service_key}.yaml";
+                    $configFile = "{$serverFolder}/{$module->name}.yaml";
 
                     // بررسی داده واقعی ماژول (فقط برای تست، بعداً می‌توان حذف کرد)
-                    // echo "Current config JSON for module {$module->service_key}:\n";
+                    // echo "Current config JSON for module {$module->name}:\n";
                     // var_dump($module->pivot->current_config);
 
                     // استفاده از YamlParserService اصلاح‌شده

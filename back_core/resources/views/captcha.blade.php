@@ -12,7 +12,7 @@
             // The id of the reCAPTCHA widget is assigned to 'widgetId1'.
             widgetId1 = grecaptcha.render('example1', {
                 'sitekey' : '6LcSsSwrAAAAACr48sIuVQwBuBNjDiP8ksVqgkwa',
-                'theme' : 'dark'
+                'theme' : 'light'
             });
             widgetId2 = grecaptcha.render(document.getElementById('example2'), {
                 'sitekey' : '6LcSsSwrAAAAACr48sIuVQwBuBNjDiP8ksVqgkwa'

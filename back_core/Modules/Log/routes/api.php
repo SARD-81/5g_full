@@ -13,6 +13,6 @@ use Modules\Log\Http\Controllers\LogController;
  * is assigned the "api" middleware group. Enjoy building your API!
  *
 */
-Route::post('/log-suggestions', [LogController::class, 'getSuggestions']);
+
 Route::middleware(['auth:sanctum', 'permission:log|role:admin|expert'])->post('show-all-logs', [LogController::class, 'showAllLogs']);
 Route::middleware(['auth:sanctum', 'permission:log|role:admin|expert'])->post('export-logs', [LogController::class, 'exportLogs']);

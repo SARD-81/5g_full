@@ -1399,17 +1399,10 @@ function permissionEdit() {
 let tableUsers = document.getElementById("addTableUsers");
 tableUsers.addEventListener("click", function () {
   if (btnAddUser == "") {
-    let lengthNameAddUser = document.getElementById("nameInputAddUser").value;
-    let lengthFamilyAddUser =
-      document.getElementById("familyInputAddUser").value;
     let lengthAuthNameAddUser = document.getElementById(
       "authNameInputAddUser"
     ).value;
     let checkBox = document.querySelectorAll(".accessLevelCheckbox");
-    let lengthPhoneNumber;
-    if (document.getElementById("phoneNumber")) {
-      lengthPhoneNumber = document.getElementById("phoneNumber").value;
-    }
 
     let lengthPassword = document.getElementById("passwordAddUser").value;
     let lengthRepeatPassword = document.getElementById(
@@ -1417,35 +1410,14 @@ tableUsers.addEventListener("click", function () {
     ).value;
 
     const isCheckedBox = [...checkBox].some((checkBox) => checkBox.checked);
-    let typePhoneNumber = /^\d+$/.test(lengthPhoneNumber);
 
-    if (lengthNameAddUser.length < 3) {
-      Toastify({
-        text: "The name is less than 3 characters.",
-      }).showToast();
-    } else if (lengthFamilyAddUser.length < 3) {
-      Toastify({
-        text: "The last name is less than 3 characters.",
-      }).showToast();
-    } else if (lengthAuthNameAddUser.length < 3) {
+    if (lengthAuthNameAddUser.length < 3) {
       Toastify({
         text: "The username is less than 3 characters.",
       }).showToast();
     } else if (isCheckedBox == false) {
       Toastify({
         text: "You must select one of the following permissions.",
-      }).showToast();
-    } else if (
-      lengthPhoneNumber &&
-      lengthPhoneNumber.length < 11 &&
-      project != "RRU"
-    ) {
-      Toastify({
-        text: "The phone number is less than 11 characters.",
-      }).showToast();
-    } else if (typePhoneNumber == false && project != "RRU") {
-      Toastify({
-        text: "The entered phone number is not numeric.",
       }).showToast();
     } else if (lengthPassword.length < 8) {
       Toastify({
@@ -1459,8 +1431,6 @@ tableUsers.addEventListener("click", function () {
 
     if (project == "RRU") {
       if (
-        lengthNameAddUser.length >= 3 &&
-        lengthFamilyAddUser.length >= 3 &&
         lengthAuthNameAddUser.length >= 3 &&
         isCheckedBox != false &&
         lengthPassword.length >= 8 &&
@@ -1498,12 +1468,8 @@ tableUsers.addEventListener("click", function () {
       }
     } else {
       if (
-        lengthNameAddUser.length >= 3 &&
-        lengthFamilyAddUser.length >= 3 &&
         lengthAuthNameAddUser.length >= 3 &&
         isCheckedBox != false &&
-        lengthPhoneNumber.length == 11 &&
-        typePhoneNumber == true &&
         lengthPassword.length >= 8 &&
         lengthRepeatPassword.length >= 8
       ) {
@@ -1548,14 +1514,9 @@ canselAddTableUser.addEventListener("click", function () {
 });
 
 function removeInputAddUser() {
-  document.getElementById("nameInputAddUser").value = "";
-  document.getElementById("familyInputAddUser").value = "";
   document.getElementById("authNameInputAddUser").value = "";
   if (document.getElementById("serverIdInputAddUser")) {
     document.getElementById("serverIdInputAddUser").value = "";
-  }
-  if (document.getElementById("phoneNumber")) {
-    document.getElementById("phoneNumber").value = "";
   }
   document.getElementById("passwordAddUser").value = "";
   document.getElementById("repeatPasswordAddUser").value = "";
@@ -1683,8 +1644,6 @@ async function SubAddUser() {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  let nameInputAddUser = document.getElementById("nameInputAddUser").value;
-  let familyInputAddUser = document.getElementById("familyInputAddUser").value;
   let authNameInputAddUser = document.getElementById(
     "authNameInputAddUser"
   ).value;
@@ -1695,10 +1654,6 @@ async function SubAddUser() {
     ).value;
   }
   let roleInput = document.getElementById("selectAddUser").value;
-  let phoneNumberAddUser;
-  if (document.getElementById("phoneNumber")) {
-    phoneNumberAddUser = document.getElementById("phoneNumber").value;
-  }
   let passwordAddUser = document.getElementById("passwordAddUser").value;
   let repeatPasswordAddUser = document.getElementById(
     "repeatPasswordAddUser"
@@ -1707,8 +1662,6 @@ async function SubAddUser() {
   let formData = new FormData();
 
   // اضافه کردن مقادیر به FormData
-  formData.append("first_name", nameInputAddUser);
-  formData.append("last_name", familyInputAddUser);
   formData.append("auth_name", authNameInputAddUser);
   if (document.getElementById("serverIdInputAddUser")) {
     if (serverIdInputAddUser != "") {
@@ -1716,9 +1669,6 @@ async function SubAddUser() {
     }
   }
   formData.append("role", roleInput);
-  if (project != "RRU") {
-    formData.append("phone", phoneNumberAddUser);
-  }
   formData.append("password", passwordAddUser);
   formData.append("password_confirmation", repeatPasswordAddUser);
 
@@ -1759,9 +1709,9 @@ async function SubAddUser() {
         if (x == 1) {
           td.innerHTML = endPageShowUser;
         } else if (x == 2) {
-          td.innerHTML = document.getElementById("nameInputAddUser").value;
+          td.innerHTML = data.data.user.first_name;
         } else if (x == 3) {
-          td.innerHTML = document.getElementById("familyInputAddUser").value;
+          td.innerHTML = data.data.user.last_name;
         } else if (x == 4) {
           td.innerHTML = document.getElementById("authNameInputAddUser").value;
         } else if (x == 5) {

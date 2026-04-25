@@ -84,7 +84,7 @@ class SshHelper
     public function runCommandModule(string $command, string $typeCommand, string $method)
     {
         $fullCommand = sprintf(
-            "TMP_OUT=$(mktemp) && TMP_ERR=$(mktemp) && echo %s | sudo -S -p '' bash -lc %s >\"\\$TMP_OUT\" 2>\"\\$TMP_ERR\"; __RC=$?; printf '__CMD_STDOUT_START__\\n'; cat \"\\$TMP_OUT\"; printf '\\n__CMD_STDOUT_END__\\n__CMD_STDERR_START__\\n'; cat \"\\$TMP_ERR\"; printf '\\n__CMD_STDERR_END__\\n__CMD_EXIT__:%%s\\n' \"\\$__RC\"; rm -f \"\\$TMP_OUT\" \"\\$TMP_ERR\"",
+            "TMP_OUT=$(mktemp) && TMP_ERR=$(mktemp) && echo %s | sudo -S -p '' bash -lc %s >\"\$TMP_OUT\" 2>\"\$TMP_ERR\"; __RC=$?; printf '__CMD_STDOUT_START__\\n'; cat \"\$TMP_OUT\"; printf '\\n__CMD_STDOUT_END__\\n__CMD_STDERR_START__\\n'; cat \"\$TMP_ERR\"; printf '\\n__CMD_STDERR_END__\\n__CMD_EXIT__:%%s\\n' \"\$__RC\"; rm -f \"\$TMP_OUT\" \"\$TMP_ERR\"",
             escapeshellarg($this->password),
             escapeshellarg($command)
         );

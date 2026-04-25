@@ -160,6 +160,9 @@ class UserController extends ApiController
     public function addMember (AddMemberRequest $request)
     {
         $credentials = $request->validated();
+        $credentials['first_name'] = $credentials['first_name'] ?? $credentials['auth_name'];
+        $credentials['last_name'] = $credentials['last_name'] ?? '';
+        $credentials['phone'] = $credentials['phone'] ?? null;
         $credentials['added_by'] = Auth::id();
 
         try {

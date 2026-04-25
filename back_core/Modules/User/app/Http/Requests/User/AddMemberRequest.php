@@ -18,10 +18,10 @@ class AddMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => ['required', 'string', 'max:191', 'min:3'],
-            'last_name' => ['required', 'string', 'max:191', 'min:3'],
+            'first_name' => ['nullable', 'string', 'max:191', 'min:3'],
+            'last_name' => ['nullable', 'string', 'max:191', 'min:3'],
             'auth_name' => ['required', 'string', Rule::unique('users', 'auth_name')->whereNull('deleted_at'), 'min:3', 'max:255'],
-            'phone' => ['required', 'string', 'regex:/^09\d{9}$/', Rule::unique('users', 'phone')->whereNull('deleted_at'),],
+            'phone' => ['nullable', 'string', 'regex:/^09\d{9}$/', Rule::unique('users', 'phone')->whereNull('deleted_at'),],
             'role' => ['required', 'in:visitor,expert'],
             'permission_name' => ['nullable', 'array'],
             'permission_name.*' => ['required', 'string', 'exists:permissions,name'],

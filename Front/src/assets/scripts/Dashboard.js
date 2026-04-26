@@ -13,7 +13,10 @@ import "toastify-js/src/toastify.css";
 import { data, error } from "jquery";
 import Stepper from "bs-stepper";
 import "bs-stepper/dist/css/bs-stepper.min.css";
-import { persistScopedServerCredentials } from "./serverCredentials.js";
+import {
+  persistScopedServerCredentials,
+  resolveValidatedServerCredentials,
+} from "./serverCredentials.js";
 
 
 
@@ -6114,49 +6117,86 @@ let pageModule;
 async function DeleteModules() {
   if (roleUserGetMe == "visitor") return;
 
-  // جمع‌آوری مقادیر فرم‌های SSH سرورها
-  const serversCredentials = [];
-  const usernameInputs = document.querySelectorAll('.server-username-input');
+  const selectedModule = modulesInfo.find(
+    (moduleItem) => Number(moduleItem.moduleID) === Number(moduleIdRemove)
+  );
+  const serverIds = (selectedModule?.serverIDs || [])
+    .map((id) => Number(id))
+    .filter((id) => Number.isInteger(id) && id > 0);
 
-  usernameInputs.forEach(input => {
-    const serverId = input.getAttribute('data-server-id');
-    const passwordInput = document.querySelector(`.server-password-input[data-server-id="${serverId}"]`);
-    
+  if (!serverIds.length) {
+    showToast("No attached server was found for this module delete action.", "error");
+    return;
+  }
+
+  const serversCredentials = [];
+  for (const serverId of serverIds) {
+    const usernameInput = document.querySelector(
+      `.server-username-input[data-server-id="${serverId}"]`
+    );
+    const passwordInput = document.querySelector(
+      `.server-password-input[data-server-id="${serverId}"]`
+    );
+
+    persistScopedServerCredentials(localStorage, serverId, {
+      username: usernameInput?.value?.trim() || "",
+      password: passwordInput?.value || "",
+    });
+
+    const resolvedCredentials = resolveValidatedServerCredentials(
+      localStorage,
+      serverId
+    );
+
+    if (!resolvedCredentials.valid) {
+      showToast(
+        `Please enter valid SSH credentials for all attached servers before deleting the module.`,
+        "error"
+      );
+      document.getElementById("idLoading").style.display = "none";
+      document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
+      return;
+    }
+
     serversCredentials.push({
       id: serverId,
-      username: input.value,
-      password: passwordInput.value
+      username: resolvedCredentials.credentials.username,
+      password: resolvedCredentials.credentials.password,
+      port: resolvedCredentials.credentials.port,
     });
-  });
+  }
 
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-    
-  await useApi({
-    url: `delete-module`,
-    method: "delete",
-    data: { 
-      module_id: moduleIdRemove,
-      servers: serversCredentials // ارسال آرایه سرورها حاوی یوزرنیم و پسورد
-    },
-    callback: function (data) {
-      modulesInfo = modulesInfo.filter(
-        (item) => item.moduleID != moduleIdRemove && item.id != moduleIdRemove
-      );
 
-      document.getElementById("subDeletModule").dataset.bsDismiss = "modal";
-      document.getElementById("subDeletModule").click();
-      document.querySelector(trModuleRemove).remove();
-      modulesCountElement.innerHTML = +modulesCountElement.innerHTML - 1;
-      document.getElementById("idLoading").style.display = "none";
-      showToast("Module deleted successfully", "success");
-    },
-    onError: function (error) {
-      document.getElementById("idLoading").style.display = "none";
-      showToast(error.message, "error");
-    },
-  });
+  try {
+    await useApi({
+      url: `delete-module`,
+      method: "delete",
+      data: {
+        module_id: moduleIdRemove,
+        servers: serversCredentials,
+      },
+      callback: function () {
+        modulesInfo = modulesInfo.filter(
+          (item) => item.moduleID != moduleIdRemove && item.id != moduleIdRemove
+        );
+
+        document.querySelector(trModuleRemove)?.remove();
+        modulesCountElement.innerHTML = +modulesCountElement.innerHTML - 1;
+        removeModuleParam();
+        document.querySelector('#removeModule [data-bs-dismiss="modal"]')?.click();
+        showToast("Module deleted successfully", "success");
+      },
+      onError: function (error) {
+        showToast(error.message, "error");
+      },
+    });
+  } finally {
+    document.getElementById("idLoading").style.display = "none";
+    document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
+  }
 }
 
 function removeModuleParam() {

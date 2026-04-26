@@ -358,6 +358,81 @@ class ModuleLifecycleIdentityTest extends TestCase
         $this->assertDatabaseMissing('modules', ['id' => $module->id]);
     }
 
+    public function test_delete_requires_servers_payload(): void
+    {
+        $user = $this->createUserWithPermissions(['module/delete']);
+        $server = $this->createServer('Srv-Delete-Validation');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $server->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'PCRF', 'service_key' => 'delete-validation', 'type' => '5gc']);
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $this->deleteJson('/api/delete-module', [
+            'module_id' => $module->id,
+        ])->assertStatus(422)->assertJsonValidationErrors(['servers']);
+    }
+
+    public function test_delete_requires_complete_server_credentials(): void
+    {
+        $user = $this->createUserWithPermissions(['module/delete']);
+        $server = $this->createServer('Srv-Delete-Credential');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $server->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'PCRF', 'service_key' => 'delete-cred', 'type' => '5gc']);
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $this->deleteJson('/api/delete-module', [
+            'module_id' => $module->id,
+            'servers' => [['id' => $server->id, 'port' => 22]],
+        ])->assertStatus(422)->assertJsonValidationErrors(['servers.0.username', 'servers.0.password']);
+    }
+
+    public function test_delete_cleanup_failure_prevents_database_delete(): void
+    {
+        $user = $this->createUserWithPermissions(['module/delete']);
+        $server = $this->createServer('Srv-Delete-Fail');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $server->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'PCRF', 'service_key' => 'delete-fail', 'type' => '5gc']);
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->once()
+            ->andReturn('Permission denied');
+
+        $this->deleteJson('/api/delete-module', [
+            'module_id' => $module->id,
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertStatus(422);
+
+        $this->assertDatabaseHas('modules', ['id' => $module->id]);
+        $this->assertDatabaseHas('module_server', ['module_id' => $module->id, 'server_id' => $server->id]);
+    }
+
+    public function test_delete_requires_credentials_for_all_attached_servers(): void
+    {
+        $user = $this->createUserWithPermissions(['module/delete']);
+        $serverA = $this->createServer('Srv-Delete-All-A');
+        $serverB = $this->createServer('Srv-Delete-All-B');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverA->name, 'web'));
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverB->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'PCRF', 'service_key' => 'delete-all', 'type' => '5gc']);
+        $module->servers()->attach($serverA->id, ['initial_config' => '{}', 'current_config' => '{}']);
+        $module->servers()->attach($serverB->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $this->deleteJson('/api/delete-module', [
+            'module_id' => $module->id,
+            'servers' => [['id' => $serverA->id, 'username' => 'u-a', 'password' => 'p-a', 'port' => 22]],
+        ])->assertStatus(422)->assertJsonValidationErrors(['servers']);
+    }
+
     public function test_delete_cleanup_uses_service_key_for_yaml_and_run_config_artifacts(): void
     {
         $user = $this->createUserWithPermissions(['module/delete']);

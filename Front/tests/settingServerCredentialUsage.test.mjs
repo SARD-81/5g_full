@@ -40,6 +40,21 @@ for (const actionName of requiredCredentialGuardedActions) {
   );
 }
 
+const getModulesBlockMatch = settingServerSource.match(
+  /async function getModules\(serverId\)[\s\S]*?await useApi\([\s\S]*?\n}\n\n/
+);
+assert.ok(getModulesBlockMatch, "getModules block was not found");
+assert.match(
+  getModulesBlockMatch[0],
+  /resolveServerCredentialsForAction\(/,
+  "getModules must use resolveServerCredentialsForAction"
+);
+assert.doesNotMatch(
+  getModulesBlockMatch[0],
+  /localStorage\.getItem\("userNameServer"\)|localStorage\.getItem\("passwordServer"\)|localStorage\.getItem\("port"\)/,
+  "getModules should not read raw SSH credentials from localStorage"
+);
+
 assert.doesNotMatch(
   settingServerSource,
   /SSH was successful\./,

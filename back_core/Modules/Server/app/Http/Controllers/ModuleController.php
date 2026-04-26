@@ -20,6 +20,7 @@ use Modules\Server\Http\Requests\Modules\deleteModuleRequest;
 use Modules\Server\Http\Requests\Modules\ShowAllModules;
 use Modules\Server\Http\Requests\Modules\ShowAllModulesRequest;
 use Modules\Server\Http\Requests\Modules\ShowAllModulesRequestt;
+use Modules\Server\Http\Requests\Modules\ShowAllServerModulesRequest;
 use Modules\Server\Http\Requests\Modules\UpdateConfigModulerequest;
 use Modules\Server\Http\Requests\Undo\UndoConfigModulesRequest;
 use Modules\Server\Http\Requests\Undo\UndoToInitialConfigModulesRequest;
@@ -28,6 +29,7 @@ use Modules\Server\Models\Server;
 use Modules\Server\Service\Parser\YamlParserService;
 use Modules\Server\Utility\CommandOutputAnalyzerService;
 use Modules\Server\Utility\LogModuleService;
+use Modules\Server\Utility\ModuleIdentity;
 
 class ModuleController extends ApiController
 {
@@ -75,15 +77,43 @@ class ModuleController extends ApiController
             ]
         ]);
     }
-    public function showAllServiseAndModulesInServer ($serverId)
+    public function showAllServiseAndModulesInServer (ShowAllServerModulesRequest $request, $serverId)
     {
-        $server = Server::with(['modules:id,name,type'])->find($serverId);
-            if(!$server)
-                return response()->json(['msg' => 'invalide server id'], 404);
+        $credentials = $request->validated();
+
+        if ((int) $credentials['server_id'] !== (int) $serverId) {
+            throw ValidationException::withMessages(['server_id' => 'The submitted server_id does not match route serverID.']);
+        }
+
+        $server = Server::with(['modules:id,name,type,service_key'])->find($serverId);
+        if (! $server) {
+            return response()->json(['msg' => 'invalide server id'], 404);
+        }
+
+        $this->chackPermissionModule($server);
+
+        if ($server['is_down'] == Server::OFF) {
+            throw ValidationException::withMessages(['server.down' => 'this server: ' . $server['name'] . ' is off']);
+        }
+
+        $sshHelper = new SshHelper(
+            $server->ip,
+            $credentials['username'],
+            $credentials['password'],
+            $credentials['port'] ?? 22
+        );
+
+        $existingModules = $server->modules->filter(function ($module) use ($sshHelper, $server) {
+            $configPath = rtrim((string) $server->path_config, '/') . '/' . ModuleIdentity::configFileName($module);
+            $checkCommand = 'test -f ' . escapeshellarg($configPath);
+            $output = $sshHelper->runCommandModule($checkCommand, 'show-server-module-list', 'showAllServiseAndModulesInServer');
+
+            return str_contains($output, '__CMD_EXIT__:0');
+        })->values();
 
 
         $modulesGroupedByType = collect();
-        foreach ($server->modules as $module) {
+        foreach ($existingModules as $module) {
             $types = array_map('trim', explode(',', $module->type));
 
             foreach ($types as $type) {
@@ -96,7 +126,7 @@ class ModuleController extends ApiController
         $response = [
             'Epc' => $modulesGroupedByType->get('Epc', []),
             '5gc' => $modulesGroupedByType->get('5gc', []),
-            'allModules' => $server->modules->makeHidden('pivot')
+            'allModules' => $existingModules->makeHidden('pivot')
         ];
 
         return $this->respondSuccess('List of server services and their modules', $response);

@@ -112,4 +112,38 @@ class YamlParserService
 
         return json_encode($arrayContent, JSON_PRETTY_PRINT);
     }
+
+    public static function parseRawConfigContent(string $content, string $extension = 'yaml'): array
+    {
+        $normalizedExtension = strtolower($extension);
+        try {
+            if (in_array($normalizedExtension, ['yaml', 'yml', 'yaml.in'])) {
+                $parsed = Yaml::parse($content);
+                if (!is_array($parsed)) {
+                    throw new \RuntimeException('Invalid YAML structure.');
+                }
+
+                return $parsed;
+            }
+
+            if ($normalizedExtension === 'json') {
+                $decoded = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+                if (!is_array($decoded)) {
+                    throw new \RuntimeException('Invalid JSON structure.');
+                }
+
+                return $decoded;
+            }
+
+            return ['raw' => $content];
+        } catch (ParseException $e) {
+            throw ValidationException::withMessages([
+                'config_file' => 'YAML Parse Error: ' . $e->getMessage(),
+            ]);
+        } catch (\Exception $e) {
+            throw ValidationException::withMessages([
+                'config_file' => 'Parse Error: ' . $e->getMessage(),
+            ]);
+        }
+    }
 }

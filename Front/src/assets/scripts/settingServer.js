@@ -879,8 +879,31 @@ async function getModuleConfig(moduleId) {
   showConfigModuleLoading = true;
   currentModuleId = moduleId;
   document.getElementById("idLoading").style.display = "flex";
+  document.getElementById("mainTabs").innerHTML = "";
+  document.getElementById("jsoneditor").innerHTML = "";
+  jsonData = {};
+  const credentialResult = resolveServerCredentialsForAction(TheDesiredServer, {
+    requireRecovery: true,
+    statusTargetId: "textStatus",
+  });
+  if (!credentialResult.valid) {
+    showConfigModuleLoading = false;
+    if (document.getElementById("idSidebar")) {
+      document.getElementById("idLoadingModule").style.display = "none";
+    }
+    return;
+  }
+
   await useApi({
+    method: "post",
     url: `show-config-module/${TheDesiredServer}/${moduleId}`,
+    data: {
+      server_id: Number(TheDesiredServer),
+      module_id: Number(moduleId),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
+    },
     callback: async function (data) {
       moduleDetails = data.moduleDetails.name;
       document.getElementById("mainTabs").innerHTML = "";
@@ -893,6 +916,11 @@ async function getModuleConfig(moduleId) {
       let status = 0;
       CallingTabs(status);
       showAllModules();
+    },
+    errorCallback: function () {
+      document.getElementById("mainTabs").innerHTML = "";
+      document.getElementById("jsoneditor").innerHTML = "";
+      jsonData = {};
     },
   });
   showConfigModuleLoading = false;

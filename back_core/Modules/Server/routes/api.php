@@ -32,7 +32,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('test-connection', [ServerController::class, 'testConnection']);
 
     // module
-    Route::middleware(['permission:module/read|role:admin|visitor|expert'])->get('show-config-module/{serverID}/{ModuleID}', [ModuleController::class, 'showConfigModule']);
+    Route::middleware(['permission:module/read|role:admin|visitor|expert'])->post('show-config-module/{serverID}/{ModuleID}', [ModuleController::class, 'showConfigModule']);
     Route::middleware(['role:admin|visitor|expert'])->post('show-all-servies-and-modules/{serverID}', [ModuleController::class, 'showAllServiseAndModulesInServer']);
     Route::middleware(['permission:module/create|role:admin|expert'])->post('create-module', [ModuleController::class, 'createModule']);
     Route::middleware(['permission:module/update|role:admin|expert'])->post('update-config-module', [ModuleController::class, 'updateConfigModule']);

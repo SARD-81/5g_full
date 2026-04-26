@@ -36,36 +36,21 @@ class ModuleController extends ApiController
     public function __construct()
     {}
 
-    public function showConfigModule (ShowConfigModuleRequest $request, $serverId, $moduleId)
+    public function showConfigModule ($serverId, $moduleId)
     {
-        $credentials = $request->validated();
-        if ((int) $credentials['server_id'] !== (int) $serverId) {
-            throw ValidationException::withMessages(['server_id' => 'The submitted server_id does not match route serverID.']);
-        }
-        if ((int) $credentials['module_id'] !== (int) $moduleId) {
-            throw ValidationException::withMessages(['module_id' => 'The submitted module_id does not match route ModuleID.']);
-        }
-
         $module = Module::where('id', $moduleId)
         ->whereHas('servers', function ($query) use ($serverId) {
             $query->where('server_id', $serverId);
         })
         ->with(['servers' => function ($query) {
-            $query->select('servers.id', 'servers.name', 'servers.is_down', 'servers.path_config', 'servers.ip');
+            $query->select('servers.id', 'servers.name', 'servers.is_down');
         }])
         ->first();
 
         if (!$module)
             throw new HttpResponseException(response()->json(['msg' => 'The module with the provided ID was not found on the server you specified.']));
 
-        $server = $module->servers->where('id', (int) $serverId)->first();
-        $this->chackPermissionModule($server);
-        if ($server['is_down'] == Server::OFF) {
-            throw ValidationException::withMessages(['server.down' => 'this server: ' . $server['name'] . ' is off']);
-        }
-        if (!$server['path_config']) {
-            throw ValidationException::withMessages(['server.path_config' => 'You did not specify a configuration address config']);
-        }
+
 
         $serverIdsInModuleName = $module->servers->pluck('pivot.server_id');
         $serversData = $module->servers->map(function ($server) {
@@ -75,35 +60,14 @@ class ModuleController extends ApiController
                 'is_down' => $server->is_down,
             ];
         });
-        $configPath = rtrim((string) $server->path_config, '/') . '/' . $module->name . '.yaml';
-        $sshHelper = new sshHelper(
-            $server->ip,
-            $credentials['username'],
-            $credentials['password'],
-            $credentials['port'] ?? 22
-        );
-        $checkFileCommand = 'test -f ' . escapeshellarg($configPath) . ' && echo __FILE_EXISTS__';
-        $fileExistsOutput = $sshHelper->runCommandModule($checkFileCommand, 'show-config-module', 'showConfigModule');
-        if (!str_contains($fileExistsOutput, '__FILE_EXISTS__')) {
-            throw ValidationException::withMessages([
-                'config_file' => 'Module config file was not found on the selected server.',
-            ]);
-        }
 
-        $fileContent = $sshHelper->getFileContent('cat ' . escapeshellarg($configPath));
-        $parsedConfig = YamlParserService::parseRawConfigContent($fileContent, pathinfo($configPath, PATHINFO_EXTENSION) ?: 'yaml');
-        $encodedConfig = json_encode($parsedConfig, JSON_PRETTY_PRINT);
-
-        $pivotData = $module->servers->where('pivot.server_id', $serverId)->first()?->pivot;
-        if ($pivotData) {
-            $pivotData->previous_config = $pivotData->current_config;
-            $pivotData->current_config = $encodedConfig;
-            $pivotData->save();
-        }
+        $currentConfig = $module->servers
+        ->where('pivot.server_id', $serverId)
+        ->first()?->pivot->current_config;
 
 
         return response()->json([
-            'config' => $parsedConfig,
+            'config' => json_decode($currentConfig),
             'serversDetails' => $serversData,
             'serversIdInModuleName' => $serverIdsInModuleName,
             'moduleDetails' => [

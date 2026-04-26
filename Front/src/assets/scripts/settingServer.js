@@ -712,8 +712,29 @@ let Modules;
 let moduleId;
 
 async function getModules(serverId) {
+  document.querySelector(".accordion-body-epc").innerHTML = "";
+  document.querySelector(".accordion-body-5gc").innerHTML = "";
+
+  const credentialResult = resolveServerCredentialsForAction(serverId, {
+    requireRecovery: true,
+  });
+  if (!credentialResult.valid) {
+    Modules = { Epc: [], "5gc": [], allModules: [] };
+    if (document.getElementById("idSidebar")) {
+      document.getElementById("idLoadingModule").style.display = "none";
+    }
+    return;
+  }
+
   await useApi({
+    method: "post",
     url: `show-all-servies-and-modules/${serverId}`,
+    data: {
+      server_id: Number(serverId),
+      username: credentialResult.credentials.username,
+      password: credentialResult.credentials.password,
+      port: credentialResult.credentials.port,
+    },
     callback: function (data) {
       Modules = data.data;
       let lengthEpc = data.data.Epc.length;
@@ -832,6 +853,11 @@ async function getModules(serverId) {
         });
         document.querySelector(".accordion-body-5gc").appendChild(a5gc);
       }
+    },
+    errorCallback: function () {
+      Modules = { Epc: [], "5gc": [], allModules: [] };
+      document.querySelector(".accordion-body-epc").innerHTML = "";
+      document.querySelector(".accordion-body-5gc").innerHTML = "";
     },
   });
 

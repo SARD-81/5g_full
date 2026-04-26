@@ -316,23 +316,31 @@ class ModuleController extends ApiController
     public function deleteModule (deleteModuleRequest $request)
     {
         $credentials = $request->validated();
-        $module = Module::find($credentials['module_id']);
+        $module = Module::query()->with('servers')->findOrFail($credentials['module_id']);
 
         try {
+            $servers = $module->servers;
 
-            $serverModule = $module->servers()->get();
-            if (!$serverModule) {
-                $module->delete();
-                return response()->json(['msg' => 'Module Deleted', 'module' => $module]);
+            foreach ($servers as $server) {
+                $this->chackPermissionModule($server);
             }
 
+            $serverCredentialsById = collect($credentials['servers'])
+                ->keyBy(fn ($serverCredential) => (int) $serverCredential['id']);
 
-            foreach ($serverModule as $server)
-                $this->chackPermissionModule($server);
+            foreach ($servers as $server) {
+                $serverCredential = $serverCredentialsById->get((int) $server->id);
+                if (!$serverCredential) {
+                    throw ValidationException::withMessages([
+                        'servers' => ['Missing SSH credentials for server ID: ' . $server->id],
+                    ]);
+                }
 
+                $this->cleanupRemoteModuleArtifacts($server, $module, $serverCredential);
+            }
 
+            DB::beginTransaction();
             $module->delete();
-
 
             activity('create-module')
                 ->causedBy(Auth::user())
@@ -341,22 +349,66 @@ class ModuleController extends ApiController
                     'type-log' => 'server',
                     'route' => request()->fullUrl(),
                     'user' => Auth::user()->makeHidden(['roles', 'permissions'])->toArray(),
-                    'user_role' => Auth::user()->roles()->pluck('name')->first(),
-                    'method' => 'createModule',
-                    'module' => [
-                        'name' => $module['name'],
-                        'type' => $module['type'],
-                        'server_id' => $serverModule,
-                    ],
+                        'user_role' => Auth::user()->roles()->pluck('name')->first(),
+                        'method' => 'createModule',
+                        'module' => [
+                            'name' => $module['name'],
+                            'type' => $module['type'],
+                            'server_id' => $servers,
+                        ],
                 ])
                 ->log('A new module has been created');
 
-                DB::commit();
+            DB::commit();
             return response()->json(['msg' => 'Module Deleted', 'module' => $module]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
                 return response()->json(['success' => false, 'msg' => $e->getMessage()], 422);
+        }
+    }
+
+    private function cleanupRemoteModuleArtifacts(Server $server, Module $module, array $serverCredential): void
+    {
+        if (empty($server->path_config) || empty($server->path_run_config)) {
+            throw ValidationException::withMessages([
+                'server' => ['Server paths (path_config and path_run_config) are required for delete cleanup.'],
+            ]);
+        }
+
+        $sshHelper = new sshHelper(
+            $server->ip,
+            $serverCredential['username'],
+            $serverCredential['password'],
+            $serverCredential['port'] ?? 22
+        );
+
+        $serviceUnitName = ModuleIdentity::serviceUnitName($module);
+        $configFileName = ModuleIdentity::configFileName($module);
+        $configFilePath = rtrim((string) $server->path_config, '/') . '/' . $configFileName;
+        $runConfigPath = rtrim((string) $server->path_run_config, '/');
+
+        $cleanupCommands = [
+            'systemctl stop ' . escapeshellarg($serviceUnitName),
+            'systemctl disable ' . escapeshellarg($serviceUnitName),
+            'rm -f ' . escapeshellarg($configFilePath),
+            'rm -f ' . escapeshellarg($runConfigPath . '/' . $configFileName),
+            'rm -f ' . escapeshellarg($runConfigPath . '/' . $serviceUnitName),
+            'rm -f ' . escapeshellarg($runConfigPath . '/' . $serviceUnitName . '.service'),
+            'rm -f ' . escapeshellarg($runConfigPath . '/' . $serviceUnitName . '.sh'),
+        ];
+
+        foreach ($cleanupCommands as $command) {
+            $output = $sshHelper->runCommandModule($command, 'delete-module-cleanup', 'deleteModule.cleanupRemoteModuleArtifacts');
+            $commandErrors = !empty($output) ? CommandOutputAnalyzerService::extractErrors($output) : [];
+            if (!empty($commandErrors)) {
+                throw ValidationException::withMessages([
+                    'msg' => ['Remote cleanup failed on server ' . $server->name],
+                    'command_errors' => $commandErrors,
+                ]);
+            }
         }
     }
 

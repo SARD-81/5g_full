@@ -10,6 +10,8 @@ use Modules\Server\Utility\ModuleIdentity;
 
 class CreateModulesRequest extends FormRequest
 {
+    private const ALLOWED_MODULE_TYPES = ['hss', 'pcrf', 'upf', 'sgwc', 'sgwu', 'smf', 'mme'];
+
     public function rules(): array
     {
         return [
@@ -19,6 +21,11 @@ class CreateModulesRequest extends FormRequest
                 'min:3',
                 'max:24',
                 'regex:/^[^<>{}\/\~`!@#$%&*()\="\':;؟،]*$/u',
+            ],
+            'type' => [
+                'required',
+                'string',
+                Rule::in(self::ALLOWED_MODULE_TYPES),
                 function ($attribute, $value, $fail) {
                     $serviceKey = ModuleIdentity::normalizeKey($value);
                     if (Module::where('service_key', $serviceKey)->exists()) {
@@ -26,7 +33,6 @@ class CreateModulesRequest extends FormRequest
                     }
                 },
             ],
-            'type' => ['required', 'string', 'min:2', 'max:255', 'regex:/^[^<>{}\/|\~`!@#$%&*()_\-+="\':;؟،]*$/u'],
             'config_file' => ['required', 'file', function ($attribute, $value, $fail) {
                 if (!preg_match('/\.(yaml|yml|yaml\.in|json|conf|conf\.in)$/i', $value->getClientOriginalName())) {
                     $fail('The file must be one of the following formats: .yaml, .yml, .yaml.in, .json, .conf, .conf.in');
@@ -60,7 +66,7 @@ class CreateModulesRequest extends FormRequest
     {
         return [
             'name.regex' => 'The name field contains invalid characters. characters like < > { } / | \\ ~ ` ! @ # $ % & * ( ) _ - + = " \' : ; are not allowed.',
-            'type.regex' => 'The name field contains invalid characters. characters like < > { } / | \\ ~ ` ! @ # $ % & * ( ) _ - + = " \' : ; are not allowed.',
+            'type.in' => 'The selected module type is invalid. Allowed values: hss, pcrf, upf, sgwc, sgwu, smf, mme.',
         ];
     }
 

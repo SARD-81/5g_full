@@ -13,7 +13,10 @@ import "toastify-js/src/toastify.css";
 import { data, error } from "jquery";
 import Stepper from "bs-stepper";
 import "bs-stepper/dist/css/bs-stepper.min.css";
-import { persistScopedServerCredentials } from "./serverCredentials.js";
+import {
+  persistScopedServerCredentials,
+  resolveValidatedServerCredentials,
+} from "./serverCredentials.js";
 
 
 
@@ -6056,6 +6059,74 @@ async function editModules(idModule) {
 
 let moduleIdRemove;
 let trModuleRemove;
+let deleteModuleInProgress = false;
+
+function setDeleteModuleButtonState() {
+  const deleteButton = document.getElementById("subDeletModule");
+  if (!deleteButton) return;
+
+  const inputs = Array.from(document.querySelectorAll(".server-username-input"));
+  const hasAtLeastOneServer = inputs.length > 0;
+  const isMissingAnyCredentials = inputs.some((input) => {
+    const serverId = input.getAttribute("data-server-id");
+    const passwordInput = document.querySelector(
+      `.server-password-input[data-server-id="${serverId}"]`
+    );
+    return !input.value.trim() || !passwordInput?.value?.trim();
+  });
+
+  deleteButton.disabled =
+    deleteModuleInProgress || !hasAtLeastOneServer || isMissingAnyCredentials;
+}
+
+function resolveDeleteServersCredentials(serverIds = []) {
+  const serversCredentials = [];
+
+  for (const rawServerId of serverIds) {
+    const serverId = Number(rawServerId);
+    const usernameInput = document.querySelector(
+      `.server-username-input[data-server-id="${serverId}"]`
+    );
+    const passwordInput = document.querySelector(
+      `.server-password-input[data-server-id="${serverId}"]`
+    );
+    const inlineUsername = usernameInput?.value?.trim() || "";
+    const inlinePassword = passwordInput?.value?.trim() || "";
+    const localCredentials = resolveValidatedServerCredentials(localStorage, serverId);
+
+    const username =
+      inlineUsername ||
+      (localCredentials.valid ? localCredentials.credentials.username : "");
+    const password =
+      inlinePassword ||
+      (localCredentials.valid ? localCredentials.credentials.password : "");
+    const port =
+      localCredentials.valid && Number.isInteger(localCredentials.credentials.port)
+        ? localCredentials.credentials.port
+        : 22;
+
+    if (!username || !password) {
+      return {
+        isValid: false,
+        message:
+          "SSH credentials are required for all module servers. Please enter or update SSH credentials and try again.",
+      };
+    }
+
+    serversCredentials.push({
+      id: serverId,
+      username,
+      password,
+      port,
+    });
+  }
+
+  return {
+    isValid: true,
+    servers: serversCredentials,
+  };
+}
+
 function iconDeleteModule() {
   document.querySelectorAll(".deleteModuleClick").forEach(function (e) {
     e.addEventListener("click", function () {
@@ -6069,6 +6140,10 @@ function iconDeleteModule() {
       document.getElementById("spanRemoveModule").innerHTML = module ? module.moduleName : "";
       trModuleRemove = `#tr${e.id}`;
       moduleIdRemove = dataId;
+      const deleteButton = document.getElementById("subDeletModule");
+      deleteButton.removeAttribute("data-bs-dismiss");
+      deleteButton.disabled = false;
+      deleteModuleInProgress = false;
 
       const container = document.getElementById("server-credentials-container");
       container.innerHTML = ""; 
@@ -6088,17 +6163,22 @@ function iconDeleteModule() {
               <h6 class="text-primary mb-2">Server ID: ${serverId}</h6>
               <div class="form-group">
                 <label class="form-label mb-1" style="font-size: 13px;">SSH Username</label>
-                <input type="text" class="form-control form-control-sm server-username-input" data-server-id="${serverId}" placeholder="e.g. root">
+                <input type="text" class="form-control form-control-sm server-username-input" data-server-id="${serverId}" placeholder="e.g. root" required>
               </div>
               <div class="form-group mt-2">
                 <label class="form-label mb-1" style="font-size: 13px;">SSH Password</label>
-                <input type="password" class="form-control form-control-sm server-password-input" data-server-id="${serverId}" placeholder="Enter password">
+                <input type="password" class="form-control form-control-sm server-password-input" data-server-id="${serverId}" placeholder="Enter password" required>
               </div>
             </div>
           `;
           container.insertAdjacentHTML('beforeend', serverForm);
         });
       }
+
+      container.querySelectorAll("input").forEach((input) => {
+        input.addEventListener("input", setDeleteModuleButtonState);
+      });
+      setDeleteModuleButtonState();
     });
   });
 }
@@ -6113,50 +6193,79 @@ let pageModule;
 
 async function DeleteModules() {
   if (roleUserGetMe == "visitor") return;
+  if (deleteModuleInProgress) return;
 
-  // جمع‌آوری مقادیر فرم‌های SSH سرورها
-  const serversCredentials = [];
-  const usernameInputs = document.querySelectorAll('.server-username-input');
+  const selectedModule = modulesInfo.find(
+    (moduleItem) => Number(moduleItem.moduleID) === Number(moduleIdRemove)
+  );
+  const serverIds = (selectedModule?.serverIDs || []).map((id) => Number(id));
 
-  usernameInputs.forEach(input => {
-    const serverId = input.getAttribute('data-server-id');
-    const passwordInput = document.querySelector(`.server-password-input[data-server-id="${serverId}"]`);
-    
-    serversCredentials.push({
-      id: serverId,
-      username: input.value,
-      password: passwordInput.value
-    });
-  });
+  const deleteServerDetails = resolveDeleteServersCredentials(serverIds);
+  if (!deleteServerDetails.isValid) {
+    showToast(deleteServerDetails.message, "error");
+    document.getElementById("idLoading").style.display = "none";
+    document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
+    setDeleteModuleButtonState();
+    return;
+  }
+
+  deleteModuleInProgress = true;
+  setDeleteModuleButtonState();
 
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-    
-  await useApi({
-    url: `delete-module`,
-    method: "delete",
-    data: { 
-      module_id: moduleIdRemove,
-      servers: serversCredentials // ارسال آرایه سرورها حاوی یوزرنیم و پسورد
-    },
-    callback: function (data) {
-      modulesInfo = modulesInfo.filter(
-        (item) => item.moduleID != moduleIdRemove && item.id != moduleIdRemove
-      );
 
-      document.getElementById("subDeletModule").dataset.bsDismiss = "modal";
-      document.getElementById("subDeletModule").click();
-      document.querySelector(trModuleRemove).remove();
-      modulesCountElement.innerHTML = +modulesCountElement.innerHTML - 1;
+  let deleteSucceeded = false;
+  try {
+    await useApi({
+      url: `delete-module`,
+      method: "delete",
+      data: {
+        module_id: Number(moduleIdRemove),
+        servers: deleteServerDetails.servers,
+      },
+      callback: async function () {
+        deleteSucceeded = true;
+        const deletedModuleId = Number(moduleIdRemove);
+        modulesInfo = modulesInfo.filter(
+          (item) =>
+            Number(item.moduleID) !== deletedModuleId &&
+            Number(item.id) !== deletedModuleId
+        );
+        schedulingData = schedulingData.filter(
+          (item) => Number(item.module_id) !== deletedModuleId
+        );
+        if (Number(idModule) === deletedModuleId) idModule = null;
+        if (Number(idModuleScheduling) === deletedModuleId) idModuleScheduling = null;
+
+        removeModuleParam();
+        const pageToRefresh = Number(currentPageModule || urlModule || 1);
+        await showModuls(pageToRefresh);
+        await getScheduleingModules();
+
+        document.getElementById("subDeletModule").dataset.bsDismiss = "modal";
+        document.getElementById("subDeletModule").click();
+        showToast("Module deleted successfully", "success");
+      },
+      errorCallback: function (error) {
+        const message =
+          error?.response?.data?.msg ||
+          error?.response?.data?.message ||
+          "Module delete failed.";
+        showToast(message, "error");
+      },
+    });
+  } finally {
+    deleteModuleInProgress = false;
+    document.getElementById("subDeletModule").removeAttribute("data-bs-dismiss");
+    setDeleteModuleButtonState();
+    if (!deleteSucceeded) {
+      // keep row unchanged for failed delete
+    }
       document.getElementById("idLoading").style.display = "none";
-      showToast("Module deleted successfully", "success");
-    },
-    onError: function (error) {
-      document.getElementById("idLoading").style.display = "none";
-      showToast(error.message, "error");
-    },
-  });
+      document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
+  }
 }
 
 function removeModuleParam() {

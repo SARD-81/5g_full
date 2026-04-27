@@ -1656,6 +1656,51 @@ function extractValuesWithRegex(data) {
   return data;
 }
 
+function normalizeConfDuplicateCopyKeys(data) {
+  if (Array.isArray(data)) {
+    return data.map((item) => normalizeConfDuplicateCopyKeys(item));
+  }
+
+  if (data === null || typeof data !== "object") {
+    return data;
+  }
+
+  const normalized = {};
+  const pendingCopyValues = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    const normalizedValue = normalizeConfDuplicateCopyKeys(value);
+    const copyKeyMatch = key.match(/^(.*)\s+\(copy(?:\s+\d+)?\)$/i);
+
+    if (copyKeyMatch) {
+      const baseKey = copyKeyMatch[1].trim();
+      if (!pendingCopyValues[baseKey]) {
+        pendingCopyValues[baseKey] = [];
+      }
+      pendingCopyValues[baseKey].push(normalizedValue);
+      return;
+    }
+
+    normalized[key] = normalizedValue;
+  });
+
+  Object.entries(pendingCopyValues).forEach(([baseKey, copies]) => {
+    if (!Object.prototype.hasOwnProperty.call(normalized, baseKey)) {
+      normalized[baseKey] = copies.length === 1 ? copies[0] : copies;
+      return;
+    }
+
+    if (Array.isArray(normalized[baseKey])) {
+      normalized[baseKey] = [...normalized[baseKey], ...copies];
+      return;
+    }
+
+    normalized[baseKey] = [normalized[baseKey], ...copies];
+  });
+
+  return normalized;
+}
+
 let oldDataContainer, newDataContainer;
 let descriptionsData;
 let finalObject;
@@ -1670,7 +1715,7 @@ function setJsonEditor(data) {
   let rawText = data;
 
   if (typeof data === "object" && data !== null && (data.format === "conf" || data._format === "conf")) {
-    parsedData = data.data || {};
+    parsedData = normalizeConfDuplicateCopyKeys(data.data || {});
     container._confMeta = data.meta || [];
     isConf = true;
   }
@@ -1701,6 +1746,7 @@ function setJsonEditor(data) {
   // اگر میخواهید روی فایل‌های JSON هم اعمال شود، شرط if (isConf) را بردارید
   if (isConf) {
     parsedData = extractValuesWithRegex(parsedData);
+    parsedData = normalizeConfDuplicateCopyKeys(parsedData);
   }
 
   // ✅ ذخیره state

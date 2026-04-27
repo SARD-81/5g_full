@@ -37,38 +37,90 @@ class ModuleController extends ApiController
     public function __construct()
     {}
 
-    public function showConfigModule ($serverId, $moduleId)
+    public function showConfigModule(ShowConfigModuleRequest $request, $serverId, $moduleId)
     {
+        $credentials = $request->validated();
+
+        if ((int) $credentials['server_id'] !== (int) $serverId) {
+            throw ValidationException::withMessages(['server_id' => 'The submitted server_id does not match route serverID.']);
+        }
+        if ((int) $credentials['module_id'] !== (int) $moduleId) {
+            throw ValidationException::withMessages(['module_id' => 'The submitted module_id does not match route ModuleID.']);
+        }
+
+        $server = Server::find($serverId);
+        if (! $server) {
+            throw new HttpResponseException(response()->json(['msg' => 'invalide server id'], 404));
+        }
+
+        $this->chackPermissionModule($server);
+
+        if ($server['is_down'] == Server::OFF) {
+            throw ValidationException::withMessages(['server.down' => 'this server: ' . $server['name'] . ' is off']);
+        }
+
+        if (! $server->path_config) {
+            throw ValidationException::withMessages(['server.path_config' => 'You did not specify a configuration address config']);
+        }
+
         $module = Module::where('id', $moduleId)
-        ->whereHas('servers', function ($query) use ($serverId) {
-            $query->where('server_id', $serverId);
-        })
-        ->with(['servers' => function ($query) {
-            $query->select('servers.id', 'servers.name', 'servers.is_down');
-        }])
-        ->first();
+            ->whereHas('servers', function ($query) use ($serverId) {
+                $query->where('server_id', $serverId);
+            })
+            ->with(['servers' => function ($query) {
+                $query->select('servers.id', 'servers.name', 'servers.is_down');
+            }])
+            ->first();
 
-        if (!$module)
+        if (! $module) {
             throw new HttpResponseException(response()->json(['msg' => 'The module with the provided ID was not found on the server you specified.']));
+        }
 
+        $configFileName = ModuleIdentity::configFileName($module);
+        $configPath = rtrim((string) $server->path_config, '/') . '/' . $configFileName;
 
+        $sshHelper = new SshHelper(
+            $server->ip,
+            $credentials['username'],
+            $credentials['password'],
+            $credentials['port'] ?? 22
+        );
+
+        $checkCommand = 'test -f ' . escapeshellarg($configPath) . ' && echo "__FILE_EXISTS__"';
+        $existsOutput = $sshHelper->runCommandModule($checkCommand, 'show-config-module', 'showConfigModule');
+        if (! str_contains($existsOutput, '__FILE_EXISTS__')) {
+            throw ValidationException::withMessages(['config_file' => 'Module config file was not found on the selected server.']);
+        }
+
+        $rawConfigContent = $sshHelper->getFileContent('cat ' . escapeshellarg($configPath));
+
+        try {
+            $parsedConfig = ModuleConfigParserService::parseRawContent($rawConfigContent, $configFileName);
+        } catch (\Throwable $e) {
+            throw ValidationException::withMessages(['config_parse' => 'Failed to parse module config file content.']);
+        }
+
+        $pivotData = $module->servers()->where('server_id', $serverId)->first()?->pivot;
+        if (! $pivotData) {
+            throw new HttpResponseException(response()->json(['msg' => 'The module with the provided ID was not found on the server you specified.']));
+        }
+
+        $previousConfig = $pivotData->current_config;
+        $pivotData->previous_config = $previousConfig;
+        $pivotData->current_config = json_encode($parsedConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $pivotData->save();
 
         $serverIdsInModuleName = $module->servers->pluck('pivot.server_id');
-        $serversData = $module->servers->map(function ($server) {
+        $serversData = $module->servers->map(function ($serverItem) {
             return [
-                'id' => $server->id,
-                'name' => $server->name,
-                'is_down' => $server->is_down,
+                'id' => $serverItem->id,
+                'name' => $serverItem->name,
+                'is_down' => $serverItem->is_down,
             ];
         });
 
-        $currentConfig = $module->servers
-        ->where('pivot.server_id', $serverId)
-        ->first()?->pivot->current_config;
-
-
         return response()->json([
-            'config' => json_decode($currentConfig),
+            'config' => $parsedConfig,
             'serversDetails' => $serversData,
             'serversIdInModuleName' => $serverIdsInModuleName,
             'moduleDetails' => [

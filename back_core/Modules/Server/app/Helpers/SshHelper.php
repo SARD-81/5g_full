@@ -78,51 +78,62 @@ class SshHelper
     {
         return true;
     }
-public function runCommandModule(string $command, string $typeCommand, string $method)
-{
-    $this->ssh->setTimeout(10);
-
-    $fullCommand = sprintf(
-        "TMP_OUT=\$(mktemp) && TMP_ERR=\$(mktemp) && echo %s | sudo -S -p '' bash -lc %s >\"\$TMP_OUT\" 2>\"\$TMP_ERR\"; RC=\$?; echo \"__RC:\$RC\"; cat \"\$TMP_OUT\"; cat \"\$TMP_ERR\"; rm -f \"\$TMP_OUT\" \"\$TMP_ERR\"",
-        escapeshellarg($this->password),
-        escapeshellarg($command)
-    );
-
-    $output = $this->ssh->exec($fullCommand);
-
-    preg_match('/__RC:(\d+)/', $output, $matches);
-    $exitCode = isset($matches[1]) ? (int)$matches[1] : 0;
-
-    $cleanOutput = trim(preg_replace('/__RC:\d+/', '', $output));
-
-    // ❗ مهم: فقط واقعی‌ترین error ها
-    $isHardError =
-        $exitCode === 127 ||  // command not found
-        $exitCode === 126;    // permission denied
-
-    if ($isHardError) {
-        $this->logActivity('module-error', $method, [
+    public function runCommandModule(string $command, string $typeCommand, string $method)
+    {
+        $this->ssh->setTimeout(10);
+    
+        $fullCommand = sprintf(
+            "TMP_OUT=\$(mktemp) && TMP_ERR=\$(mktemp) && " .
+            "echo %s | sudo -S -p '' bash -lc %s >\"\$TMP_OUT\" 2>\"\$TMP_ERR\"; " .
+            "RC=\$?; " .
+            "echo '__START_OUT__'; cat \"\$TMP_OUT\"; echo '__END_OUT__'; " .
+            "echo '__START_ERR__'; cat \"\$TMP_ERR\"; echo '__END_ERR__'; " .
+            "echo '__RC:'\"\$RC\"; " .
+            "rm -f \"\$TMP_OUT\" \"\$TMP_ERR\"",
+            escapeshellarg($this->password),
+            escapeshellarg($command)
+        );
+    
+        $output = $this->ssh->exec($fullCommand);
+    
+        // --- Parse خروجی به صورت دقیق ---
+        preg_match('/__START_OUT__(.*?)__END_OUT__/s', $output, $outMatch);
+        preg_match('/__START_ERR__(.*?)__END_ERR__/s', $output, $errMatch);
+        preg_match('/__RC:(\d+)/', $output, $rcMatch);
+    
+        $stdout = isset($outMatch[1]) ? trim($outMatch[1]) : '';
+        $stderr = isset($errMatch[1]) ? trim($errMatch[1]) : '';
+        $exitCode = isset($rcMatch[1]) ? (int)$rcMatch[1] : 1;
+    
+        // فقط errorهای واقعی
+        $isHardError = in_array($exitCode, [126, 127], true);
+    
+        if ($isHardError) {
+            $this->logActivity('module-error', $method, [
+                'command' => $command,
+                'stdout' => $stdout,
+                'stderr' => $stderr,
+                'exit_code' => $exitCode
+            ]);
+    
+            throw new CommandExecutionException(
+                'remote_command_failed',
+                $stderr ?: $stdout,
+                compact('command', 'exitCode'),
+                422
+            );
+        }
+    
+        $this->logActivity($typeCommand, $method, [
             'command' => $command,
-            'output' => $cleanOutput,
+            'stdout' => $stdout,
+            'stderr' => $stderr,
             'exit_code' => $exitCode
         ]);
-
-        throw new CommandExecutionException(
-            'remote_command_failed',
-            $cleanOutput,
-            compact('command', 'exitCode'),
-            422
-        );
+    
+        // 🔥 فقط stdout برگردون (کاملاً تمیز)
+        return $stdout;
     }
-
-    $this->logActivity($typeCommand, $method, [
-        'command' => $command,
-        'output' => $cleanOutput,
-        'exit_code' => $exitCode
-    ]);
-
-    return $cleanOutput;
-}
     public function pingRunCommand ($command)
     {
         try {

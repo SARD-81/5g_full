@@ -140,69 +140,155 @@ class CommandController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Service restart command executed successfully.', 'data' => ['output' => $output]]);
         });
-    }
-
-public function startServiceModule(restartServiceModuleRequest $request)
+    }public function startServiceModule(restartServiceModuleRequest $request)
 {
-return $this->serviceResponse(function () use ($request) {
+    return $this->serviceResponse(function () use ($request) {
 
-    $credentials = $request->validated();
-    $server = Server::findOrFail($credentials['server_id']);
-    $module = Module::findOrFail($credentials['module_id']);
+        $credentials = $request->validated();
+        $server = Server::findOrFail($credentials['server_id']);
+        $module = Module::findOrFail($credentials['module_id']);
 
-    $service = ModuleIdentity::serviceUnitName($module);
+        $service = ModuleIdentity::serviceUnitName($module);
 
-    // 🔴 1. check if .conf exists (BLOCK start if true)
-    $checkCommand = 'sudo test -f /etc/systemd/system/' . $service . '.conf && echo "CONF_EXISTS" || echo "NO_CONF"';
+        // 🔴 0. Service name validation (anti injection)
+        if (!preg_match('/^[a-zA-Z0-9@._-]+$/', $service)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid service name.',
+            ], 400);
+        }
 
-    $checkOutput = $this->runCommandModuleToServer(
-        $credentials,
-        $checkCommand,
-        $server,
-        'checkModule',
-        'checkServiceConf'
-    );
+        // 🔴 1. Get systemd fragment path
+        $fragmentCommand = "systemctl show " . escapeshellarg($service) . " --property=FragmentPath --value";
 
-    Log::info('Check Output Type: ' . gettype($checkOutput));
-    Log::info('Check Output Content: ', (array) $checkOutput);
+        $fragmentPath = trim((string)$this->runCommandModuleToServer(
+            $credentials,
+            $fragmentCommand,
+            $server,
+            'checkModule',
+            'getFragmentPath'
+        ));
 
-    // تبدیل خروجی به رشته (در صورتی که آرایه یا آبجکت است، باید استخراج شود)
-    // فرض می‌کنیم خروجی به صورت رشته متنی برمی‌گردد:
-    $outputString = is_string($checkOutput) ? $checkOutput : json_encode($checkOutput);
+        if (empty($fragmentPath)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service not found.',
+            ], 404);
+        }
 
-    if (str_contains($outputString, 'CONF_EXISTS')) {
+        // 🔴 2. Block suspicious "=" (anti injection / broken output)
+        if (str_contains($fragmentPath, '=')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Blocked: invalid fragment output.',
+                'data' => ['fragment_path' => $fragmentPath]
+            ], 403);
+        }
+
+        // 🔴 3. ONLY blacklist .conf and override
+        if (
+            preg_match('/\.conf(\.|$)/', $fragmentPath) ||
+            str_contains($fragmentPath, '.override')
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Blocked: .conf / override services are forbidden.',
+                'data' => ['fragment_path' => $fragmentPath]
+            ], 403);
+        }
+
+        // 🔴 4. Resolve real path (anti symlink attack)
+        $realPathCommand = "realpath " . escapeshellarg($fragmentPath);
+
+        $realPath = trim((string)$this->runCommandModuleToServer(
+            $credentials,
+            $realPathCommand,
+            $server,
+            'checkModule',
+            'resolveRealPath'
+        ));
+
+        if (empty($realPath)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot resolve service path.',
+            ], 403);
+        }
+
+        // 🔴 5. Allowed base directories (system hardening)
+        $allowedPaths = [
+            '/etc/systemd/system/',
+            '/lib/systemd/system/',
+            '/usr/lib/systemd/system/',
+            '/opt/',
+        ];
+
+        $allowed = false;
+        foreach ($allowedPaths as $path) {
+            if (str_starts_with($realPath, $path)) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        if (!$allowed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Blocked: path not allowed.',
+                'data' => ['real_path' => $realPath]
+            ], 403);
+        }
+
+        // 🔴 6. Final safety check (double guard)
+        if (
+            str_contains($realPath, '.conf') ||
+            str_contains($realPath, '.override')
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Blocked: unsafe unit detected.',
+                'data' => ['real_path' => $realPath]
+            ], 403);
+        }
+
+        // 🔴 7. Verify systemd actually knows this service
+        $statusCommand = "systemctl status " . escapeshellarg($service) . " 2>&1";
+
+        $statusOutput = $this->runCommandModuleToServer(
+            $credentials,
+            $statusCommand,
+            $server,
+            'checkModule',
+            'verifyService'
+        );
+
+        if (str_contains($statusOutput, 'Loaded: not-found')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service not recognized by systemd.',
+            ], 404);
+        }
+
+        // 🟢 8. START SERVICE (no whitelist restriction)
+        $startCommand = 'systemctl start ' . escapeshellarg($service);
+
+        $output = $this->runCommandModuleToServer(
+            $credentials,
+            $startCommand,
+            $server,
+            'startModule',
+            'startService'
+        );
+
         return response()->json([
-            'success' => false,
-            'message' => 'Service is managed via .conf file and cannot be started directly.',
+            'success' => true,
+            'message' => 'Service started successfully.',
             'data' => [
-                'output' => trim($outputString)
+                'output' => $output
             ]
-        ], 409);
-    }
-    // 🟢 2. start service only if safe
-    $startCommand = 'systemctl start ' . $service;
-
-    $output = $this->runCommandModuleToServer(
-        $credentials,
-        $startCommand,
-        $server,
-        'startModule',
-        'startServiceModule'
-    );
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Service start command executed successfully.',
-        'data' => [
-            'output' => $output
-        ]
-    ]);
-
-});
-
-
+        ]);
+    });
 }
-
     public function stopServiceModule(restartServiceModuleRequest $request)
     {
         return $this->serviceResponse(function () use ($request) {

@@ -7,8 +7,8 @@ use Illuminate\Validation\ValidationException;
 use Modules\Server\Helpers\SshHelper;
 use Modules\Server\Models\ModuleSchedule;
 use Modules\Server\Models\Server;
+use Modules\Server\Service\Parser\ModuleConfigParserService;
 use Modules\Server\Utility\CommandOutputAnalyzerService;
-use Symfony\Component\Yaml\Yaml;
 
 class ModuleScheduleService
 {
@@ -106,18 +106,17 @@ class ModuleScheduleService
      */
     private function parseConfigSafely(string $configContent, ?string $fileName)
     {
-        $extension = $fileName ? strtolower(pathinfo($fileName, PATHINFO_EXTENSION)) : null;
-        $trimmed = ltrim($configContent);
-
         try {
-            if ($extension && in_array($extension, ['yaml', 'yml', 'yaml.in'])) {
-                return Yaml::parse($configContent);
-            } elseif ($extension === 'json' || str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[')) {
-                return json_decode($configContent, true, 512, JSON_THROW_ON_ERROR);
-            } else {
-                // سایر فرمت‌ها (conf، conf.in) را بدون تغییر نگه می‌داریم
-                return $configContent;
+            if ($fileName) {
+                return ModuleConfigParserService::parseRawContent($configContent, $fileName);
             }
+
+            $trimmed = ltrim($configContent);
+            if (str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[')) {
+                return ModuleConfigParserService::parseRawContent($configContent, 'config.json');
+            }
+
+            return ModuleConfigParserService::parseRawContent($configContent, 'config.conf');
         } catch (\Exception $e) {
             throw ValidationException::withMessages([
                 'config_file' => 'Configuration parsing failed: ' . $e->getMessage()

@@ -716,8 +716,9 @@ let Modules;
 let moduleId;
 
 async function getModules(serverId) {
-  document.querySelector(".accordion-body-epc").innerHTML = "";
-  document.querySelector(".accordion-body-5gc").innerHTML = "";
+  document.querySelectorAll(".module-list").forEach((container) => {
+    container.innerHTML = "";
+  });
 
   const credentialResult = resolveServerCredentialsForAction(serverId, {
     requireRecovery: true,
@@ -741,127 +742,69 @@ async function getModules(serverId) {
     },
     callback: function (data) {
       Modules = data.data;
-      let lengthEpc = data.data.Epc.length;
-      let length5gc = data.data["5gc"].length;
-      for (let i = 0; i < lengthEpc; i++) {
-        let tempModuleId = data.data["Epc"][i]["id"];
-        let aEpc = document.createElement("a");
-        aEpc.setAttribute("class", "selectMenu module-button");
-        aEpc.setAttribute("id", `Type-${data.data["Epc"][i]["id"]}`);
-        aEpc.setAttribute("data-route", `${data.data["Epc"][i]["name"]}`);
-        aEpc.innerHTML = data.data.Epc[i].name;
-        aEpc.addEventListener("click", (x) => {
-          if (document.getElementById("closeOffcanvas")) {
-            document.getElementById("closeOffcanvas").click();
-          }
-          UpdateJsons = false;
-          tabModuleSelect = undefined;
-          if (moduleId != tempModuleId) {
-            if (document.getElementById("updateBtn") != null) {
-              document.getElementById("updateBtn").style.bottom = "-100px";
-            }
-            displayNone = false;
-            handleButtonClickModulId(tempModuleId);
-            resetChanges();
-            document.getElementById("idMassgeModule").style.display = "none";
-            getModuleConfig(tempModuleId);
-            moduleId = tempModuleId;
-            let element = x.target;
-            for (let x = 0; x < length5gc; x++) {
-              document
-                .getElementById(`Type-${data.data["5gc"][x]["id"]}`)
-                .classList.remove("selectMenus");
-              if (motherboard) {
-                document
-                  .getElementById(`Type-${data.data["5gc"][x]["id"]}`)
-                  .classList.remove("backSelectMenus");
-              }
-            }
-            for (let x = 0; x < lengthEpc; x++) {
-              document
-                .getElementById(`Type-${data.data["Epc"][x]["id"]}`)
-                .classList.remove("selectMenus");
-              if (motherboard) {
-                document
-                  .getElementById(`Type-${data.data["Epc"][x]["id"]}`)
-                  .classList.remove("backSelectMenus");
-              }
-            }
+      const allModules = data.data.allModules || [];
 
-            element.classList.add("selectMenus");
-            if (motherboard) {
-              element.classList.add("backSelectMenus");
-            }
-            document.getElementById("idpageConfigModule").style.display =
-              "block";
-            document.getElementById("jsoneditor").innerHTML = "";
-          }
-        });
-        document.querySelector(".accordion-body-epc").appendChild(aEpc);
-      }
+      allModules.forEach((moduleItem) => {
+        const tempModuleId = moduleItem.id;
+        const appendModuleButton = (container, suffix = "") => {
+          const moduleButton = document.createElement("a");
+          moduleButton.setAttribute("class", "selectMenu module-button");
+          moduleButton.setAttribute("id", `Type-${moduleItem.id}${suffix}`);
+          moduleButton.setAttribute("data-route", `${moduleItem.name}`);
+          moduleButton.innerHTML = moduleItem.name;
 
-      for (let i = 0; i < length5gc; i++) {
-        let tempModuleId = data.data["5gc"][i]["id"];
-        let a5gc = document.createElement("a");
-        a5gc.setAttribute("class", "selectMenu module-button");
-        a5gc.setAttribute("id", `Type-${data.data["5gc"][i]["id"]}`);
-        a5gc.setAttribute("data-route", data.data["5gc"][i]["name"]);
-        a5gc.innerHTML = data.data["5gc"][i].name;
-        a5gc.addEventListener("click", (x) => {
-          if (document.getElementById("closeOffcanvas")) {
-            document.getElementById("closeOffcanvas").click();
-          }
-          UpdateJsons = false;
-          tabModuleSelect = undefined;
-          if (moduleId != tempModuleId) {
-            if (document.getElementById("updateBtn") != null) {
-              document.getElementById("updateBtn").style.bottom = "-100px";
+          moduleButton.addEventListener("click", () => {
+            if (document.getElementById("closeOffcanvas")) {
+              document.getElementById("closeOffcanvas").click();
             }
-            displayNone = false;
-            handleButtonClickModulId(tempModuleId);
-            resetChanges();
-            document.getElementById("idMassgeModule").style.display = "none";
-            document.getElementById("idLoading").style.display = "flex";
-            getModuleConfig(tempModuleId);
-            moduleId = tempModuleId;
-            let element = x.target;
-            for (let x = 0; x < lengthEpc; x++) {
-              document
-                .getElementById(`Type-${data.data["Epc"][x]["id"]}`)
-                .classList.remove("selectMenus");
-              if (motherboard) {
-                document
-                  .getElementById(`Type-${data.data["Epc"][x]["id"]}`)
-                  .classList.remove("backSelectMenus");
+            UpdateJsons = false;
+            tabModuleSelect = undefined;
+            if (moduleId != tempModuleId) {
+              if (document.getElementById("updateBtn") != null) {
+                document.getElementById("updateBtn").style.bottom = "-100px";
               }
-            }
-            for (let x = 0; x < length5gc; x++) {
+              displayNone = false;
+              handleButtonClickModulId(tempModuleId);
+              resetChanges();
+              document.getElementById("idMassgeModule").style.display = "none";
+              getModuleConfig(tempModuleId);
+              moduleId = tempModuleId;
+              document.querySelectorAll(".module-button").forEach((button) => {
+                button.classList.remove("selectMenus");
+                if (motherboard) {
+                  button.classList.remove("backSelectMenus");
+                }
+              });
               document
-                .getElementById(`Type-${data.data["5gc"][x]["id"]}`)
-                .classList.remove("selectMenus");
-              if (motherboard) {
-                document
-                  .getElementById(`Type-${data.data["5gc"][x]["id"]}`)
-                  .classList.remove("backSelectMenus");
-              }
+                .querySelectorAll(
+                  `.module-button[data-route='${moduleItem.name}'][id^='Type-${moduleItem.id}']`
+                )
+                .forEach((button) => {
+                  button.classList.add("selectMenus");
+                  if (motherboard) {
+                    button.classList.add("backSelectMenus");
+                  }
+                });
+              document.getElementById("idpageConfigModule").style.display =
+                "block";
+              document.getElementById("jsoneditor").innerHTML = "";
             }
+          });
 
-            element.classList.add("selectMenus");
-            if (motherboard) {
-              element.classList.add("backSelectMenus");
-            }
-            document.getElementById("idpageConfigModule").style.display =
-              "block";
-            document.getElementById("jsoneditor").innerHTML = "";
-          }
-        });
-        document.querySelector(".accordion-body-5gc").appendChild(a5gc);
-      }
+          container.appendChild(moduleButton);
+        };
+
+        const desktopList = document.querySelector(".module-list-desktop");
+        const mobileList = document.querySelector(".module-list-mobile");
+        if (desktopList) appendModuleButton(desktopList, "-desktop");
+        if (mobileList) appendModuleButton(mobileList, "-mobile");
+      });
     },
     errorCallback: function () {
       Modules = { Epc: [], "5gc": [], allModules: [] };
-      document.querySelector(".accordion-body-epc").innerHTML = "";
-      document.querySelector(".accordion-body-5gc").innerHTML = "";
+      document.querySelectorAll(".module-list").forEach((container) => {
+        container.innerHTML = "";
+      });
     },
   });
 
@@ -1419,9 +1362,10 @@ function handleButtonClickModulId(route) {
 let idModuleType;
 
 function desiredRootModuleId(route) {
-  if (document.querySelector(`#Type-${route}`) != null) {
+  const moduleButton = document.querySelector(`[id^='Type-${route}']`);
+  if (moduleButton != null) {
     document.getElementById("idpageConfigModule").style.display = "block";
-    let dataRoute = document.querySelector(`#Type-${route}`).dataset.route;
+    let dataRoute = moduleButton.dataset.route;
     idModuleType = route;
     desiredRoot(dataRoute);
   }
@@ -1442,37 +1386,14 @@ function desiredRoot(route) {
   if (route != null) {
     document.getElementById("idMassgeModule").style.display = "none";
     document.getElementById("idpageConfigModule").style.display = "block";
-    let lengthEpc = Modules.Epc.length;
-    for (let i = 0; i < lengthEpc; i++) {
-      if (route == Modules.Epc[i].name && idModuleType == Modules.Epc[i].id) {
-        document.getElementById("collapseEPC").classList.add("show");
-        document.getElementById("collapse5GC").classList.remove("show");
-      }
-    }
-
-    let length5gc = Modules["5gc"].length;
-    for (let i = 0; i < length5gc; i++) {
-      if (
-        route == Modules["5gc"][i].name &&
-        idModuleType == Modules["5gc"][i].id
-      ) {
-        document.getElementById("collapse5GC").classList.add("show");
-        document.getElementById("collapseEPC").classList.remove("show");
-      }
-    }
-
     document
-      .querySelector(
-        `.module-button[data-route='${route}']#Type-${idModuleType}`
-      )
-      .classList.add("selectMenus");
-    if (motherboard) {
-      document
-        .querySelector(
-          `.module-button[data-route='${route}']#Type-${idModuleType}`
-        )
-        .classList.add("backSelectMenus");
-    }
+      .querySelectorAll(`.module-button[data-route='${route}'][id^='Type-${idModuleType}']`)
+      .forEach((button) => {
+        button.classList.add("selectMenus");
+        if (motherboard) {
+          button.classList.add("backSelectMenus");
+        }
+      });
   }
 }
 

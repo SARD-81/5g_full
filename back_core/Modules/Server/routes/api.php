@@ -40,8 +40,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['permission:module/read|role:admin|expert'])->get('show-all-modules', [ModuleController::class, 'showAllModules']);
     Route::middleware(['permission:module/update|role:admin|expert'])->post('edit-module', [ModuleController::class, 'editModule']);
 
-    Route::resource('module/schedule', ModuleScheduleController::class)
-        ->middleware(['role:admin']);
+    Route::middleware(['role:admin|expert'])->get('module/schedule', [ModuleScheduleController::class, 'index']);
+    Route::middleware(['role:admin'])->group(function () {
+        Route::post('module/schedule', [ModuleScheduleController::class, 'store']);
+        Route::put('module/schedule/{schedule}', [ModuleScheduleController::class, 'update']);
+        Route::patch('module/schedule/{schedule}', [ModuleScheduleController::class, 'update']);
+        Route::delete('module/schedule/{schedule}', [ModuleScheduleController::class, 'destroy']);
+    });
 
     Route::middleware(['role:admin'])->group(function () {
         Route::delete('module/schedules-by-module/{module_id}', [ModuleScheduleController::class, 'destroyByModuleId']);

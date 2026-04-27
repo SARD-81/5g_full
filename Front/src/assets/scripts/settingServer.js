@@ -1063,40 +1063,68 @@ function showModuleActionError(errorPayload, options = {}) {
   return { handled: true };
 }
 
+function isCurrentModuleConfBased() {
+  const container = document.getElementById("jsoneditor");
+  const datasetIsConf = container?.dataset?.isConf === "true";
+  const detectedFormat = String(
+    jsonData?.format
+    || jsonData?._format
+    || jsonData?.extension
+    || ""
+  ).toLowerCase();
+
+  return datasetIsConf || detectedFormat === "conf";
+}
+
 async function StartModules(id) {
   if (roleUserGetMe == "visitor") return;
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
+
+  if (isCurrentModuleConfBased()) {
+    document.getElementById("idLoading").style.display = "none";
+    Toastify({
+      text: "Start is not supported for .conf-based modules.",
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
+
   const selectedServerId = localStorage.getItem("server");
   const credentialResult = resolveServerCredentialsForAction(selectedServerId);
   if (!credentialResult.valid) return;
 
-  await useApi({
-    method: "post",
-    url: `start-service-config`,
-    data: {
-      server_id: selectedServerId,
-      module_id: id,
-      username: credentialResult.credentials.username,
-      password: credentialResult.credentials.password,
-      port: credentialResult.credentials.port,
-    },
-    callback: async function (data) {
-      Toastify({
-        text: mapModuleActionSuccessMessage("start"),
-        style: {
-          background:
-            "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
-        },
-      }).showToast();
-    },
-    errorCallback: function (errorPayload) {
-      return showModuleActionError(errorPayload);
-    },
-    suppressDefaultErrorHandler: true,
-  });
-  document.getElementById("idLoading").style.display = "none";
+  try {
+    await useApi({
+      method: "post",
+      url: `start-service-config`,
+      data: {
+        server_id: selectedServerId,
+        module_id: id,
+        username: credentialResult.credentials.username,
+        password: credentialResult.credentials.password,
+        port: credentialResult.credentials.port,
+      },
+      callback: async function (data) {
+        Toastify({
+          text: mapModuleActionSuccessMessage("start"),
+          style: {
+            background:
+              "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+          },
+        }).showToast();
+      },
+      errorCallback: function (errorPayload) {
+        return showModuleActionError(errorPayload);
+      },
+      suppressDefaultErrorHandler: true,
+    });
+  } finally {
+    document.getElementById("idLoading").style.display = "none";
+  }
 }
 
 document.getElementById("stopModule").addEventListener("click", () => {

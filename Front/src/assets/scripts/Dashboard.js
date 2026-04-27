@@ -6284,8 +6284,7 @@ document.getElementById("addModal").addEventListener("click", function () {
 
   document.querySelector('input[name="name_nameInputAddModule"]').value = "";
   document.querySelector("#moduleAddFile").value = "";
-  document.querySelector("#moduleAddTypeEPC").checked = false;
-  document.querySelector("#moduleAddType5GC").checked = false;
+  document.querySelector("#moduleAddType").value = "";
   // document.querySelector("#saveValueAdd").checked = false;
 
   // if (userNameServer && passwordServer) {
@@ -6431,14 +6430,12 @@ document
       console.log(moduleFile)
 
       let moduleName = document.getElementById("moduleAddName").value;
-      let radioButtons = document.querySelectorAll(
-        'input[name="flexRadioDefault"]'
-      );
+      let selectedModuleType = document.getElementById("moduleAddType")?.value?.trim();
       let checkBox = document.querySelectorAll(".addModalCheckbox");
       // let userNameUser = document.getElementById("userNameAddModule").value;
       // let passwordUser = document.getElementById("passwordAddModule").value;
 
-      const isChecked = [...radioButtons].some((radio) => radio.checked);
+      const isChecked = Boolean(selectedModuleType);
       const isCheckedBox = [...checkBox].some((checkBox) => checkBox.checked);
       if (moduleName.length < 3) {
         Toastify({

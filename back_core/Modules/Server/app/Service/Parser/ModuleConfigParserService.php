@@ -38,6 +38,7 @@ class ModuleConfigParserService
         }
 
         if (($decoded['format'] ?? null) === 'conf') {
+            $decoded['data'] = self::normalizeConfDuplicateKeys($decoded['data'] ?? []);
             return ConfParserService::serialize($decoded);
         }
 
@@ -50,7 +51,7 @@ class ModuleConfigParserService
             $confPayload = [
                 'format' => 'conf',
                 'extension' => $payload['extension'] ?? 'conf',
-                'data' => $payload['data'] ?? [],
+                'data' => self::normalizeConfDuplicateKeys($payload['data'] ?? []),
                 'meta' => $payload['meta'] ?? [],
             ];
 
@@ -69,7 +70,7 @@ class ModuleConfigParserService
                 $confPayload = [
                     'format' => 'conf',
                     'extension' => $existingDecoded['extension'] ?? 'conf',
-                    'data' => $payload,
+                    'data' => self::normalizeConfDuplicateKeys($payload),
                     'meta' => $existingDecoded['meta'] ?? [],
                 ];
 
@@ -114,5 +115,57 @@ class ModuleConfigParserService
         }
 
         return YamlParserService::parseRawConfigContent($content, $extension);
+    }
+
+    private static function normalizeConfDuplicateKeys(mixed $data): mixed
+    {
+        if (!is_array($data)) {
+            return $data;
+        }
+
+        $normalized = [];
+        $pendingCopyValues = [];
+
+        foreach ($data as $key => $value) {
+            $normalizedValue = self::normalizeConfDuplicateKeys($value);
+
+            if (!is_string($key)) {
+                $normalized[$key] = $normalizedValue;
+                continue;
+            }
+
+            if (preg_match('/^(.*)\s+\(copy(?:\s+\d+)?\)$/i', $key, $matches)) {
+                $baseKey = rtrim($matches[1]);
+                $pendingCopyValues[$baseKey] ??= [];
+                $pendingCopyValues[$baseKey][] = $normalizedValue;
+                continue;
+            }
+
+            $normalized[$key] = $normalizedValue;
+        }
+
+        foreach ($pendingCopyValues as $baseKey => $copies) {
+            if (!array_key_exists($baseKey, $normalized)) {
+                if (count($copies) === 1) {
+                    $normalized[$baseKey] = $copies[0];
+                } else {
+                    $normalized[$baseKey] = $copies;
+                }
+                continue;
+            }
+
+            if (!is_array($normalized[$baseKey]) || array_is_list($normalized[$baseKey])) {
+                $baseValues = is_array($normalized[$baseKey]) && array_is_list($normalized[$baseKey])
+                    ? $normalized[$baseKey]
+                    : [$normalized[$baseKey]];
+                $normalized[$baseKey] = array_merge($baseValues, $copies);
+                continue;
+            }
+
+            // Preserve object-like arrays by appending copies as list entries.
+            $normalized[$baseKey] = array_merge([$normalized[$baseKey]], $copies);
+        }
+
+        return $normalized;
     }
 }

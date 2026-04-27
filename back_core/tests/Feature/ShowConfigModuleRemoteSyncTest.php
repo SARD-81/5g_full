@@ -136,4 +136,55 @@ class ShowConfigModuleRemoteSyncTest extends TestCase
         $this->assertSame('{"time": 10}', $pivot->current_config);
         $this->assertSame('{"time": 5}', $pivot->previous_config);
     }
+
+    public function test_show_config_module_uses_conf_parser_when_stored_format_is_conf_even_with_yaml_remote_name(): void
+    {
+        $user = $this->createUserWithPermissions(['module/read', 'server/Core-Server']);
+        Sanctum::actingAs($user);
+
+        $server = Server::query()->create([
+            'name' => 'Core-Server',
+            'ip' => '10.0.0.17',
+            'path_config' => '/tmp/config/',
+            'path_run_config' => '/tmp/run/',
+            'is_down' => Server::ON,
+        ]);
+
+        $module = Module::query()->create([
+            'name' => 'HSS',
+            'service_key' => 'hss',
+            'type' => '5gc',
+        ]);
+
+        $module->servers()->attach($server->id, [
+            'initial_config' => '{"format":"conf","extension":"conf","data":{"a":"1"},"meta":[]}',
+            'current_config' => '{"format":"conf","extension":"conf","data":{"a":"1"},"meta":[]}',
+            'previous_config' => null,
+        ]);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')->once()->andReturn('__FILE_EXISTS__');
+        $sshMock->shouldReceive('getFileContent')->once()->andReturn("a=2\na=3\n");
+
+        $response = $this->postJson("/api/show-config-module/{$server->id}/{$module->id}", [
+            'server_id' => $server->id,
+            'module_id' => $module->id,
+            'username' => 'root',
+            'password' => 'secret',
+            'port' => 22,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('config.format', 'conf')
+            ->assertJsonPath('config.data.a.0', '2')
+            ->assertJsonPath('config.data.a.1', '3');
+
+        $pivot = $module->servers()->where('server_id', $server->id)->first()->pivot;
+        $decodedCurrent = json_decode($pivot->current_config, true);
+
+        $this->assertIsArray($decodedCurrent);
+        $this->assertSame('conf', $decodedCurrent['format'] ?? null);
+        $this->assertSame('{"format":"conf","extension":"conf","data":{"a":"1"},"meta":[]}', $pivot->previous_config);
+    }
 }

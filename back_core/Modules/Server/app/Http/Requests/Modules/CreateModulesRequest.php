@@ -5,8 +5,6 @@ namespace Modules\Server\Http\Requests\Modules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Modules\Server\Models\Module;
-use Modules\Server\Utility\ModuleIdentity;
 
 class CreateModulesRequest extends FormRequest
 {
@@ -26,12 +24,6 @@ class CreateModulesRequest extends FormRequest
                 'required',
                 'string',
                 Rule::in(self::ALLOWED_MODULE_TYPES),
-                function ($attribute, $value, $fail) {
-                    $serviceKey = ModuleIdentity::normalizeKey($value);
-                    if (Module::where('service_key', $serviceKey)->exists()) {
-                        $fail('module technical identity already exists.');
-                    }
-                },
             ],
             'config_file' => ['required', 'file', function ($attribute, $value, $fail) {
                 if (!preg_match('/\.(yaml|yml|yaml\.in|json|conf|conf\.in)$/i', $value->getClientOriginalName())) {

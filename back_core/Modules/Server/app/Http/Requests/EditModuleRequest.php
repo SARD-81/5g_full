@@ -5,7 +5,6 @@ namespace Modules\Server\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Modules\Server\Models\Module;
-use Modules\Server\Utility\ModuleIdentity;
 
 class EditModuleRequest extends FormRequest
 {
@@ -19,18 +18,6 @@ class EditModuleRequest extends FormRequest
                 'min:2',
                 'max:24',
                 'regex:/^[^<>{}\/|\~`!@#$%&*()\+="\':;؟،]*$/u',
-                function ($attribute, $value, $fail) {
-                    if ($value === null) {
-                        return;
-                    }
-
-                    $serviceKey = ModuleIdentity::normalizeKey($value);
-                    $moduleId = (int) $this->input('module_id');
-
-                    if (Module::where('service_key', $serviceKey)->where('id', '!=', $moduleId)->exists()) {
-                        $fail('module technical identity already exists.');
-                    }
-                },
             ],
             'type' => ['nullable', 'string', 'regex:/^[^<>{}\/|\~`!@#$%&*()_\-+="\':;؟،]*$/u'],
             'config_file' => ['nullable', 'file', function ($attribute, $value, $fail) {

@@ -76,6 +76,14 @@ class ModuleController extends ApiController
             throw new HttpResponseException(response()->json(['msg' => 'The module with the provided ID was not found on the server you specified.']));
         }
 
+        $pivotData = $module->servers()->where('server_id', $serverId)->first()?->pivot;
+        if (! $pivotData) {
+            throw new HttpResponseException(response()->json(['msg' => 'The module with the provided ID was not found on the server you specified.']));
+        }
+
+        $storedConfig = json_decode((string) $pivotData->current_config, true);
+        $storedFormat = is_array($storedConfig) ? strtolower((string) ($storedConfig['format'] ?? '')) : '';
+
         $configFileName = ModuleIdentity::configFileName($module);
         $configPath = rtrim((string) $server->path_config, '/') . '/' . $configFileName;
 
@@ -95,14 +103,14 @@ class ModuleController extends ApiController
         $rawConfigContent = $sshHelper->getFileContent('cat ' . escapeshellarg($configPath));
 
         try {
-            $parsedConfig = ModuleConfigParserService::parseRawContent($rawConfigContent, $configFileName);
-        } catch (\Throwable $e) {
-            throw ValidationException::withMessages(['config_parse' => 'Failed to parse module config file content.']);
-        }
+            $parserFileName = $storedFormat === 'conf'
+                ? $module->service_key . '.conf'
+                : $configFileName;
 
-        $pivotData = $module->servers()->where('server_id', $serverId)->first()?->pivot;
-        if (! $pivotData) {
-            throw new HttpResponseException(response()->json(['msg' => 'The module with the provided ID was not found on the server you specified.']));
+            $parsedConfig = ModuleConfigParserService::parseRawContent($rawConfigContent, $parserFileName);
+        } catch (\Throwable $e) {
+            report($e);
+            throw ValidationException::withMessages(['config_parse' => 'Failed to parse module config file content.']);
         }
 
         $previousConfig = $pivotData->current_config;

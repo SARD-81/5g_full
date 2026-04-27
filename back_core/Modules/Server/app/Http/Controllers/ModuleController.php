@@ -316,48 +316,105 @@ class ModuleController extends ApiController
     public function deleteModule (deleteModuleRequest $request)
     {
         $credentials = $request->validated();
-        $module = Module::find($credentials['module_id']);
+        $module = Module::with('servers')->findOrFail($credentials['module_id']);
 
         try {
+            $attachedServers = $module->servers;
+            $submittedServers = collect($credentials['servers'] ?? [])->keyBy(
+                fn ($item) => (int) $item['id']
+            );
 
-            $serverModule = $module->servers()->get();
-            if (!$serverModule) {
-                $module->delete();
-                return response()->json(['msg' => 'Module Deleted', 'module' => $module]);
-            }
-
-
-            foreach ($serverModule as $server)
+            foreach ($attachedServers as $server) {
                 $this->chackPermissionModule($server);
 
+                $serverCredentials = $submittedServers->get((int) $server->id);
+                if (!$serverCredentials) {
+                    throw ValidationException::withMessages([
+                        'servers' => "SSH credentials for server ID {$server->id} are required.",
+                    ]);
+                }
 
+                $this->cleanupModuleArtifactsFromServer($module, $server, $serverCredentials);
+            }
+
+            DB::beginTransaction();
             $module->delete();
+            DB::commit();
 
-
-            activity('create-module')
+            activity('delete-module')
                 ->causedBy(Auth::user())
-                ->event('create-module')
+                ->event('delete-module')
                 ->withProperties([
                     'type-log' => 'server',
                     'route' => request()->fullUrl(),
                     'user' => Auth::user()->makeHidden(['roles', 'permissions'])->toArray(),
                     'user_role' => Auth::user()->roles()->pluck('name')->first(),
-                    'method' => 'createModule',
+                    'method' => 'deleteModule',
                     'module' => [
                         'name' => $module['name'],
                         'type' => $module['type'],
-                        'server_id' => $serverModule,
+                        'server_id' => $attachedServers->pluck('id')->toArray(),
                     ],
                 ])
-                ->log('A new module has been created');
+                ->log('The module has been deleted successfully after remote cleanup.');
 
-                DB::commit();
             return response()->json(['msg' => 'Module Deleted', 'module' => $module]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
                 return response()->json(['success' => false, 'msg' => $e->getMessage()], 422);
         }
+    }
+
+    private function cleanupModuleArtifactsFromServer(Module $module, Server $server, array $credentials): void
+    {
+        if (empty($server->path_config) || empty($server->path_run_config)) {
+            throw ValidationException::withMessages([
+                'server' => "Server {$server->name} is missing required paths for module cleanup.",
+            ]);
+        }
+
+        $username = (string) $credentials['username'];
+        $password = (string) $credentials['password'];
+        $port = (int) ($credentials['port'] ?? 22);
+
+        $pathConfig = rtrim((string) $server->path_config, '/');
+        $pathRunConfig = rtrim((string) $server->path_run_config, '/');
+
+        $identityConfig = $pathConfig . '/' . ModuleIdentity::configFileName($module);
+        $legacyConfig = $pathConfig . '/' . $module->name . '.yaml';
+        $serviceName = ModuleIdentity::serviceUnitName($module);
+
+        $runArtifacts = [
+            $pathRunConfig . '/' . $serviceName,
+            $pathRunConfig . '/' . $serviceName . '.service',
+            $pathRunConfig . '/run-' . $module->service_key,
+            $pathRunConfig . '/run-' . $module->name,
+            $pathRunConfig . '/' . $module->service_key . '.yaml',
+            $pathRunConfig . '/' . $module->name . '.yaml',
+        ];
+
+        $artifactPaths = array_values(array_unique(array_filter(array_merge([
+            $identityConfig,
+            $legacyConfig,
+        ], $runArtifacts))));
+
+        $checks = implode(' && ', array_map(
+            fn ($path) => 'test ! -e ' . escapeshellarg($path),
+            $artifactPaths
+        ));
+
+        $command = implode(' ; ', [
+            'systemctl stop ' . escapeshellarg($serviceName) . ' >/dev/null 2>&1 || true',
+            'systemctl disable ' . escapeshellarg($serviceName) . ' >/dev/null 2>&1 || true',
+            'rm -f ' . implode(' ', array_map(fn ($path) => escapeshellarg($path), $artifactPaths)) . ' || exit 127',
+            '(' . $checks . ') || exit 127',
+        ]);
+
+        $sshHelper = new SshHelper($server->ip, $username, $password, $port);
+        $sshHelper->runCommandModule($command, 'delete-module-cleanup', 'deleteModule.cleanupModuleArtifactsFromServer');
     }
 
 

@@ -108,7 +108,7 @@ class ModuleController extends ApiController
             $checkCommand = 'test -f ' . escapeshellarg($configPath);
             $output = $sshHelper->runCommandModule($checkCommand, 'show-server-module-list', 'showAllServiseAndModulesInServer');
 
-            return str_contains($output, '__CMD_EXIT__:0');
+            return str_contains($output, "");
         })->values();
 
 

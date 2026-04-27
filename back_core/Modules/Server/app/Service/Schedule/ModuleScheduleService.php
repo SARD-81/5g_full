@@ -62,7 +62,7 @@ class ModuleScheduleService
             $outputCommand = $this->sendConfigToServer(
                 $moduleSchedule['username_ssh'],
                 $moduleSchedule['password_ssh'],
-                $moduleSchedule->module->name,
+                $moduleSchedule->module->service_key,
                 $moduleSchedule['config'],
                 $moduleSchedule->server,
                 'moduleSchedule',
@@ -148,6 +148,6 @@ class ModuleScheduleService
         $sshHelper = new sshHelper($server->ip, $username, $password, $port);
 
         $commandUpdateFileModule = 'echo ' . escapeshellarg($yamlContent) . ' > ' . $server['path_config'] . $moduleName . '.yaml';
-        return $sshHelper->runCommandModule($commandUpdateFileModule, $typeCommand, $method, $server);
+        return $sshHelper->runCommandModule($commandUpdateFileModule, $typeCommand, $method);
     }
 }

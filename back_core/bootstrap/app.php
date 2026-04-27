@@ -18,12 +18,18 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
         ]);
+    
+        $middleware->web(append: [
+            \App\Http\Middleware\SessionTimeoutMiddleware::class,
+        ]);
     })
+
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->renderable(function (NotFoundHttpException $e, $request) {
             return response()->json(['message' => 'endpoin not found.'], 404);

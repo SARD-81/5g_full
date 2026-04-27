@@ -78,31 +78,51 @@ class SshHelper
     {
         return true;
     }
+public function runCommandModule(string $command, string $typeCommand, string $method)
+{
+    $this->ssh->setTimeout(10);
 
+    $fullCommand = sprintf(
+        "TMP_OUT=\$(mktemp) && TMP_ERR=\$(mktemp) && echo %s | sudo -S -p '' bash -lc %s >\"\$TMP_OUT\" 2>\"\$TMP_ERR\"; RC=\$?; echo \"__RC:\$RC\"; cat \"\$TMP_OUT\"; cat \"\$TMP_ERR\"; rm -f \"\$TMP_OUT\" \"\$TMP_ERR\"",
+        escapeshellarg($this->password),
+        escapeshellarg($command)
+    );
 
+    $output = $this->ssh->exec($fullCommand);
 
-    public function runCommandModule(string $command, string $typeCommand, string $method)
-    {
-        $fullCommand = sprintf(
-            "TMP_OUT=$(mktemp) && TMP_ERR=$(mktemp) && echo %s | sudo -S -p '' bash -lc %s >\"\$TMP_OUT\" 2>\"\$TMP_ERR\"; __RC=$?; printf '__CMD_STDOUT_START__\\n'; cat \"\$TMP_OUT\"; printf '\\n__CMD_STDOUT_END__\\n__CMD_STDERR_START__\\n'; cat \"\$TMP_ERR\"; printf '\\n__CMD_STDERR_END__\\n__CMD_EXIT__:%%s\\n' \"\$__RC\"; rm -f \"\$TMP_OUT\" \"\$TMP_ERR\"",
-            escapeshellarg($this->password),
-            escapeshellarg($command)
+    preg_match('/__RC:(\d+)/', $output, $matches);
+    $exitCode = isset($matches[1]) ? (int)$matches[1] : 0;
+
+    $cleanOutput = trim(preg_replace('/__RC:\d+/', '', $output));
+
+    // ❗ مهم: فقط واقعی‌ترین error ها
+    $isHardError =
+        $exitCode === 127 ||  // command not found
+        $exitCode === 126;    // permission denied
+
+    if ($isHardError) {
+        $this->logActivity('module-error', $method, [
+            'command' => $command,
+            'output' => $cleanOutput,
+            'exit_code' => $exitCode
+        ]);
+
+        throw new CommandExecutionException(
+            'remote_command_failed',
+            $cleanOutput,
+            compact('command', 'exitCode'),
+            422
         );
-
-        $output = $this->ssh->exec($fullCommand);
-
-        if (str_contains($output, 'FATAL') || str_contains($output, 'ERROR')) {
-            $this->logActivity('module-error', $method,
-                ['command' => $command, 'output' => $output]);
-            throw new InvalidArgumentException($output);
-        }
-        else
-            $this->logActivity($typeCommand, $method,
-                ['command' => $command, 'output' => $output]);
-
-
-        return $output;
     }
+
+    $this->logActivity($typeCommand, $method, [
+        'command' => $command,
+        'output' => $cleanOutput,
+        'exit_code' => $exitCode
+    ]);
+
+    return $cleanOutput;
+}
     public function pingRunCommand ($command)
     {
         try {

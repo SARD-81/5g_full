@@ -5,7 +5,7 @@ namespace Modules\Server\Http\Requests\Modules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 
-class ShowAllServerModulesRequest extends FormRequest
+ class ShowAllServerModulesRequest extends FormRequest
 {
     public function rules(): array
     {
@@ -31,7 +31,7 @@ class ShowAllServerModulesRequest extends FormRequest
             ],
         ];
     }
-
+    
     public function authorize(): bool
     {
         return true;

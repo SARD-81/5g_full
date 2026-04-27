@@ -77,7 +77,7 @@ class ModuleLifecycleIdentityTest extends TestCase
 
         $response = $this->postJson('/api/create-module', [
             'name' => 'PCRF',
-            'type' => '5gc',
+            'type' => 'pcrf',
             'config_file' => UploadedFile::fake()->create('module.yaml', 10),
             'servers' => [
                 ['id' => $server->id, 'password' => 'secret', 'port' => 22],
@@ -95,17 +95,84 @@ class ModuleLifecycleIdentityTest extends TestCase
         Sanctum::actingAs($user);
 
         $payload = [
-            'name' => 'PCRF',
-            'type' => '5gc',
+            'name' => 'Display Name One',
+            'type' => 'pcrf',
             'config_file' => UploadedFile::fake()->create('module.yaml', 10),
             'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
         ];
 
         $this->postJson('/api/create-module', $payload)->assertOk();
 
-        $this->postJson('/api/create-module', array_merge($payload, ['name' => 'pcrf']))
+        $this->postJson('/api/create-module', array_merge($payload, ['name' => 'Different Display Name']))
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['name']);
+            ->assertJsonValidationErrors(['type']);
+    }
+
+    public function test_create_accepts_each_allowed_module_type(): void
+    {
+        $this->mockSshWithOutput('');
+        $user = $this->createUserWithPermissions(['module/create']);
+        $server = $this->createServer('Srv-Allowed-Types');
+        Sanctum::actingAs($user);
+
+        foreach (['hss', 'pcrf', 'upf', 'sgwc', 'sgwu', 'smf', 'mme'] as $index => $type) {
+            $this->postJson('/api/create-module', [
+                'name' => 'Display ' . $type . ' ' . $index,
+                'type' => $type,
+                'config_file' => UploadedFile::fake()->create('module.yaml', 10),
+                'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+            ])->assertOk();
+
+            $this->assertDatabaseHas('modules', ['name' => 'Display ' . $type . ' ' . $index, 'service_key' => $type, 'type' => $type]);
+        }
+    }
+
+    public function test_create_rejects_disallowed_module_types(): void
+    {
+        $this->mockSshWithOutput('');
+        $user = $this->createUserWithPermissions(['module/create']);
+        $server = $this->createServer('Srv-Bad-Types');
+        Sanctum::actingAs($user);
+
+        foreach (['EPC', '5GC', 'hss,pcrf', 'custom-type', 'HSS'] as $invalidType) {
+            $this->postJson('/api/create-module', [
+                'name' => 'Display ' . $invalidType,
+                'type' => $invalidType,
+                'config_file' => UploadedFile::fake()->create('module.yaml', 10),
+                'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+            ])->assertStatus(422)->assertJsonValidationErrors(['type']);
+        }
+    }
+
+    public function test_create_uses_type_for_service_key_and_remote_artifacts(): void
+    {
+        $user = $this->createUserWithPermissions(['module/create']);
+        $server = $this->createServer('Srv-Type-Identity');
+        Sanctum::actingAs($user);
+
+        $commands = [];
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->andReturnUsing(function ($command) use (&$commands) {
+                $commands[] = $command;
+                return '';
+            });
+        $sshMock->shouldReceive('getFileContent')->andReturn('');
+        $sshMock->shouldReceive('testConnection')->andReturnTrue();
+
+        $this->postJson('/api/create-module', [
+            'name' => 'hss12',
+            'type' => 'hss',
+            'config_file' => UploadedFile::fake()->create('module.yaml', 10),
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertOk();
+
+        $module = Module::query()->where('name', 'hss12')->firstOrFail();
+        $this->assertSame('hss', $module->service_key);
+        $this->assertSame('bbdh-hssd', \Modules\Server\Utility\ModuleIdentity::serviceUnitName($module));
+        $this->assertContains("echo '' > /tmp/config/hss.yaml", $commands);
+        $this->assertNotContains("echo '' > /tmp/config/hss12.yaml", $commands);
     }
 
     public function test_edit_rename_changes_display_name_not_service_key(): void
@@ -321,14 +388,14 @@ class ModuleLifecycleIdentityTest extends TestCase
 
         $this->postJson('/api/create-module', [
             'name' => 'PCRF',
-            'type' => '5gc',
+            'type' => 'pcrf',
             'config_file' => UploadedFile::fake()->create('module.yaml', 10),
             'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
         ])->assertOk();
 
         $this->postJson('/api/create-module', [
-            'name' => 'pcrf',
-            'type' => '5gc',
+            'name' => 'pcrf second',
+            'type' => 'pcrf',
             'config_file' => UploadedFile::fake()->create('module.yaml', 10),
             'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
         ])->assertStatus(422);

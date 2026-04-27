@@ -6562,18 +6562,7 @@ async function addModules() {
   ).value;
   let fileInput = document.getElementById("moduleAddFile");
   let fileModule = fileInput.files[0];
-  let typeModule;
-
-  let fivegcType = document.getElementById("moduleAddType5GC");
-  let epcType = document.getElementById("moduleAddTypeEPC");
-
-  if (fivegcType.checked && epcType.checked) {
-    typeModule = "Epc, 5gc";
-  } else if (fivegcType.checked) {
-    typeModule = "5gc";
-  } else if (epcType.checked) {
-    typeModule = "Epc";
-  }
+  let typeModule = document.getElementById("moduleAddType")?.value?.trim();
 
   // let path_config = document.querySelector(
   //   'input[name="name_InputPathConfigAddModule"]'

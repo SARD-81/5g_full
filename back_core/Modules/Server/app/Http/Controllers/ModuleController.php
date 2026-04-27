@@ -219,10 +219,12 @@ class ModuleController extends ApiController
 
         try {
             DB::beginTransaction();
+            $technicalKey = ModuleIdentity::normalizeKey($credential['type']);
 
             $module = Module::create([
                 'name' => $credential['name'],
                 'type' => $credential['type'],
+                'service_key' => $technicalKey,
             ]);
 
 
@@ -250,7 +252,7 @@ class ModuleController extends ApiController
                 $outputCommand = $this->sendConfigToServer(
                     $username,
                     $password,
-                    $credential['name'],
+                    $module->service_key,
                     $yamlContent,
                     $server,
                     'create-module',

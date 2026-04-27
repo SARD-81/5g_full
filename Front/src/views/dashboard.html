@@ -4230,18 +4230,16 @@
                       <div class="mb-3">
                         <label for="moduleAddType" class="form-label">Module Type
                         </label>
-                        <div class="form-check">
-                          <input class="form-check-input" type="radio" name="flexRadioDefault" id="moduleAddTypeEPC" />
-                          <label class="form-check-label" for="moduleAddTypeEPC">
-                            EPC
-                          </label>
-                        </div>
-                        <div class="form-check">
-                          <input class="form-check-input" type="radio" name="flexRadioDefault" id="moduleAddType5GC" />
-                          <label class="form-check-label" for="moduleAddType5GC">
-                            5GC
-                          </label>
-                        </div>
+                        <select class="form-select" id="moduleAddType" name="moduleAddType" aria-label="Select module type">
+                          <option value="" selected disabled>Select module type</option>
+                          <option value="hss">hss</option>
+                          <option value="pcrf">pcrf</option>
+                          <option value="upf">upf</option>
+                          <option value="sgwc">sgwc</option>
+                          <option value="sgwu">sgwu</option>
+                          <option value="smf">smf</option>
+                          <option value="mme">mme</option>
+                        </select>
                       </div>
                       <div class="mb-3">
                         <label for="selectAddServer" class="form-label replace-server">Servers

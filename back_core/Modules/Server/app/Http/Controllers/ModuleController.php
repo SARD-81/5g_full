@@ -280,6 +280,20 @@ class ModuleController extends ApiController
         try {
             DB::beginTransaction();
             $technicalKey = ModuleIdentity::normalizeKey($credential['type']);
+            $duplicateServerNames = Server::query()
+                ->whereIn('id', $serverIds)
+                ->whereHas('modules', function ($query) use ($technicalKey) {
+                    $query->where('service_key', $technicalKey);
+                })
+                ->pluck('name')
+                ->all();
+
+            if (! empty($duplicateServerNames)) {
+                throw ValidationException::withMessages([
+                    'type' => 'A module with this Module Type already exists on the selected server.',
+                    'servers' => implode(', ', $duplicateServerNames),
+                ]);
+            }
 
             $module = Module::create([
                 'name' => $credential['name'],

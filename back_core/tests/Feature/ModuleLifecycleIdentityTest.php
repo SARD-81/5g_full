@@ -87,25 +87,51 @@ class ModuleLifecycleIdentityTest extends TestCase
         $response->assertStatus(422)->assertJsonValidationErrors(['servers.0.username']);
     }
 
-    public function test_create_rejects_duplicate_technical_identity(): void
+    public function test_create_allows_same_module_type_on_different_servers(): void
     {
         $this->mockSshWithOutput('');
         $user = $this->createUserWithPermissions(['module/create']);
-        $server = $this->createServer();
+        $serverA = $this->createServer('Srv-A');
+        $serverB = $this->createServer('Srv-B');
         Sanctum::actingAs($user);
 
-        $payload = [
+        $this->postJson('/api/create-module', [
+            'name' => 'Display Name One',
+            'type' => 'pcrf',
+            'config_file' => UploadedFile::fake()->create('module.yaml', 10),
+            'servers' => [['id' => $serverA->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertOk();
+
+        $this->postJson('/api/create-module', [
+            'name' => 'Display Name Two',
+            'type' => 'pcrf',
+            'config_file' => UploadedFile::fake()->create('module.yaml', 10),
+            'servers' => [['id' => $serverB->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertOk();
+
+        $this->assertSame(2, Module::query()->where('service_key', 'pcrf')->count());
+    }
+
+    public function test_create_rejects_duplicate_module_type_on_same_server(): void
+    {
+        $this->mockSshWithOutput('');
+        $user = $this->createUserWithPermissions(['module/create']);
+        $server = $this->createServer('Srv-Dupe');
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/create-module', [
             'name' => 'Display Name One',
             'type' => 'pcrf',
             'config_file' => UploadedFile::fake()->create('module.yaml', 10),
             'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
-        ];
+        ])->assertOk();
 
-        $this->postJson('/api/create-module', $payload)->assertOk();
-
-        $this->postJson('/api/create-module', array_merge($payload, ['name' => 'Different Display Name']))
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['type']);
+        $this->postJson('/api/create-module', [
+            'name' => 'Display Name Two',
+            'type' => 'pcrf',
+            'config_file' => UploadedFile::fake()->create('module.yaml', 10),
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertStatus(422)->assertJsonValidationErrors(['type']);
     }
 
     public function test_create_accepts_each_allowed_module_type(): void

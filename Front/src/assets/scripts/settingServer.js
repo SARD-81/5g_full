@@ -1701,6 +1701,28 @@ function normalizeConfDuplicateCopyKeys(data) {
   return normalized;
 }
 
+function hasConfLikeLegacyRawShape(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return false;
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(data, "raw")) {
+    return false;
+  }
+
+  const raw = data.raw;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return false;
+  }
+
+  const copySuffixRegex = /\s+\(copy(?:\s+\d+)?\)$/i;
+  const hasCopySuffixedKey = Object.keys(raw).some((key) => copySuffixRegex.test(key));
+  const hasConfMeta = Array.isArray(data.meta)
+    && data.meta.some((item) => item && typeof item === "object" && (item.type === "kv" || item.type === "section"));
+
+  return hasCopySuffixedKey || hasConfMeta;
+}
+
 let oldDataContainer, newDataContainer;
 let descriptionsData;
 let finalObject;
@@ -1716,6 +1738,12 @@ function setJsonEditor(data) {
 
   if (typeof data === "object" && data !== null && (data.format === "conf" || data._format === "conf")) {
     parsedData = normalizeConfDuplicateCopyKeys(data.data || {});
+    container._confMeta = data.meta || [];
+    isConf = true;
+  }
+
+  if (!isConf && hasConfLikeLegacyRawShape(data)) {
+    parsedData = normalizeConfDuplicateCopyKeys(data);
     container._confMeta = data.meta || [];
     isConf = true;
   }

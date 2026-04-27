@@ -26,6 +26,7 @@ use Modules\Server\Http\Requests\Undo\UndoConfigModulesRequest;
 use Modules\Server\Http\Requests\Undo\UndoToInitialConfigModulesRequest;
 use Modules\Server\Models\Module;
 use Modules\Server\Models\Server;
+use Modules\Server\Service\Parser\ModuleConfigParserService;
 use Modules\Server\Service\Parser\YamlParserService;
 use Modules\Server\Utility\CommandOutputAnalyzerService;
 use Modules\Server\Utility\LogModuleService;
@@ -207,11 +208,10 @@ class ModuleController extends ApiController
     {
         $credential  = $request->validated();
         $serverIds   = array_column($credential['servers'], 'id');
-        $jsonContent = YamlParserService::uploadModuleFile($request->file('config_file'));
-        $configType = $request->input('configType'); 
-        $yamlContent = YamlParserService::convertJsonToYaml($jsonContent);
-
-        if (is_array($jsonContent) || is_object($jsonContent)) return $jsonContent;
+        $parsedConfig = ModuleConfigParserService::parseUploadedFile($request->file('config_file'));
+        $jsonContent = $parsedConfig['stored_json'];
+        $configType = $request->input('configType');
+        $yamlContent = $parsedConfig['remote_content'];
 
         $failedServers  = [];
         $createdModules = [];
@@ -581,25 +581,14 @@ class ModuleController extends ApiController
                 $modulePivot = $server->modules()->wherePivot('module_id', $request['module_id'])->first();
                 $this->chackPermissionModule($modulePivot, $server);
 
-                // --- STEP 1: Data Preparation (Memory Only) ---
-                // آماده‌سازی داده‌ها دقیقاً مشابه متد updateModuleConfigInDatabase
-                // اما بدون ذخیره در دیتابیس، صرفاً برای ساخت YAML
                 $data = $request->input('data');
-//                foreach ($data as $key => $value) {
-//                    if (is_null($value)) $data[$key] = "";
-//                }
-                array_walk_recursive($data, function (&$value) {
-                    if (is_null($value)) {
-                        $value = "";
-                    }
-                });
+                $normalizedPayload = ModuleConfigParserService::normalizeUpdatePayload(
+                    $data,
+                    $modulePivot->pivot->current_config
+                );
 
-                $jsonContent = json_encode($data, JSON_PRETTY_PRINT);
-                $yamlContent = YamlParserService::convertJsonToYaml($jsonContent);
-
-//                $yamlContent = str_replace([': ""', ": ''"], ':', $yamlContent);
-                $yamlContent = preg_replace('/:\s*(null|""|\'\'|~)\s*$/m', ':', $yamlContent);
-                $yamlContent = preg_replace("/['\"]#\s?(\w+)['\"]:/", '$1:', $yamlContent);
+                $jsonContent = $normalizedPayload['stored_json'];
+                $yamlContent = $normalizedPayload['remote_content'];
                 // --- STEP 2: SSH Operation (Heavy Lift - No DB Lock) ---
                 // ارسال به سرور قبل از درگیر کردن دیتابیس
                 $outputCommand = $this->sendConfigToServer(
@@ -623,15 +612,20 @@ class ModuleController extends ApiController
                 // --- STEP 3: Database Update (Fast & Atomic) ---
                 // حالا که مطمئن شدیم کانفیگ روی سرور نشسته، دیتابیس را آپدیت می‌کنیم
                 // از تراکنش استفاده می‌کنیم تا آپدیت و لاگ اتمیک باشند
-                DB::transaction(function () use ($modulePivot, $data, $server) {
-                    // فراخوانی متد آپدیت شما (چون داخل تراکنش است مشکلی ایجاد نمی‌کند)
-                    $this->updateModuleConfigInDatabase($modulePivot['id'], $data, $server);
+                DB::transaction(function () use ($modulePivot, $server, $jsonContent, $normalizedPayload) {
+                    $serverModel = $modulePivot->servers()->find($server['id']);
+                    $moduleCurrentConfig = $serverModel->pivot['current_config'];
 
-                    LogModuleService::logModuleUpdate($modulePivot, $server, $data);
+                    $modulePivot->servers()->updateExistingPivot($server['id'], [
+                        'current_config' => $jsonContent,
+                        'previous_config' => $moduleCurrentConfig,
+                    ]);
+
+                    LogModuleService::logModuleUpdate($modulePivot, $server, $normalizedPayload['editor_data']);
                 });
 
                 // نگه داشتن آخرین کانفیگ برای خروجی
-                $updatedModuleJson = $jsonContent;
+                $updatedModuleJson = json_encode($normalizedPayload['editor_data'], JSON_PRETTY_PRINT);
             }
 
             // --- Response Preparation ---
@@ -740,7 +734,7 @@ class ModuleController extends ApiController
                 $pivotData->initial_config = $encodedConfig;
                 $pivotData->current_config = $encodedConfig;
 
-                $yamlContent = YamlParserService::convertJsonToYaml($pivotData->current_config);
+                $yamlContent = ModuleConfigParserService::serializeForRemote($pivotData->current_config);
                 $outputCommand = $this->sendConfigToServer(
                     $username,
                     $password,
@@ -771,8 +765,8 @@ class ModuleController extends ApiController
     }
     private function sendDefaultConfigToServers(array $serverIds, Request $request, Module $module, int $port)
     {
-        $yamlContent = $request->file('config_file')->getContent();
-        $jsonContent = YamlParserService::uploadModuleFile($request->file('config_file'));
+        $parsedConfig = ModuleConfigParserService::parseUploadedFile($request->file('config_file'));
+        $jsonContent = $parsedConfig['stored_json'];
 
         foreach ($serverIds as $serverId) {
 
@@ -790,7 +784,7 @@ class ModuleController extends ApiController
 
             $module->servers()->attach($serverId,$defaultConfig);
 
-            $yamlContent = YamlParserService::convertJsonToYaml($defaultConfig['initial_config']);
+            $yamlContent = ModuleConfigParserService::serializeForRemote($defaultConfig['initial_config']);
             $outputCommand = $this->sendConfigToServer(
                 $username,
                 $password,
@@ -832,7 +826,7 @@ class ModuleController extends ApiController
                 ]);
             }
 
-            $yamlContent = YamlParserService::convertJsonToYaml($pivotData['initial_config']);
+            $yamlContent = ModuleConfigParserService::serializeForRemote($pivotData['initial_config']);
             $this->sendConfigToServer(
                 $username,
                 $password,
@@ -892,7 +886,7 @@ class ModuleController extends ApiController
 
                 // update file
                 if ($configFile) {
-                    $jsonConfig = YamlParserService::uploadModuleFile($configFile);
+                    $jsonConfig = ModuleConfigParserService::parseUploadedFile($configFile)['stored_json'];
                     $output = $this->updateConfigForDB($module, $serverIds, $jsonConfig, $request, $credentials['port'] ?? 22);
                 }
             }
@@ -1024,7 +1018,7 @@ class ModuleController extends ApiController
 
         try {
             // ssh to server format yaml
-            $yamlContent = YamlParserService::convertJsonToYaml($pivotData['previous_config']);
+            $yamlContent = ModuleConfigParserService::serializeForRemote($pivotData['previous_config']);
             $outputCommand = $this->sendConfigToServer(
                 $credential['username'],
                 $credential['password'],
@@ -1086,7 +1080,7 @@ class ModuleController extends ApiController
             DB::beginTransaction();
 
                     // ssh to server format yaml
-            $yamlContent = YamlParserService::convertJsonToYaml($moduleInitialConfig);
+            $yamlContent = ModuleConfigParserService::serializeForRemote($moduleInitialConfig);
 
             $outputCommand = $this->sendConfigToServer(
                 $credential['username'],

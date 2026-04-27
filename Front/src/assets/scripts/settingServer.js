@@ -443,7 +443,11 @@ async function saveDataToServer() {
 
 
   if (isConf) {
-    finalData = jsonToConfWithComments(finalData, meta);
+    finalData = {
+      format: "conf",
+      data: finalData,
+      meta: meta || [],
+    };
   }
   await useApi({
     method: "post",
@@ -1665,13 +1669,19 @@ function setJsonEditor(data) {
   let isConf = false;
   let rawText = data;
 
+  if (typeof data === "object" && data !== null && (data.format === "conf" || data._format === "conf")) {
+    parsedData = data.data || {};
+    container._confMeta = data.meta || [];
+    isConf = true;
+  }
+
   // ✅ ۱. بررسی اینکه آیا داده درون کلید content قرار دارد یا خیر
-  if (typeof data === "object" && data !== null && data.content && typeof data.content === "string") {
+  if (!isConf && typeof data === "object" && data !== null && data.content && typeof data.content === "string") {
     rawText = data.content;
   }
 
   // ✅ ۲. تلاش برای پارس کردن متن خام (یا به عنوان JSON یا به عنوان فایل conf)
-  if (typeof rawText === "string") {
+  if (!isConf && typeof rawText === "string") {
     try {
       parsedData = JSON.parse(rawText);
 

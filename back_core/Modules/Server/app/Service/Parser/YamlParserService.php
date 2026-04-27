@@ -24,7 +24,8 @@ class YamlParserService
                 throw new \Exception('YAML file is empty or unreadable.');
             }
 
-            $extension = strtolower($file->getClientOriginalExtension());
+            $fileName = strtolower($file->getClientOriginalName());
+            $extension = str_ends_with($fileName, '.yaml.in') ? 'yaml.in' : strtolower($file->getClientOriginalExtension());
 
             if (in_array($extension, ['yaml', 'yml', 'yaml.in'])) {
                 $parsedArray = Yaml::parse($yamlContent);
@@ -36,10 +37,11 @@ class YamlParserService
             } elseif ($extension === 'json') {
                 return json_decode($yamlContent, true, 512, JSON_THROW_ON_ERROR);
 
-            } else {
-                // conf / conf.in → raw text
-                return ['raw' => $yamlContent];
             }
+
+            throw ValidationException::withMessages([
+                'config_file' => 'Unsupported config format for YAML parser.'
+            ]);
 
         } catch (ParseException $e) {
             throw ValidationException::withMessages([
@@ -106,10 +108,6 @@ class YamlParserService
     {
         $arrayContent = self::parseYamlToArray($file);
 
-        if (isset($arrayContent['raw'])) {
-            return json_encode(['raw' => $arrayContent['raw']], JSON_PRETTY_PRINT);
-        }
-
         return json_encode($arrayContent, JSON_PRETTY_PRINT);
     }
 
@@ -135,7 +133,9 @@ class YamlParserService
                 return $decoded;
             }
 
-            return ['raw' => $content];
+            throw ValidationException::withMessages([
+                'config_file' => 'Unsupported config format for YAML parser.',
+            ]);
         } catch (ParseException $e) {
             throw ValidationException::withMessages([
                 'config_file' => 'YAML Parse Error: ' . $e->getMessage(),

@@ -38,6 +38,7 @@ class ModuleConfigParserService
         }
 
         if (($decoded['format'] ?? null) === 'conf') {
+            $decoded = ConfParserService::normalizeLegacyDirectiveMeta($decoded);
             $decoded['data'] = self::normalizeConfDuplicateKeys($decoded['data'] ?? []);
             return ConfParserService::serialize($decoded);
         }
@@ -48,12 +49,12 @@ class ModuleConfigParserService
     public static function normalizeUpdatePayload(mixed $payload, ?string $existingStoredConfig = null): array
     {
         if (is_array($payload) && (($payload['format'] ?? null) === 'conf' || ($payload['_format'] ?? null) === 'conf')) {
-            $confPayload = [
+            $confPayload = ConfParserService::normalizeLegacyDirectiveMeta([
                 'format' => 'conf',
                 'extension' => $payload['extension'] ?? 'conf',
                 'data' => self::normalizeConfDuplicateKeys($payload['data'] ?? []),
                 'meta' => $payload['meta'] ?? [],
-            ];
+            ]);
 
             $storedJson = json_encode($confPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
             return [
@@ -67,12 +68,12 @@ class ModuleConfigParserService
         if (is_array($payload) && $existingStoredConfig) {
             $existingDecoded = json_decode($existingStoredConfig, true);
             if (is_array($existingDecoded) && ($existingDecoded['format'] ?? null) === 'conf') {
-                $confPayload = [
+                $confPayload = ConfParserService::normalizeLegacyDirectiveMeta([
                     'format' => 'conf',
                     'extension' => $existingDecoded['extension'] ?? 'conf',
                     'data' => self::normalizeConfDuplicateKeys($payload),
                     'meta' => $existingDecoded['meta'] ?? [],
-                ];
+                ]);
 
                 $storedJson = json_encode($confPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                 return [

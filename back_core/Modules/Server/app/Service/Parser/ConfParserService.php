@@ -86,6 +86,27 @@ class ConfParserService
                 continue;
             }
 
+            $directive = self::parseDirectiveLine($line);
+            if ($directive !== null) {
+                if ($currentSection) {
+                    self::addValue($data[$currentSection], '_directives', $directive['key']);
+                } else {
+                    self::addValue($data, '_directives', $directive['key']);
+                }
+
+                $meta[] = [
+                    'type' => 'directive',
+                    'key' => $directive['key'],
+                    'section' => $currentSection,
+                    'raw' => $line,
+                    'rawFormat' => [
+                        'prefix' => $directive['prefix'],
+                        'terminator' => $directive['terminator'],
+                    ],
+                ];
+                continue;
+            }
+
             $meta[] = ['type' => 'raw', 'raw' => $line];
         }
 
@@ -118,6 +139,7 @@ class ConfParserService
 
         $lines = [];
         $keyCounters = [];
+        $directiveCounters = [];
 
         foreach ($meta as $item) {
             $type = $item['type'] ?? 'raw';
@@ -128,6 +150,43 @@ class ConfParserService
             }
 
             if ($type !== 'kv') {
+                if ($type !== 'directive') {
+                    continue;
+                }
+
+                $section = $item['section'] ?? null;
+                $format = $item['rawFormat'] ?? [];
+                $jsonRef = $section ? ($jsonData[$section] ?? null) : $jsonData;
+
+                if (!is_array($jsonRef) || !array_key_exists('_directives', $jsonRef)) {
+                    $lines[] = $item['raw'] ?? '';
+                    continue;
+                }
+
+                $candidate = $jsonRef['_directives'];
+                $counterKey = ($section ?? 'root') . '._directives';
+                $index = $directiveCounters[$counterKey] ?? 0;
+                $directiveCounters[$counterKey] = $index + 1;
+
+                if (is_array($candidate)) {
+                    $directiveValue = $candidate[$index] ?? null;
+                } elseif ($index === 0) {
+                    $directiveValue = $candidate;
+                } else {
+                    $directiveValue = null;
+                }
+
+                if (!is_string($directiveValue) || trim($directiveValue) === '') {
+                    $lines[] = $item['raw'] ?? '';
+                    continue;
+                }
+
+                $lines[] = sprintf(
+                    '%s%s%s',
+                    $format['prefix'] ?? '',
+                    trim($directiveValue),
+                    $format['terminator'] ?? '',
+                );
                 continue;
             }
 
@@ -179,5 +238,75 @@ class ConfParserService
         }
 
         $target[$key] = $value;
+    }
+
+    public static function normalizeLegacyDirectiveMeta(array $payload): array
+    {
+        $meta = $payload['meta'] ?? [];
+        $data = $payload['data'] ?? [];
+
+        if (!is_array($meta) || !is_array($data)) {
+            return $payload;
+        }
+
+        foreach ($meta as $index => $item) {
+            if (($item['type'] ?? null) !== 'raw') {
+                continue;
+            }
+
+            $rawLine = $item['raw'] ?? '';
+            if (!is_string($rawLine)) {
+                continue;
+            }
+
+            $directive = self::parseDirectiveLine($rawLine);
+            if ($directive === null) {
+                continue;
+            }
+
+            $section = $item['section'] ?? null;
+            if (is_string($section) && $section !== '') {
+                $data[$section] ??= [];
+                if (!is_array($data[$section])) {
+                    continue;
+                }
+                self::addValue($data[$section], '_directives', $directive['key']);
+            } else {
+                self::addValue($data, '_directives', $directive['key']);
+            }
+
+            $meta[$index] = [
+                'type' => 'directive',
+                'key' => $directive['key'],
+                'section' => $section,
+                'raw' => $rawLine,
+                'rawFormat' => [
+                    'prefix' => $directive['prefix'],
+                    'terminator' => $directive['terminator'],
+                ],
+            ];
+        }
+
+        $payload['data'] = $data;
+        $payload['meta'] = $meta;
+
+        return $payload;
+    }
+
+    private static function parseDirectiveLine(string $line): ?array
+    {
+        if (!preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)(;?)\s*$/', $line, $matches)) {
+            return null;
+        }
+
+        if ($matches[2] === '{' || $matches[2] === '}') {
+            return null;
+        }
+
+        return [
+            'prefix' => $matches[1],
+            'key' => $matches[2],
+            'terminator' => $matches[4] === ';' ? ';' : '',
+        ];
     }
 }

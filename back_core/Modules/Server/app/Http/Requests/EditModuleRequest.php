@@ -21,8 +21,8 @@ class EditModuleRequest extends FormRequest
             ],
             'type' => ['nullable', 'string', 'regex:/^[^<>{}\/|\~`!@#$%&*()_\-+="\':;؟،]*$/u'],
             'config_file' => ['nullable', 'file', function ($attribute, $value, $fail) {
-                if (!preg_match('/\.(yaml|yml|yaml\.in)$/i', $value->getClientOriginalName())) {
-                    $fail('The file must be one of the following formats: .yaml, .yml, or .yaml.in');
+                if (!preg_match('/\.(yaml|yml|yaml\.in|json|conf|conf\.in)$/i', $value->getClientOriginalName())) {
+                    $fail('The file must be one of the following formats: .yaml, .yml, .yaml.in, .json, .conf, or .conf.in');
                 }
             }],
             'servers' => ['sometimes', 'array'],

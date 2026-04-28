@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 use Mockery;
@@ -683,5 +684,83 @@ class ModuleLifecycleIdentityTest extends TestCase
     {
         $module = Module::query()->create(['name' => 'PCRF Existing', 'type' => '5gc']);
         $this->assertSame('pcrf-existing', $module->service_key);
+    }
+
+    public function test_create_same_type_with_different_formats_on_same_server_is_allowed(): void
+    {
+        $user = $this->createUserWithPermissions(['module/create']);
+        $server = $this->createServer('Srv-Format-Allow');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $server->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')->andReturn('');
+
+        $this->post('/api/create-module', [
+            'name' => 'smf-conf',
+            'type' => 'smf',
+            'config_file' => UploadedFile::fake()->createWithContent('smf.conf', "No_TLS;\n"),
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertOk();
+
+        $this->post('/api/create-module', [
+            'name' => 'smf-yaml',
+            'type' => 'smf',
+            'config_file' => UploadedFile::fake()->createWithContent('smf.yaml', "foo: bar\n"),
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertOk();
+    }
+
+    public function test_create_same_type_same_format_on_same_server_is_rejected_with_validation_error(): void
+    {
+        $user = $this->createUserWithPermissions(['module/create']);
+        $server = $this->createServer('Srv-Format-Dupe');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $server->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')->andReturn('');
+
+        $this->post('/api/create-module', [
+            'name' => 'smf-conf-a',
+            'type' => 'smf',
+            'config_file' => UploadedFile::fake()->createWithContent('smf.conf', "No_TLS;\n"),
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertOk();
+
+        $this->post('/api/create-module', [
+            'name' => 'smf-conf-b',
+            'type' => 'smf',
+            'config_file' => UploadedFile::fake()->createWithContent('smf.conf', "No_SCTP;\n"),
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertStatus(422)->assertJsonValidationErrors(['type']);
+    }
+
+    public function test_edit_with_subset_of_servers_does_not_detach_unchecked_servers(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        $serverA = $this->createServer('Srv-Edit-Single-A');
+        $serverB = $this->createServer('Srv-Edit-Single-B');
+        $user->givePermissionTo(Permission::findOrCreate('server/' . $serverA->name, 'web'));
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create(['name' => 'SMF', 'service_key' => 'smf', 'type' => 'smf']);
+        $module->servers()->attach($serverA->id, ['initial_config' => '{}', 'current_config' => '{}']);
+        $module->servers()->attach($serverB->id, ['initial_config' => '{"persist":true}', 'current_config' => '{"persist":true}']);
+
+        $this->postJson('/api/edit-module', [
+            'module_id' => $module->id,
+            'name' => 'SMF Updated',
+            'servers' => [
+                ['id' => $serverA->id, 'username' => 'u-a', 'password' => 'p-a', 'port' => 22],
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('module_server', ['module_id' => $module->id, 'server_id' => $serverA->id]);
+        $this->assertDatabaseHas('module_server', ['module_id' => $module->id, 'server_id' => $serverB->id]);
+        $pivotB = DB::table('module_server')->where('module_id', $module->id)->where('server_id', $serverB->id)->first();
+        $this->assertSame('{"persist":true}', $pivotB->current_config);
     }
 }

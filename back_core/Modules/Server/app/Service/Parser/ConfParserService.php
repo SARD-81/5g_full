@@ -41,7 +41,8 @@ class ConfParserService
         $meta = [];
         $currentSection = null;
 
-        foreach ($lines as $line) {
+        for ($index = 0; $index < count($lines); $index++) {
+            $line = $lines[$index];
             if (trim($line) === '') {
                 $meta[] = ['type' => 'empty', 'raw' => $line];
                 continue;
@@ -56,6 +57,87 @@ class ConfParserService
                 $currentSection = trim($sectionMatch[1]);
                 $data[$currentSection] ??= [];
                 $meta[] = ['type' => 'section', 'name' => $currentSection, 'raw' => $line];
+                continue;
+            }
+
+            if (preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)=(\s*)"([^"]*)"(?:\s*)\{\s*$/', $line, $blockMatches)) {
+                $blockKey = trim($blockMatches[2]);
+                $blockEntry = ['value' => $blockMatches[5]];
+                $blockMetaEntries = [];
+                $baseIndent = $blockMatches[1] . '    ';
+
+                for ($index++; $index < count($lines); $index++) {
+                    $blockLine = $lines[$index];
+                    if (preg_match('/^\s*}\s*;\s*$/', $blockLine)) {
+                        break;
+                    }
+
+                    if (trim($blockLine) === '') {
+                        $blockMetaEntries[] = ['type' => 'empty', 'raw' => $blockLine];
+                        continue;
+                    }
+
+                    if (preg_match('/^\s*[#;]/', $blockLine)) {
+                        $blockMetaEntries[] = ['type' => 'comment', 'raw' => $blockLine];
+                        continue;
+                    }
+
+                    if (preg_match('/^(\s*)([^=:]+?)(\s*)([=:])(\s*)(.*?)(;?)\s*$/', $blockLine, $nestedKvMatches)) {
+                        $nestedKey = trim($nestedKvMatches[2]);
+                        $nestedRawValue = trim((string) $nestedKvMatches[6]);
+                        $nestedValue = trim($nestedRawValue, " \t\"'");
+                        self::addValue($blockEntry, $nestedKey, $nestedValue);
+                        $blockMetaEntries[] = [
+                            'type' => 'kv',
+                            'key' => $nestedKey,
+                            'rawFormat' => [
+                                'prefix' => $nestedKvMatches[1],
+                                'suffixKey' => $nestedKvMatches[3],
+                                'separator' => $nestedKvMatches[4],
+                                'valuePrefix' => $nestedKvMatches[5],
+                                'terminator' => $nestedKvMatches[7] === ';' ? ';' : '',
+                            ],
+                        ];
+                        continue;
+                    }
+
+                    $nestedDirective = self::parseDirectiveLine($blockLine);
+                    if ($nestedDirective !== null) {
+                        self::addValue($blockEntry, '_directives', $nestedDirective['key']);
+                        $blockMetaEntries[] = [
+                            'type' => 'directive',
+                            'key' => $nestedDirective['key'],
+                            'rawFormat' => [
+                                'prefix' => $nestedDirective['prefix'],
+                                'terminator' => $nestedDirective['terminator'],
+                            ],
+                        ];
+                        continue;
+                    }
+
+                    $blockMetaEntries[] = ['type' => 'raw', 'raw' => $blockLine];
+                }
+
+                if ($currentSection) {
+                    self::addValue($data[$currentSection], $blockKey, $blockEntry);
+                } else {
+                    self::addValue($data, $blockKey, $blockEntry);
+                }
+
+                $meta[] = [
+                    'type' => 'block',
+                    'key' => $blockKey,
+                    'section' => $currentSection,
+                    'rawFormat' => [
+                        'prefix' => $blockMatches[1],
+                        'suffixKey' => $blockMatches[3],
+                        'separator' => '=',
+                        'valuePrefix' => $blockMatches[4] . '"',
+                        'valueSuffix' => '"',
+                        'childIndent' => $baseIndent,
+                    ],
+                    'entries' => $blockMetaEntries,
+                ];
                 continue;
             }
 
@@ -149,6 +231,101 @@ class ConfParserService
                 continue;
             }
 
+            if ($type === 'block') {
+                $section = $item['section'] ?? null;
+                $key = $item['key'] ?? '';
+                $format = $item['rawFormat'] ?? [];
+                $jsonRef = $section ? ($jsonData[$section] ?? null) : $jsonData;
+                $counterKey = ($section ?? 'root') . '.' . $key . '.__block';
+                $index = $keyCounters[$counterKey] ?? 0;
+                $keyCounters[$counterKey] = $index + 1;
+                $candidate = is_array($jsonRef) ? ($jsonRef[$key] ?? null) : null;
+                $entry = is_array($candidate) && array_is_list($candidate)
+                    ? ($candidate[$index] ?? null)
+                    : ($index === 0 ? $candidate : null);
+
+                if (!is_array($entry)) {
+                    continue;
+                }
+
+                $blockValue = trim((string) ($entry['value'] ?? ''));
+                $lines[] = sprintf(
+                    '%s%s%s%s%s%s {',
+                    $format['prefix'] ?? '',
+                    $key,
+                    $format['suffixKey'] ?? ' ',
+                    $format['separator'] ?? '=',
+                    $format['valuePrefix'] ?? ' "',
+                    $blockValue . ($format['valueSuffix'] ?? '"'),
+                );
+
+                $blockMetaEntries = $item['entries'] ?? [];
+                $blockKeyCounters = [];
+                $usedDirectives = [];
+                $defaultIndent = $format['childIndent'] ?? '    ';
+
+                foreach ($blockMetaEntries as $blockMeta) {
+                    $blockType = $blockMeta['type'] ?? 'raw';
+                    if (in_array($blockType, ['comment', 'empty', 'raw'], true)) {
+                        $lines[] = $blockMeta['raw'] ?? '';
+                        continue;
+                    }
+
+                    if ($blockType === 'kv') {
+                        $nestedKey = $blockMeta['key'] ?? null;
+                        if (!$nestedKey) {
+                            continue;
+                        }
+                        $nestedFormat = $blockMeta['rawFormat'] ?? [];
+                        $counter = $blockKeyCounters[$nestedKey] ?? 0;
+                        $blockKeyCounters[$nestedKey] = $counter + 1;
+                        $nestedCandidate = $entry[$nestedKey] ?? '';
+                        $nestedValue = is_array($nestedCandidate)
+                            ? ($nestedCandidate[$counter] ?? '')
+                            : ($counter === 0 ? $nestedCandidate : '');
+
+                        $lines[] = sprintf(
+                            '%s%s%s%s%s%s%s',
+                            $nestedFormat['prefix'] ?? $defaultIndent,
+                            $nestedKey,
+                            $nestedFormat['suffixKey'] ?? ' ',
+                            $nestedFormat['separator'] ?? '=',
+                            $nestedFormat['valuePrefix'] ?? ' ',
+                            (string) $nestedValue,
+                            $nestedFormat['terminator'] ?? ';',
+                        );
+                        continue;
+                    }
+
+                    if ($blockType === 'directive') {
+                        $nestedFormat = $blockMeta['rawFormat'] ?? [];
+                        $candidateDirectives = $entry['_directives'] ?? [];
+                        $directivesList = is_array($candidateDirectives) ? $candidateDirectives : [$candidateDirectives];
+                        $directiveIndex = count($usedDirectives);
+                        $directiveValue = $directivesList[$directiveIndex] ?? null;
+                        if (!is_string($directiveValue) || trim($directiveValue) === '') {
+                            continue;
+                        }
+
+                        $normalizedDirective = self::normalizeDirectiveValue($directiveValue);
+                        $usedDirectives[] = $normalizedDirective;
+                        $lines[] = sprintf(
+                            '%s%s%s',
+                            $nestedFormat['prefix'] ?? $defaultIndent,
+                            $normalizedDirective,
+                            $nestedFormat['terminator'] ?? ';',
+                        );
+                    }
+                }
+
+                $extraDirectives = self::remainingDirectives($entry['_directives'] ?? [], $usedDirectives);
+                foreach ($extraDirectives as $directive) {
+                    $lines[] = $defaultIndent . self::normalizeDirectiveValue($directive) . ';';
+                }
+                $lines[] = ($format['prefix'] ?? '') . '};';
+                continue;
+            }
+
             if ($type !== 'kv') {
                 if ($type !== 'directive') {
                     continue;
@@ -181,12 +358,7 @@ class ConfParserService
                     continue;
                 }
 
-                $lines[] = sprintf(
-                    '%s%s%s',
-                    $format['prefix'] ?? '',
-                    trim($directiveValue),
-                    $format['terminator'] ?? '',
-                );
+                $lines[] = sprintf('%s%s%s', $format['prefix'] ?? '', self::normalizeDirectiveValue($directiveValue), $format['terminator'] ?? '');
                 continue;
             }
 
@@ -222,6 +394,10 @@ class ConfParserService
                 $format['valuePrefix'] ?? '',
                 (string) $value,
             );
+        }
+
+        foreach (self::remainingDirectives($jsonData['_directives'] ?? [], []) as $directive) {
+            $lines[] = self::normalizeDirectiveValue($directive) . ';';
         }
 
         return implode("\n", $lines);
@@ -308,5 +484,36 @@ class ConfParserService
             'key' => $matches[2],
             'terminator' => $matches[4] === ';' ? ';' : '',
         ];
+    }
+
+    private static function normalizeDirectiveValue(string $directive): string
+    {
+        $normalized = trim($directive);
+        $normalized = ltrim($normalized, ';');
+        $normalized = rtrim($normalized, ';');
+        return trim($normalized);
+    }
+
+    private static function remainingDirectives(mixed $candidate, array $used): array
+    {
+        $directives = is_array($candidate) ? $candidate : [$candidate];
+        $usedMap = [];
+        foreach ($used as $item) {
+            $usedMap[self::normalizeDirectiveValue((string) $item)] = true;
+        }
+
+        $remaining = [];
+        foreach ($directives as $directive) {
+            if (!is_string($directive) || trim($directive) === '') {
+                continue;
+            }
+            $normalized = self::normalizeDirectiveValue($directive);
+            if ($normalized === '' || isset($usedMap[$normalized])) {
+                continue;
+            }
+            $remaining[] = $normalized;
+        }
+
+        return $remaining;
     }
 }

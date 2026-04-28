@@ -72,6 +72,7 @@ class ModuleConfigParserService
             $storedJson = json_encode($confPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
             return [
                 'format' => 'conf',
+                'extension' => $confPayload['extension'] ?? 'conf',
                 'stored_json' => $storedJson,
                 'remote_content' => ConfParserService::serialize($confPayload),
                 'editor_data' => $confPayload['data'],
@@ -91,6 +92,7 @@ class ModuleConfigParserService
                 $storedJson = json_encode($confPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                 return [
                     'format' => 'conf',
+                    'extension' => $confPayload['extension'] ?? 'conf',
                     'stored_json' => $storedJson,
                     'remote_content' => ConfParserService::serialize($confPayload),
                     'editor_data' => $confPayload['data'],
@@ -163,6 +165,26 @@ class ModuleConfigParserService
         }
 
         return 'yaml';
+    }
+
+    public static function resolveEffectiveExtensionFromStoredConfig(?string $storedConfig): string
+    {
+        if (!is_string($storedConfig) || trim($storedConfig) === '') {
+            return 'yaml';
+        }
+
+        $decoded = json_decode($storedConfig, true);
+        if (!is_array($decoded)) {
+            return 'yaml';
+        }
+
+        $extension = strtolower((string) ($decoded['extension'] ?? ''));
+        if (in_array($extension, ['conf', 'conf.in', 'yaml', 'yml', 'yaml.in', 'json'], true)) {
+            return $extension;
+        }
+
+        $format = strtolower((string) ($decoded['format'] ?? 'yaml'));
+        return $format === 'conf' ? 'conf' : ($format === 'json' ? 'json' : 'yaml');
     }
 
     private static function normalizeConfDuplicateKeys(mixed $data): mixed

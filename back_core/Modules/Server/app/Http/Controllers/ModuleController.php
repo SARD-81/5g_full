@@ -6,6 +6,7 @@ use App\Http\Controllers\Contract\ApiController;
 use Exception;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
@@ -280,7 +281,8 @@ class ModuleController extends ApiController
             DB::beginTransaction();
             $technicalKey = ModuleIdentity::normalizeKey($credential['type']);
             $incomingFormat = ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($jsonContent);
-            $this->assertModuleTypeFormatCapacityForServers($serverIds, $technicalKey, $incomingFormat);
+            $incomingExtension = ModuleConfigParserService::resolveEffectiveExtensionFromStoredConfig($jsonContent);
+            $this->assertModuleTypeFormatCapacityForServers($serverIds, $technicalKey, $incomingFormat, $incomingExtension);
 
             $module = Module::create([
                 'name' => $credential['name'],
@@ -372,6 +374,11 @@ class ModuleController extends ApiController
                 'data' => ['created_modules' => $createdModules]
             ], $commandWarning ? 422 : 200);
 
+        } catch (QueryException $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'type' => 'A module with this Module Type and config format already exists on the selected server.',
+            ]);
         } catch (Exception $e) {
             DB::rollBack();
                 throw $e;
@@ -932,16 +939,13 @@ class ModuleController extends ApiController
                 $module->servers()->detach($serverId);
         }
     }
-    private function syncModuleWithServers(Module $module, array $serverIds, $request, int $port)
+    private function syncModuleWithServers(Module $module, array $serverIds, $request, int $port, bool $detachRemovedServers = false)
     {
         $existingServerIds = $module->servers->pluck('id')->toArray();
-
-        $serversToDelete = array_diff($existingServerIds, $serverIds);
+        $serversToDelete = $detachRemovedServers ? array_diff($existingServerIds, $serverIds) : [];
         $serversToAdd = array_diff($serverIds, $existingServerIds);
-
-
         $this->addModules($module, $serversToAdd, $request, $port);
-        $this->deleteModules($serversToDelete, $module, $request, $port);
+        $this->deleteModules($serversToDelete, $module);
     }
     public function editModule(EditModuleRequest $request)
     {
@@ -962,6 +966,12 @@ class ModuleController extends ApiController
                 : ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig(
                     (string) optional($module->servers()->first()?->pivot)->current_config
                 );
+            $incomingExtension = $parsedUpload
+                ? ModuleConfigParserService::resolveEffectiveExtensionFromStoredConfig($parsedUpload['stored_json'])
+                : ModuleConfigParserService::resolveEffectiveExtensionFromStoredConfig(
+                    (string) optional($module->servers()->first()?->pivot)->current_config
+                );
+            $detachRemovedServers = (bool) ($credentials['detach_removed_servers'] ?? false);
 
             if ($module->servers->isEmpty() && !$configFile) throw ValidationException::withMessages(['config' => 'config file required']);
 
@@ -974,9 +984,9 @@ class ModuleController extends ApiController
                     if ($server['is_down'] === Server::OFF) throw ValidationException::withMessages(['msg' => 'server : ' . $server['name'] . ' is off']);
                 }
 
-                $this->assertModuleTypeFormatCapacityForServers($serverIds, $module->service_key, $incomingFormat, (int) $module->id);
+                $this->assertModuleTypeFormatCapacityForServers($serverIds, $module->service_key, $incomingFormat, $incomingExtension, (int) $module->id);
 
-                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
+                $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22, $detachRemovedServers);
 
                 // update file
                 if ($configFile) {
@@ -1040,6 +1050,11 @@ class ModuleController extends ApiController
                     ]
                 ], 200);
 
+        } catch (QueryException $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'type' => 'A module with this Module Type and config format already exists on the selected server.',
+            ]);
         } catch (\Exception $e){
             DB::rollBack();
                 throw $e;
@@ -1230,7 +1245,7 @@ class ModuleController extends ApiController
         }
     }
 
-    private function assertModuleTypeFormatCapacityForServers(array $serverIds, string $serviceKey, string $incomingFormat, ?int $ignoreModuleId = null): void
+    private function assertModuleTypeFormatCapacityForServers(array $serverIds, string $serviceKey, string $incomingFormat, string $incomingExtension, ?int $ignoreModuleId = null): void
     {
         $limits = [
             'hss' => 2,
@@ -1262,9 +1277,10 @@ class ModuleController extends ApiController
                 ]);
             }
 
-            $sameTypeAndFormatExists = $sameTypeModules->contains(function ($attachedModule) use ($incomingFormat) {
+            $sameTypeAndFormatExists = $sameTypeModules->contains(function ($attachedModule) use ($incomingFormat, $incomingExtension) {
                 $existingFormat = ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($attachedModule->pivot?->current_config);
-                return $existingFormat === $incomingFormat;
+                $existingExtension = ModuleConfigParserService::resolveEffectiveExtensionFromStoredConfig($attachedModule->pivot?->current_config);
+                return $existingFormat === $incomingFormat && $existingExtension === $incomingExtension;
             });
 
             if ($sameTypeAndFormatExists) {

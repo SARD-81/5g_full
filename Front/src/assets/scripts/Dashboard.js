@@ -5772,41 +5772,7 @@ if (window.top !== window.self) {
 }
 
 function typeModuleEdit(moduleId) {
-  let type = [];
-  for (let y = 0; y < modulesInfo.length; y++) {
-    if (Number(modulesInfo[y].moduleID) === Number(moduleId)) {
-      type = modulesInfo[y].moduleType || [];
-      break;
-    }
-  }
-
-  // نرمال‌سازی داده‌ها (تبدیل به حروف کوچک)
-  const normalizedData = type.map((item) => String(item).toLowerCase());
-
-  // انتخاب چک‌باکس‌ها
-  const epcCheckbox = document.getElementById("moduleTypeEPC");
-  const g5cCheckbox = document.getElementById("moduleType5GC");
-
-  // بررسی و فعال کردن چک‌باکس‌ها
-  if (normalizedData.includes("epc")) {
-    epcCheckbox.checked = true;
-  } else {
-    epcCheckbox.checked = false;
-  }
-
-  if (normalizedData.includes("5gc")) {
-    g5cCheckbox.checked = true;
-  } else {
-    g5cCheckbox.checked = false;
-  }
-
-  if (
-    normalizedData.includes("5gc") == false &&
-    normalizedData.includes("epc") == false
-  ) {
-    g5cCheckbox.checked = true;
-    epcCheckbox.checked = true;
-  }
+  return moduleId;
 }
 
 let idModule;
@@ -5917,16 +5883,10 @@ async function editModules(idModule) {
   let fileInput = document.getElementById("moduleFile");
   let fileModule = fileInput.files[0];
 
-  let typeModule;
-
-  let fivegcType = document.getElementById("moduleType5GC");
-  let epcType = document.getElementById("moduleTypeEPC");
-
-  if (fivegcType.checked) {
-    typeModule = "5gc";
-  } else if (epcType.checked) {
-    typeModule = "Epc";
-  }
+  const selectedModuleForType = modulesInfo.find(
+    (moduleItem) => Number(moduleItem.moduleID) === Number(idModule)
+  );
+  const typeModule = selectedModuleForType?.moduleType?.[0];
 
   // let userName = document.querySelector(
   //   'input[name="name_InputUserNameModule"]'
@@ -5992,7 +5952,9 @@ async function editModules(idModule) {
   if (fileModule) {
     formData.append("config_file", fileModule); // فایل را اضافه می‌کنیم
   }
-  formData.append("type", typeModule);
+  if (typeModule) {
+    formData.append("type", typeModule);
+  }
 
   // اضافه کردن آرایه server_ids به‌صورت مقادیر جداگانه
   // serverIds.forEach((id) => {

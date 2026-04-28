@@ -84,7 +84,7 @@ class ModuleController extends ApiController
         $storedConfig = json_decode((string) $pivotData->current_config, true);
         $storedFormat = is_array($storedConfig) ? strtolower((string) ($storedConfig['format'] ?? '')) : '';
 
-        $configFileName = ModuleIdentity::configFileName($module);
+        $configFileName = ModuleIdentity::configFileName($module, $pivotData->current_config);
         $configPath = rtrim((string) $server->path_config, '/') . '/' . $configFileName;
 
         $sshHelper = new SshHelper(
@@ -103,11 +103,7 @@ class ModuleController extends ApiController
         $rawConfigContent = $sshHelper->getFileContent('cat ' . escapeshellarg($configPath));
 
         try {
-            $parserFileName = $storedFormat === 'conf'
-                ? $module->service_key . '.conf'
-                : $configFileName;
-
-            $parsedConfig = ModuleConfigParserService::parseRawContent($rawConfigContent, $parserFileName);
+            $parsedConfig = ModuleConfigParserService::parseRawContent($rawConfigContent, $configFileName);
         } catch (\Throwable $e) {
             report($e);
             throw ValidationException::withMessages(['config_parse' => 'Failed to parse module config file content.']);
@@ -129,6 +125,9 @@ class ModuleController extends ApiController
 
         return response()->json([
             'config' => $parsedConfig,
+            'effective_config_format' => ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig(
+                json_encode($parsedConfig, JSON_UNESCAPED_UNICODE)
+            ),
             'serversDetails' => $serversData,
             'serversIdInModuleName' => $serverIdsInModuleName,
             'moduleDetails' => [
@@ -165,11 +164,11 @@ class ModuleController extends ApiController
         );
 
         $existingModules = $server->modules->filter(function ($module) use ($sshHelper, $server) {
-            $configPath = rtrim((string) $server->path_config, '/') . '/' . ModuleIdentity::configFileName($module);
+            $configPath = rtrim((string) $server->path_config, '/') . '/' . ModuleIdentity::configFileName($module, $module->pivot?->current_config);
             $checkCommand = 'test -f ' . escapeshellarg($configPath);
             $output = $sshHelper->runCommandModule($checkCommand, 'show-server-module-list', 'showAllServiseAndModulesInServer');
 
-            return str_contains($output, "");
+            return trim((string) $output) === '';
         })->values();
 
 
@@ -280,20 +279,8 @@ class ModuleController extends ApiController
         try {
             DB::beginTransaction();
             $technicalKey = ModuleIdentity::normalizeKey($credential['type']);
-            $duplicateServerNames = Server::query()
-                ->whereIn('id', $serverIds)
-                ->whereHas('modules', function ($query) use ($technicalKey) {
-                    $query->where('service_key', $technicalKey);
-                })
-                ->pluck('name')
-                ->all();
-
-            if (! empty($duplicateServerNames)) {
-                throw ValidationException::withMessages([
-                    'type' => 'A module with this Module Type already exists on the selected server.',
-                    'servers' => implode(', ', $duplicateServerNames),
-                ]);
-            }
+            $incomingFormat = ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($jsonContent);
+            $this->assertModuleTypeFormatCapacityForServers($serverIds, $technicalKey, $incomingFormat);
 
             $module = Module::create([
                 'name' => $credential['name'],
@@ -332,6 +319,7 @@ class ModuleController extends ApiController
                     'create-module',
                     'createModule',
                     $port ?? 22,
+                    ModuleIdentity::configFileName($module, $jsonContent),
                 );
 
 
@@ -459,7 +447,8 @@ class ModuleController extends ApiController
         $pathConfig = rtrim((string) $server->path_config, '/');
         $pathRunConfig = rtrim((string) $server->path_run_config, '/');
 
-        $identityConfig = $pathConfig . '/' . ModuleIdentity::configFileName($module);
+        $serverPivot = $module->servers()->where('server_id', $server->id)->first()?->pivot;
+        $identityConfig = $pathConfig . '/' . ModuleIdentity::configFileName($module, $serverPivot?->current_config);
         $legacyConfig = $pathConfig . '/' . $module->name . '.yaml';
         $serviceName = ModuleIdentity::serviceUnitName($module);
 
@@ -490,7 +479,20 @@ class ModuleController extends ApiController
         ]);
 
         $sshHelper = new SshHelper($server->ip, $username, $password, $port);
-        $sshHelper->runCommandModule($command, 'delete-module-cleanup', 'deleteModule.cleanupModuleArtifactsFromServer');
+        try {
+            $sshHelper->runCommandModule($command, 'delete-module-cleanup', 'deleteModule.cleanupModuleArtifactsFromServer');
+        } catch (\Throwable $e) {
+            $message = strtolower($e->getMessage());
+            if (str_contains($message, 'auth') || str_contains($message, 'permission denied') || str_contains($message, 'unable to authenticate')) {
+                throw ValidationException::withMessages([
+                    'msg' => 'SSH authentication failed. Please check the SSH username and password.',
+                ]);
+            }
+
+            throw ValidationException::withMessages([
+                'msg' => 'Unable to connect to the selected server using the provided SSH credentials.',
+            ]);
+        }
     }
 
 
@@ -505,6 +507,7 @@ class ModuleController extends ApiController
         string $typeCommand,
         string $method,
         int $port = 22,
+        ?string $configFileName = null,
     ) {
         if ($server['is_down'] == Server::OFF) throw ValidationException::withMessages(['server.down' => 'this server: ' . $server['name'] .' is off']);
 
@@ -516,7 +519,8 @@ class ModuleController extends ApiController
         $sshHelper = new sshHelper($server->ip, $username, $password, $port);
 
         // update module
-        $commandUpdateFileModule = 'echo ' . escapeshellarg($yamlContent) . ' > ' . $server['path_config'] . $moduleName . '.yaml';
+        $targetFileName = $configFileName ?? ($moduleName . '.yaml');
+        $commandUpdateFileModule = 'echo ' . escapeshellarg($yamlContent) . ' > ' . rtrim((string) $server['path_config'], '/') . '/' . $targetFileName;
         return $sshHelper->runCommandModule($commandUpdateFileModule, $typeCommand, $method, $server);
 
         // restart module
@@ -676,6 +680,7 @@ class ModuleController extends ApiController
                     'update-module',
                     'updateMultipleModules',
                     $port,
+                    ModuleIdentity::configFileName($modulePivot, $jsonContent),
                 );
 
                 // بررسی خطا
@@ -701,7 +706,7 @@ class ModuleController extends ApiController
                 });
 
                 // نگه داشتن آخرین کانفیگ برای خروجی
-                $updatedModuleJson = json_encode($normalizedPayload['editor_data'], JSON_PRETTY_PRINT);
+                $updatedModuleJson = $jsonContent;
             }
 
             // --- Response Preparation ---
@@ -715,6 +720,7 @@ class ModuleController extends ApiController
 
             return response()->json([
                 'config' => json_decode($updatedModuleJson, true),
+                'effective_config_format' => ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($updatedModuleJson),
                 'commandWarinig' => $commandWarning,
                 'serverDetaile' => $serversData,
                 'serverIdsInModuleName' => $serverIdsInModuleName,
@@ -791,6 +797,7 @@ class ModuleController extends ApiController
     {
         $moduleConfig = json_decode($jsonConfig, true);
         $encodedConfig = json_encode($moduleConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $lastOutputCommand = null;
 
         foreach ($serverIds as $serverId) {
 
@@ -814,17 +821,18 @@ class ModuleController extends ApiController
                 $outputCommand = $this->sendConfigToServer(
                     $username,
                     $password,
-                    $module->name,
+                    $module->service_key,
                     $yamlContent,
                     $server,
                     'substitute-module-config-file',
                     'sendDefaultConfigToServers',
-                    $port
+                    $port,
+                    ModuleIdentity::configFileName($module, $encodedConfig),
                 );
 
                 $pivotData->save();
 
-                $commandWarning = ! empty($output) ? CommandOutputAnalyzerService::extractErrors($output) : null;
+                $commandWarning = ! empty($outputCommand) ? CommandOutputAnalyzerService::extractErrors($outputCommand) : null;
                 if ($commandWarning) throw ValidationException::withMessages($commandWarning);
 
 
@@ -834,10 +842,10 @@ class ModuleController extends ApiController
 //                    throw ValidationException::withMessages(['commandWarning' => $cleanCommand]);
 //                }
 
-                return $outputCommand;
+                $lastOutputCommand = $outputCommand;
             }
         }
-        return null;
+        return $lastOutputCommand;
     }
     private function sendDefaultConfigToServers(array $serverIds, Request $request, Module $module, int $port)
     {
@@ -864,12 +872,13 @@ class ModuleController extends ApiController
             $outputCommand = $this->sendConfigToServer(
                 $username,
                 $password,
-                'default_module',
+                $module->service_key,
                 $yamlContent,
                 $server,
                 'substitute-module-config-file',
                 'sendDefaultConfigToServers',
                 $port,
+                ModuleIdentity::configFileName($module, $defaultConfig['initial_config']),
             );
 
             if (! empty(CommandOutputAnalyzerService::extractErrors($outputCommand)))
@@ -906,12 +915,13 @@ class ModuleController extends ApiController
             $this->sendConfigToServer(
                 $username,
                 $password,
-                $module['name'],
+                $module->service_key,
                 $yamlContent,
                 $server,
                 'add-module-to-selected-server',
                 'editModule.addModuletoSelectedServer',
                 $port,
+                ModuleIdentity::configFileName($module, $pivotData['initial_config']),
             );
 
         }
@@ -946,6 +956,12 @@ class ModuleController extends ApiController
             $hasServersInput = array_key_exists('servers', $credentials);
             $serverIds = array_column($credentials['servers'] ?? [], 'id');
             $configFile = $request->file('config_file');
+            $parsedUpload = $configFile ? ModuleConfigParserService::parseUploadedFile($configFile) : null;
+            $incomingFormat = $parsedUpload
+                ? ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($parsedUpload['stored_json'])
+                : ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig(
+                    (string) optional($module->servers()->first()?->pivot)->current_config
+                );
 
             if ($module->servers->isEmpty() && !$configFile) throw ValidationException::withMessages(['config' => 'config file required']);
 
@@ -958,22 +974,20 @@ class ModuleController extends ApiController
                     if ($server['is_down'] === Server::OFF) throw ValidationException::withMessages(['msg' => 'server : ' . $server['name'] . ' is off']);
                 }
 
+                $this->assertModuleTypeFormatCapacityForServers($serverIds, $module->service_key, $incomingFormat, (int) $module->id);
+
                 $this->syncModuleWithServers($module, $serverIds, $request, $credentials['port'] ?? 22);
 
                 // update file
                 if ($configFile) {
-                    $jsonConfig = ModuleConfigParserService::parseUploadedFile($configFile)['stored_json'];
+                    $jsonConfig = $parsedUpload['stored_json'];
                     $output = $this->updateConfigForDB($module, $serverIds, $jsonConfig, $request, $credentials['port'] ?? 22);
                 }
             }
 
-
-
-                $types = implode(',', array_map('trim', explode(',', $credentials['type'] ?? $module['type'])));
-
                 $module->update([
                     'name' => $credentials['name'] ?? $module->name,
-                    'type' => $types,
+                    'type' => $credentials['type'] ?? $module->type,
                 ]);
 
                 $module->load('servers');
@@ -1038,9 +1052,9 @@ class ModuleController extends ApiController
         $credentials = $request->validated();
         $module = Module::find($credentials['module_id']);
         $server = Server::find($credentials['server_id']);
-
-
-        $command = 'cat ' . $server->path_config . $module->name . '.yaml' ;
+        $pivotData = $module?->servers()->where('server_id', $credentials['server_id'])->first()?->pivot;
+        $fileName = ModuleIdentity::configFileName($module, $pivotData?->current_config);
+        $command = 'cat ' . escapeshellarg(rtrim((string) $server->path_config, '/') . '/' . $fileName);
 
         if ($server['is_down'] == server::OFF)
             throw ValidationException::withMessages(['server' => 'server is off']);
@@ -1073,13 +1087,16 @@ class ModuleController extends ApiController
 
             return response($output, 200, [
                 'Content-Type' => 'application/octet-stream',
-                'Content-Disposition' => "attachment; filename={$module->name}.yaml",
-                'X-Name-Header' => "{$module->name}.yaml",
+                'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+                'X-Name-Header' => $fileName,
                 'Content-Length' => strlen($output),
             ]);
 
         } catch (Exception $e) {
-            return $e->getMessage();
+            return response()->json([
+                'success' => false,
+                'msg' => $e->getMessage(),
+            ], 422);
         }
     }
 
@@ -1098,11 +1115,12 @@ class ModuleController extends ApiController
             $outputCommand = $this->sendConfigToServer(
                 $credential['username'],
                 $credential['password'],
-                $request['module']['name'],
+                $request['module']->service_key,
                 $yamlContent, $request['server'],
                 'undo-config-module',
                 'undoConfigModule',
                 $credential['port'] ?? 22,
+                ModuleIdentity::configFileName($request['module'], $pivotData['previous_config']),
             );
 
 
@@ -1161,11 +1179,12 @@ class ModuleController extends ApiController
             $outputCommand = $this->sendConfigToServer(
                 $credential['username'],
                 $credential['password'],
-                $request['module']['name'],
+                $request['module']->service_key,
                 $yamlContent, $request['server'],
                 'undo-initial-config-module',
                 'undoToInitialConfigModule',
                 $credential['port'] ?? 22,
+                ModuleIdentity::configFileName($request['module'], $moduleInitialConfig),
             );
 
 
@@ -1208,6 +1227,51 @@ class ModuleController extends ApiController
         } catch (\Exception $e) {
             DB::rollback();
                 return response()->json(['error'=> $e->getMessage()], 422);
+        }
+    }
+
+    private function assertModuleTypeFormatCapacityForServers(array $serverIds, string $serviceKey, string $incomingFormat, ?int $ignoreModuleId = null): void
+    {
+        $limits = [
+            'hss' => 2,
+            'pcrf' => 2,
+            'smf' => 2,
+            'mme' => 2,
+            'upf' => 1,
+            'sgwc' => 1,
+            'sgwu' => 1,
+        ];
+        $maxAllowed = $limits[$serviceKey] ?? 1;
+
+        foreach ($serverIds as $serverId) {
+            $server = Server::with('modules')->find($serverId);
+            if (!$server) {
+                continue;
+            }
+
+            $sameTypeModules = $server->modules->filter(function ($attachedModule) use ($serviceKey, $ignoreModuleId) {
+                if ($ignoreModuleId && (int) $attachedModule->id === $ignoreModuleId) {
+                    return false;
+                }
+                return $attachedModule->service_key === $serviceKey;
+            });
+
+            if ($sameTypeModules->count() >= $maxAllowed) {
+                throw ValidationException::withMessages([
+                    'type' => "A maximum of {$maxAllowed} module(s) with this Module Type is allowed per selected server.",
+                ]);
+            }
+
+            $sameTypeAndFormatExists = $sameTypeModules->contains(function ($attachedModule) use ($incomingFormat) {
+                $existingFormat = ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($attachedModule->pivot?->current_config);
+                return $existingFormat === $incomingFormat;
+            });
+
+            if ($sameTypeAndFormatExists) {
+                throw ValidationException::withMessages([
+                    'type' => 'A module with this Module Type and config format already exists on the selected server.',
+                ]);
+            }
         }
     }
 

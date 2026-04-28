@@ -111,11 +111,58 @@ function addOrUpdateUrlParam(name, value, href = window.location.href) {
 
 let firstTabModule;
 let booleanFirstTabModule = true;
+let currentEffectiveConfigFormat = "yaml";
+let tabName = "";
+
+function createSingleEditorTab(tabKey, title, data) {
+  const mainTabs = document.getElementById("mainTabs");
+  const tabId = `tab-${tabKey}`;
+  mainTabs.innerHTML = `
+    <li class="nav-item">
+      <button class="nav-link active" id="${tabId}-tab" data-bs-toggle="tab" data-bs-target="#${tabId}" type="button" role="tab" aria-controls="${tabId}" aria-selected="true">
+        ${title}
+      </button>
+    </li>
+  `;
+  UpdateJsons = true;
+  firstTabModule = tabKey;
+  tabName = tabKey;
+  setJsonEditor(data);
+}
+
+function detectEffectiveFormat(payload = null) {
+  const source = payload || jsonData || {};
+  const explicit = String(
+    source?.effective_config_format
+    || source?.config_format
+    || source?.format
+    || source?._format
+    || source?.extension
+    || currentEffectiveConfigFormat
+    || ""
+  ).toLowerCase();
+
+  if (explicit === "conf" || explicit === "conf.in") return "conf";
+  if (explicit === "json") return "json";
+  return "yaml";
+}
 
 function generateFormFromJson(data) {
   return new Promise((resolve) => {
     const mainTabs = document.getElementById("mainTabs");
     booleanFirstTabModule = true;
+
+    const effectiveFormat = detectEffectiveFormat(data);
+    if (effectiveFormat === "conf") {
+      createSingleEditorTab("data", "data", data);
+      resolve();
+      return;
+    }
+    if (effectiveFormat === "yaml") {
+      createSingleEditorTab("modules", "modules", data);
+      resolve();
+      return;
+    }
 
     // const tabContent = document.getElementById("jsoneditor");
 
@@ -323,6 +370,7 @@ async function backToBefore() {
       // document.querySelector(".jsoneditor-mode-tree").innerHTML = "";
       if (data.config) {
         jsonData = data.config;
+        currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data.config);
 
         // removeLastGeneratedForm();
         await generateFormFromJson(jsonData);
@@ -384,6 +432,7 @@ async function returnToTheFirstState() {
       document.querySelector(".jsoneditor-mode-tree").innerHTML = "";
       // const firstKey = Object.keys(data.config)[0];
       jsonData = data.config;
+      currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data.config);
       await generateFormFromJson(jsonData);
       setEventListeners();
       let status = 1;
@@ -466,6 +515,7 @@ async function saveDataToServer() {
       document.getElementById("mainTabs").innerHTML = "";
       // document.querySelectorId("jsoneditor").innerHTML = "";
       jsonData = data.config;
+      currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data.config);
 
       await generateFormFromJson(jsonData);
       setEventListeners();
@@ -855,6 +905,7 @@ async function getModuleConfig(moduleId) {
       moduleDetails = data.moduleDetails.name;
       document.getElementById("mainTabs").innerHTML = "";
       specifyingTheModuleServer = data.serversIdInModuleName;
+      currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data?.config || {});
       if (data) jsonData = data.config;
       // removeLastGeneratedForm();
       await generateFormFromJson(jsonData);
@@ -881,7 +932,11 @@ async function getModuleConfig(moduleId) {
 let UpdateJsons = false;
 
 function showAllModules() {
-  document.getElementById("tab-all-tab").addEventListener("click", function () {
+  const modulesTabButton =
+    document.getElementById("tab-all-tab") || document.getElementById("tab-modules-tab");
+  if (!modulesTabButton) return;
+
+  modulesTabButton.addEventListener("click", function () {
     UpdateJsons = true;
     document.getElementById("jsoneditor").innerHTML = "";
     setJsonEditor(jsonData);
@@ -901,7 +956,9 @@ function CallingTabs(status) {
           document.getElementById("updateBtn").style.bottom = "-100px";
         }
 
-        if (e.innerHTML.trim() != "modules") {
+        if (currentEffectiveConfigFormat === "conf" || currentEffectiveConfigFormat === "yaml") {
+          UpdateJsons = true;
+        } else if (e.innerHTML.trim() != "modules") {
           UpdateJsons = false;
         } else {
           UpdateJsons = true;
@@ -921,7 +978,9 @@ function CallingTabs(status) {
             document.getElementById("updateBtn").style.bottom = "-100px";
           }
 
-          if (e.innerHTML.trim() != "modules") {
+          if (currentEffectiveConfigFormat === "conf" || currentEffectiveConfigFormat === "yaml") {
+            UpdateJsons = true;
+          } else if (e.innerHTML.trim() != "modules") {
             UpdateJsons = false;
           } else {
             UpdateJsons = true;
@@ -990,8 +1049,16 @@ async function ExportModules(id) {
       port: credentialResult.credentials.port,
     },
     callback: async function (data) {
-      const text = await data.text(); // blob → text
-      console.log("YAML received from server:\n", text);
+      if (!(data instanceof Blob) || data.size === 0) {
+        Toastify({
+          text: "Export failed: no file content was returned.",
+          style: {
+            background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+          },
+        }).showToast();
+        return;
+      }
+
       downloadFileProcess(data);
     },
     errorCallback: function (errorPayload) {
@@ -1066,14 +1133,9 @@ function showModuleActionError(errorPayload, options = {}) {
 function isCurrentModuleConfBased() {
   const container = document.getElementById("jsoneditor");
   const datasetIsConf = container?.dataset?.isConf === "true";
-  const detectedFormat = String(
-    jsonData?.format
-    || jsonData?._format
-    || jsonData?.extension
-    || ""
-  ).toLowerCase();
+  const detectedFormat = detectEffectiveFormat(jsonData);
 
-  return datasetIsConf || detectedFormat === "conf";
+  return datasetIsConf || currentEffectiveConfigFormat === "conf" || detectedFormat === "conf";
 }
 
 async function StartModules(id) {
@@ -1085,7 +1147,7 @@ async function StartModules(id) {
   if (isCurrentModuleConfBased()) {
     document.getElementById("idLoading").style.display = "none";
     Toastify({
-      text: "Start is not supported for .conf-based modules.",
+      text: "This action is not supported for .conf-based modules.",
       style: {
         background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
       },
@@ -1138,6 +1200,16 @@ async function StopModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
+  if (isCurrentModuleConfBased()) {
+    document.getElementById("idLoading").style.display = "none";
+    Toastify({
+      text: "This action is not supported for .conf-based modules.",
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
   const selectedServerId = localStorage.getItem("server");
   const credentialResult = resolveServerCredentialsForAction(selectedServerId);
   if (!credentialResult.valid) return;
@@ -1180,6 +1252,16 @@ async function RestartModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
+  if (isCurrentModuleConfBased()) {
+    document.getElementById("idLoading").style.display = "none";
+    Toastify({
+      text: "This action is not supported for .conf-based modules.",
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
   const selectedServerId = localStorage.getItem("server");
   const credentialResult = resolveServerCredentialsForAction(selectedServerId);
   if (!credentialResult.valid) return;
@@ -1254,6 +1336,18 @@ async function StatusModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
+  if (isCurrentModuleConfBased()) {
+    document.getElementById("idLoading").style.display = "none";
+    document.getElementById("textStatus").textContent =
+      "This action is not supported for .conf-based modules.";
+    Toastify({
+      text: "This action is not supported for .conf-based modules.",
+      style: {
+        background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
+      },
+    }).showToast();
+    return;
+  }
   const selectedServerId = localStorage.getItem("server");
   const credentialResult = resolveServerCredentialsForAction(selectedServerId, {
     statusTargetId: "textStatus",
@@ -1433,7 +1527,6 @@ function desiredRoot(route) {
 
 // container.innerHTML = "";
 let keyNew = "";
-let tabName = "";
 
 function findChanges(oldData, newData) {
   for (const key in newData) {
@@ -2200,8 +2293,10 @@ function updateJsonKey(oldData, newData) {
 }
 // ---------------------------------VersioningModuleHere----------------------------------------
 let VersionSaveBtn = document.getElementById("SaveVersion")
-VersionSaveBtn.addEventListener("click", () => {
-  let VersionInput = document.getElementById("Version").value
-  let CommentInput = document.getElementById("comments").value
-  VersioningModule(VersionInput, CommentInput)
-})
+if (VersionSaveBtn) {
+  VersionSaveBtn.addEventListener("click", () => {
+    let VersionInput = document.getElementById("Version").value
+    let CommentInput = document.getElementById("comments").value
+    VersioningModule(VersionInput, CommentInput)
+  })
+}

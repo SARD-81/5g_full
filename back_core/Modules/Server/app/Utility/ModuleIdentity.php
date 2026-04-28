@@ -25,9 +25,34 @@ class ModuleIdentity
         return substr($normalized, 0, 60);
     }
 
-    public static function configFileName(Module $module): string
+    public static function configFileName(Module $module, ?string $storedConfig = null): string
     {
-        return $module->service_key . '.yaml';
+        $extension = self::resolveConfigExtension($storedConfig);
+        return $module->service_key . '.' . $extension;
+    }
+
+    private static function resolveConfigExtension(?string $storedConfig): string
+    {
+        if (!is_string($storedConfig) || trim($storedConfig) === '') {
+            return 'yaml';
+        }
+
+        $decoded = json_decode($storedConfig, true);
+        if (!is_array($decoded)) {
+            return 'yaml';
+        }
+
+        $extension = strtolower((string) ($decoded['extension'] ?? ''));
+        if ($extension !== '') {
+            return $extension;
+        }
+
+        $format = strtolower((string) ($decoded['format'] ?? ''));
+        return match ($format) {
+            'conf' => 'conf',
+            'json' => 'json',
+            default => 'yaml',
+        };
     }
 
     public static function serviceUnitName(Module $module): string

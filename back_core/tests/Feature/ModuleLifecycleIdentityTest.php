@@ -201,6 +201,46 @@ class ModuleLifecycleIdentityTest extends TestCase
         $this->assertNotContains("echo '' > /tmp/config/hss12.yaml", $commands);
     }
 
+    public function test_update_config_writes_yaml_using_service_key_not_display_name(): void
+    {
+        $user = $this->createUserWithPermissions(['module/update']);
+        $server = $this->createServer('Srv-Update-Identity');
+        Sanctum::actingAs($user);
+
+        $module = Module::query()->create([
+            'name' => 'hss12',
+            'service_key' => 'hss',
+            'type' => 'hss',
+        ]);
+        $module->servers()->attach($server->id, ['initial_config' => '{}', 'current_config' => '{}']);
+
+        $commands = [];
+        $sshMock = Mockery::mock('overload:Modules\\Server\\Helpers\\SshHelper');
+        $sshMock->shouldReceive('__construct')->andReturnNull();
+        $sshMock->shouldReceive('runCommandModule')
+            ->andReturnUsing(function ($command) use (&$commands) {
+                $commands[] = $command;
+                return '';
+            });
+        $sshMock->shouldReceive('getFileContent')->andReturn('');
+        $sshMock->shouldReceive('testConnection')->andReturnTrue();
+
+        $this->postJson('/api/update-config-module', [
+            'module_id' => $module->id,
+            'data' => ['foo' => 'bar'],
+            'servers' => [['id' => $server->id, 'username' => 'u', 'password' => 'p', 'port' => 22]],
+        ])->assertOk();
+
+        $this->assertContains("echo 'foo: bar\n' > /tmp/config/hss.yaml", $commands);
+        $this->assertNotContains("echo 'foo: bar\n' > /tmp/config/hss12.yaml", $commands);
+        $this->assertDatabaseHas('module_server', [
+            'module_id' => $module->id,
+            'server_id' => $server->id,
+            'current_config' => "{\n    \"foo\": \"bar\"\n}",
+            'previous_config' => '{}',
+        ]);
+    }
+
     public function test_edit_rename_changes_display_name_not_service_key(): void
     {
         $user = $this->createUserWithPermissions(['module/update']);

@@ -670,7 +670,7 @@ class ModuleController extends ApiController
                 $outputCommand = $this->sendConfigToServer(
                     $username,
                     $password,
-                    $modulePivot['name'],
+                    $modulePivot->service_key,
                     $yamlContent,
                     $server,
                     'update-module',

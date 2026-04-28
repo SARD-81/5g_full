@@ -1468,6 +1468,21 @@ function parseConfToJsonWithComments(confText) {
     }
   };
 
+  const parseDirectiveLine = (lineText) => {
+    const directiveMatch = lineText.match(/^(\s*)([A-Za-z0-9_.-]+)(\s*)(;?)\s*$/);
+    if (!directiveMatch) {
+      return null;
+    }
+
+    return {
+      key: directiveMatch[2],
+      format: {
+        prefix: directiveMatch[1],
+        terminator: directiveMatch[4] === ";" ? ";" : "",
+      },
+    };
+  };
+
   lines.forEach((rawLine) => {
     const line = rawLine.trim();
 
@@ -1534,8 +1549,25 @@ function parseConfToJsonWithComments(confText) {
         rawFormat: { prefix, suffixKey, valuePrefix, valueSuffix }
       });
     } else {
-      // خطوط ناشناخته (بدون مساوی)
-      meta.push({ type: "raw", raw: rawLine });
+      const directive = parseDirectiveLine(rawLine);
+      if (directive) {
+        if (currentSection) {
+          addValue(result[currentSection], "_directives", directive.key);
+        } else {
+          addValue(result, "_directives", directive.key);
+        }
+
+        meta.push({
+          type: "directive",
+          key: directive.key,
+          section: currentSection,
+          raw: rawLine,
+          rawFormat: directive.format,
+        });
+      } else {
+        // خطوط ناشناخته (بدون مساوی)
+        meta.push({ type: "raw", raw: rawLine });
+      }
     }
   });
 
@@ -1544,6 +1576,7 @@ function parseConfToJsonWithComments(confText) {
 function jsonToConfWithComments(json, meta) {
   let conf = "";
   const keyCounters = {}; // برای رهگیری ایندکس کلیدهای تکراری (آرایه‌ها)
+  const directiveCounters = {};
 
   meta.forEach((item) => {
     if (item.type === "comment" || item.type === "empty" || item.type === "raw" || item.type === "section") {
@@ -1571,6 +1604,29 @@ function jsonToConfWithComments(json, meta) {
       // قرار دادن دقیق مقادیر در بین فاصله‌های اصلی
       const fmt = item.rawFormat;
       conf += `${fmt.prefix}${item.key}${fmt.suffixKey}=${fmt.valuePrefix}${val}${fmt.valueSuffix}\n`;
+    } else if (item.type === "directive") {
+      const jsonRef = item.section ? json[item.section] : json;
+
+      if (!jsonRef || jsonRef._directives === undefined) {
+        conf += `${item.raw || ""}\n`;
+        return;
+      }
+
+      const counterKey = `${item.section || "root"}__directives`;
+      directiveCounters[counterKey] = directiveCounters[counterKey] || 0;
+      const index = directiveCounters[counterKey];
+      directiveCounters[counterKey] += 1;
+
+      const dataVal = jsonRef._directives;
+      const directiveVal = Array.isArray(dataVal) ? dataVal[index] : (index === 0 ? dataVal : undefined);
+
+      if (typeof directiveVal !== "string" || directiveVal.trim() === "") {
+        conf += `${item.raw || ""}\n`;
+        return;
+      }
+
+      const fmt = item.rawFormat || {};
+      conf += `${fmt.prefix || ""}${directiveVal.trim()}${fmt.terminator || ""}\n`;
 
     }
   });

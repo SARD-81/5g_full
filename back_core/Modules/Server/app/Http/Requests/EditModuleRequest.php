@@ -45,6 +45,7 @@ class EditModuleRequest extends FormRequest
             'servers_to_remove.*.username' => ['required_with:servers_to_remove.*.id', 'string', 'min:1', 'max:255'],
             'servers_to_remove.*.password' => ['required_with:servers_to_remove.*.id', 'string', 'min:1', 'max:255'],
             'servers_to_remove.*.port' => ['required_with:servers_to_remove.*.id', 'integer'],
+            'detach_removed_servers' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -55,7 +56,7 @@ class EditModuleRequest extends FormRequest
         }
 
         $validator->after(function ($validator) {
-            if (!$this->has('servers')) {
+            if (!$this->has('servers') || !$this->boolean('detach_removed_servers')) {
                 return;
             }
 

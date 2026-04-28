@@ -159,7 +159,7 @@ function generateFormFromJson(data) {
       return;
     }
     if (effectiveFormat === "yaml") {
-      createSingleEditorTab("modules", "modules", data);
+      createSingleEditorTab("configurations", "configurations", data);
       resolve();
       return;
     }
@@ -933,7 +933,9 @@ let UpdateJsons = false;
 
 function showAllModules() {
   const modulesTabButton =
-    document.getElementById("tab-all-tab") || document.getElementById("tab-modules-tab");
+    document.getElementById("tab-all-tab")
+    || document.getElementById("tab-modules-tab")
+    || document.getElementById("tab-configurations-tab");
   if (!modulesTabButton) return;
 
   modulesTabButton.addEventListener("click", function () {
@@ -958,7 +960,7 @@ function CallingTabs(status) {
 
         if (currentEffectiveConfigFormat === "conf" || currentEffectiveConfigFormat === "yaml") {
           UpdateJsons = true;
-        } else if (e.innerHTML.trim() != "modules") {
+        } else if (!["modules", "configurations"].includes(e.innerHTML.trim())) {
           UpdateJsons = false;
         } else {
           UpdateJsons = true;
@@ -980,7 +982,7 @@ function CallingTabs(status) {
 
           if (currentEffectiveConfigFormat === "conf" || currentEffectiveConfigFormat === "yaml") {
             UpdateJsons = true;
-          } else if (e.innerHTML.trim() != "modules") {
+          } else if (!["modules", "configurations"].includes(e.innerHTML.trim())) {
             UpdateJsons = false;
           } else {
             UpdateJsons = true;
@@ -1576,19 +1578,20 @@ function parseConfToJsonWithComments(confText) {
     };
   };
 
-  lines.forEach((rawLine) => {
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
     const line = rawLine.trim();
 
     // ۱. کامنت‌ها
     if (line.startsWith("#") || line.startsWith(";")) {
       meta.push({ type: "comment", raw: rawLine });
-      return;
+      continue;
     }
 
     // ۲. خطوط خالی
     if (!line) {
       meta.push({ type: "empty", raw: rawLine });
-      return;
+      continue;
     }
 
     // ۳. سکشن‌ها
@@ -1599,10 +1602,59 @@ function parseConfToJsonWithComments(confText) {
       }
       currentSection = sectionName;
       meta.push({ type: "section", name: sectionName, raw: rawLine });
-      return;
+      continue;
     }
 
     // ۴. کلید و مقدار (جدا کردن فقط بر اساس اولین مساوی)
+    const blockMatch = rawLine.match(/^(\s*)([A-Za-z0-9_.-]+)(\s*)=(\s*)"([^"]*)"(?:\s*)\{\s*$/);
+    if (blockMatch) {
+      const blockKey = blockMatch[2].trim();
+      const blockEntry = { value: blockMatch[5] };
+      const entries = [];
+
+      for (i = i + 1; i < lines.length; i++) {
+        const blockRawLine = lines[i];
+        if (/^\s*}\s*;\s*$/.test(blockRawLine)) break;
+
+        if (!blockRawLine.trim()) {
+          entries.push({ type: "empty", raw: blockRawLine });
+          continue;
+        }
+        if (blockRawLine.trim().startsWith("#") || blockRawLine.trim().startsWith(";")) {
+          entries.push({ type: "comment", raw: blockRawLine });
+          continue;
+        }
+
+        const nestedEqualIndex = blockRawLine.indexOf("=");
+        if (nestedEqualIndex !== -1) {
+          const nestedRawKeyPart = blockRawLine.substring(0, nestedEqualIndex);
+          const nestedRawValuePart = blockRawLine.substring(nestedEqualIndex + 1);
+          const nestedKey = nestedRawKeyPart.trim();
+          const nestedValue = nestedRawValuePart.trim().replace(/;$/, "");
+          addValue(blockEntry, nestedKey, nestedValue);
+          entries.push({ type: "kv", key: nestedKey });
+          continue;
+        }
+
+        const nestedDirective = parseDirectiveLine(blockRawLine);
+        if (nestedDirective) {
+          addValue(blockEntry, "_directives", nestedDirective.key);
+          entries.push({ type: "directive", key: nestedDirective.key });
+          continue;
+        }
+
+        entries.push({ type: "raw", raw: blockRawLine });
+      }
+
+      if (currentSection) {
+        addValue(result[currentSection], blockKey, blockEntry);
+      } else {
+        addValue(result, blockKey, blockEntry);
+      }
+      meta.push({ type: "block", key: blockKey, section: currentSection, entries });
+      continue;
+    }
+
     const equalIndex = rawLine.indexOf("=");
     if (equalIndex !== -1) {
       const rawKeyPart = rawLine.substring(0, equalIndex);
@@ -1662,7 +1714,7 @@ function parseConfToJsonWithComments(confText) {
         meta.push({ type: "raw", raw: rawLine });
       }
     }
-  });
+  }
 
   return { json: result, meta };
 }
@@ -1697,6 +1749,30 @@ function jsonToConfWithComments(json, meta) {
       // قرار دادن دقیق مقادیر در بین فاصله‌های اصلی
       const fmt = item.rawFormat;
       conf += `${fmt.prefix}${item.key}${fmt.suffixKey}=${fmt.valuePrefix}${val}${fmt.valueSuffix}\n`;
+    } else if (item.type === "block") {
+      const blockRef = item.section ? json[item.section] : json;
+      const source = blockRef ? blockRef[item.key] : undefined;
+      const blockItems = Array.isArray(source) ? source : [source];
+      blockItems.forEach((block) => {
+        if (!block || typeof block !== "object") return;
+        conf += `${item.key} = "${(block.value || "").toString().replace(/^\"|\"$/g, "")}" {\n`;
+        Object.entries(block).forEach(([k, v]) => {
+          if (k === "value") return;
+          if (k === "_directives") {
+            const directives = Array.isArray(v) ? v : [v];
+            directives.filter(Boolean).forEach((directive) => {
+              const clean = directive.toString().trim().replace(/^;+|;+$/g, "");
+              if (clean) conf += `    ${clean};\n`;
+            });
+            return;
+          }
+          const values = Array.isArray(v) ? v : [v];
+          values.forEach((value) => {
+            conf += `    ${k} = ${value};\n`;
+          });
+        });
+        conf += "};\n";
+      });
     } else if (item.type === "directive") {
       const jsonRef = item.section ? json[item.section] : json;
 
@@ -1719,8 +1795,19 @@ function jsonToConfWithComments(json, meta) {
       }
 
       const fmt = item.rawFormat || {};
-      conf += `${fmt.prefix || ""}${directiveVal.trim()}${fmt.terminator || ""}\n`;
+      const clean = directiveVal.trim().replace(/^;+|;+$/g, "");
+      conf += `${fmt.prefix || ""}${clean}${fmt.terminator || ";"}\n`;
 
+    }
+  });
+
+  const rootDirectives = json && json._directives !== undefined
+    ? (Array.isArray(json._directives) ? json._directives : [json._directives])
+    : [];
+  rootDirectives.forEach((directive) => {
+    const clean = `${directive || ""}`.trim().replace(/^;+|;+$/g, "");
+    if (clean && !conf.includes(`\n${clean};\n`) && !conf.endsWith(`\n${clean};`)) {
+      conf += `${clean};\n`;
     }
   });
 
@@ -1940,7 +2027,7 @@ function setJsonEditor(data) {
           dataModules[`${UpperCaseModuleDetails}`][`${firstTabModule}`];
         subModuleName = firstTabModule;
       }
-    } else if (tabModuleSelect == "modules") {
+    } else if (tabModuleSelect == "modules" || tabModuleSelect == "configurations") {
       if (dataModules[`${UpperCaseModuleDetails}`]) {
         descriptionsData = dataModules[`${UpperCaseModuleDetails}`];
       }

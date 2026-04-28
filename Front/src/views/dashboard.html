@@ -30,7 +30,7 @@
         <div class="divMenu">
           <div class="mb-lg-3">
             <div class="backLogo w-100 d-flex justify-content-center align-items-center" id="backLogo">
-              <img id="logo" class="w-75 my-3" alt="logo" />
+              <img id="logo" class="my-3 w-75" alt="logo" />
             </div>
           </div>
           <div class="bgSpecifications">
@@ -38,7 +38,7 @@
               <span class="username fontDateUserRespansive">Username:</span>
               <span id="userName" class="fontDateUserRespansive"></span>
             </div>
-            <div class="mt-lg-3 pb-lg-4 pb-3 ps-xxl-4 ps-xl-2">
+            <div class="pb-3 mt-lg-3 pb-lg-4 ps-xxl-4 ps-xl-2">
               <span class="yourRole fontDateUserRespansive">Your Role:</span>
               <span id="role" class="fontDateUserRespansive"></span>
             </div>
@@ -62,10 +62,10 @@
           <!-- Accordion Menu -->
           <div class="accordion nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <!-- App Management Item -->
-            <div class="accordion-item bg-transparent border-0">
+            <div class="bg-transparent border-0 accordion-item">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 active ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero activeMenu menus1 d-flex align-items-center"
+                  class="border-0 clickTab styleButton active ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero activeMenu menus1 d-flex align-items-center"
                   data-id="1" id="v-servers-tab" data-bs-toggle="pill" data-bs-target="#v-servers-home" type="button"
                   role="tab" aria-controls="v-servers-home" aria-selected="true">
                   <span class="ms-xxl-2">Server Settings</span>
@@ -73,10 +73,10 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0">
+            <div class="bg-transparent border-0 accordion-item">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus5 d-flex align-items-center"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus5 d-flex align-items-center"
                   data-id="5" type="button" id="v-module-tab" role="tab" data-bs-toggle="pill"
                   data-bs-target="#v-module" aria-controls="v-module" aria-selected="false">
                   <span class="ms-xxl-2">Modules</span>
@@ -84,9 +84,9 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0">
-              <h2 class="accordion-header my-lg-3 mb-2">
-                <button class="styleButton border-0 ActiveMenuClick fontDateUserRespansive paddingZero collapsed menus2"
+            <div class="bg-transparent border-0 accordion-item">
+              <h2 class="mb-2 accordion-header my-lg-3">
+                <button class="border-0 styleButton ActiveMenuClick fontDateUserRespansive paddingZero collapsed menus2"
                   data-id="1" type="button" id="v-userManagement" data-bs-toggle="collapse"
                   data-bs-target="#collapseAppManagement" aria-expanded="false" aria-controls="collapseAppManagement">
                   <span class="ms-xxl-2">User Management</span>
@@ -98,14 +98,14 @@
                 </button>
               </h2>
               <div id="collapseAppManagement" class="accordion-collapse collapse">
-                <div class="accordion-body p-0">
-                  <!-- <div id="class-access-level" class="ms-3 mb-lg-3 mb-2 d-flex">
+                <div class="p-0 accordion-body">
+                  <!-- <div id="class-access-level" class="mb-2 ms-3 mb-lg-3 d-flex">
                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor"
                       class="bi bi-circle-fill iconSubMenu1" viewBox="0 0 16 16">
                       <circle id="circleOne" cx="8" cy="8" r="8" />
                     </svg>
                     <button
-                      class="clickTab styleButton border-0 subMenuClick fontDateUserRespansive paddingX subMenu subMenu1"
+                      class="border-0 clickTab styleButton subMenuClick fontDateUserRespansive paddingX subMenu subMenu1"
                       data-id="1" id="v-access-levels-tab" data-bs-toggle="pill" data-bs-target="#v-access-levels"
                       type="button" role="tab" aria-controls="v-access-levels" aria-selected="false">
                       Access Levels
@@ -118,7 +118,7 @@
                       <circle id="circleTwo" cx="8" cy="8" r="8" />
                     </svg>
                     <button
-                      class="clickTab styleButton border-0 subMenuClick fontDateUserRespansive paddingX subMenu subMenu2"
+                      class="border-0 clickTab styleButton subMenuClick fontDateUserRespansive paddingX subMenu subMenu2"
                       data-id="1" id="v-users-tab" data-bs-toggle="pill" data-bs-target="#v-users" type="button"
                       role="tab" aria-controls="v-users" aria-selected="false">
                       Users
@@ -128,10 +128,10 @@
               </div>
             </div>
 
-            <div class="accordion-item bg-transparent border-0" id="menuSubscribers">
+            <div class="bg-transparent border-0 accordion-item" id="menuSubscribers">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus6 d-flex align-items-center"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus6 d-flex align-items-center"
                   data-id="6" type="button" id="v-subscribers-tab" role="tab" data-bs-toggle="pill"
                   data-bs-target="#v-subscribers" aria-controls="v-subscribers" aria-selected="false">
                   <span class="ms-xxl-2">Subscribers</span>
@@ -139,10 +139,10 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0" id="tabTrace">
+            <div class="bg-transparent border-0 accordion-item" id="tabTrace">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus10 d-flex align-items-center"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus10 d-flex align-items-center"
                   data-id="10" type="button" id="v-trace-tab" role="tab" data-bs-toggle="pill" data-bs-target="#v-trace"
                   aria-controls="v-trace" aria-selected="false">
                   <span class="ms-xxl-2">Trace</span>
@@ -150,10 +150,10 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0" id="tabPing">
+            <div class="bg-transparent border-0 accordion-item" id="tabPing">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus7 d-flex align-items-center"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus7 d-flex align-items-center"
                   data-id="7" type="button" id="v-ping-tab" role="tab" data-bs-toggle="pill" data-bs-target="#v-ping"
                   aria-controls="v-ping" aria-selected="false">
                   <span class="ms-xxl-2">Ping</span>
@@ -161,10 +161,10 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0" id="tabRoute">
+            <div class="bg-transparent border-0 accordion-item" id="tabRoute">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus11"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus11"
                   data-id="11" type="button" id="v-route-tab" data-bs-toggle="pill" data-bs-target="#v-route"
                   aria-controls="v-route" aria-expanded="false">
                   <span class="ms-xxl-2">Route</span>
@@ -172,10 +172,10 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0" id="tabKpi">
+            <div class="bg-transparent border-0 accordion-item" id="tabKpi">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus14"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus14"
                   data-id="14" type="button" id="v-kpi-tab" data-bs-toggle="pill" data-bs-target="#v-kpi"
                   aria-controls="v-kpi" aria-expanded="false">
                   <span class="ms-xxl-2">KPI</span>
@@ -183,10 +183,10 @@
               </h2>
             </div>
 
-            <!-- <div class="accordion-item bg-transparent border-0">
+            <!-- <div class="bg-transparent border-0 accordion-item">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus3"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus3"
                   data-id="3" type="button" id="V-monitoring-tab" data-bs-toggle="pill" data-bs-target="#v-monitoring"
                   aria-controls="v-monitoring" aria-expanded="false">
                   <span class="ms-xxl-2">Monitoring</span>
@@ -194,10 +194,10 @@
               </h2>
             </div> -->
 
-            <div class="accordion-item bg-transparent border-0" id="facepalte">
+            <div class="bg-transparent border-0 accordion-item" id="facepalte">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus9"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus9"
                   data-id="9" type="button" id="v-facePlate-tab" data-bs-toggle="pill" data-bs-target="#v-facePlate"
                   aria-controls="v-facePlate" aria-expanded="false">
                   <span class="ms-xxl-2">Face Plate</span>
@@ -205,10 +205,10 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0">
+            <div class="bg-transparent border-0 accordion-item">
               <h2 class="accordion-header my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus4 d-flex align-items-center"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus4 d-flex align-items-center"
                   data-id="4" type="button" id="v-log-tab" role="tab" data-bs-toggle="pill" data-bs-target="#v-log"
                   aria-controls="v-log" aria-selected="false">
                   <span class="ms-xxl-2">Log</span>
@@ -216,29 +216,29 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0">
+            <!-- <div class="bg-transparent border-0 accordion-item">
               <h2 class="accordion-header paddingBottonSetting my-lg-3">
                 <button
-                  class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus8"
+                  class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll fontDateUserRespansive paddingZero collapsed menus8"
                   data-id="8" type="button" id="v-setting-tab" role="tab" data-bs-toggle="pill"
                   data-bs-target="#v-setting" aria-controls="v-setting" aria-selected="false">
                   <span class="ms-xxl-2">Settings</span>
                 </button>
               </h2>
-            </div>
+            </div> -->
           </div>
         </div>
         <!--------------------------------------------sideBarMenu && items here ends Here------------------------------------>
       </nav>
 
-      <div class="tab-content col-12 col-md-9 col-xl-10 mr-auto pageDashbord" id="v-pills-tabContent">
-        <div class="col-12 my-2" id="tabRRU">
+      <div class="mr-auto tab-content col-12 col-md-9 col-xl-10 pageDashbord" id="v-pills-tabContent">
+        <div class="my-2 col-12" id="tabRRU">
           <nav class="nav">
             <!-- App Management Item -->
-            <div class="accordion-item bg-transparent border-0">
-              <h2 class="accordion-header my-3">
+            <div class="bg-transparent border-0 accordion-item">
+              <h2 class="my-3 accordion-header">
                 <button
-                  class="clickTab styleTabRRU border-0 active ActiveMenuClick ActiveMenuScroll paddingZero activeMenuRRU menus1 d-flex align-items-center cursorPointer"
+                  class="border-0 clickTab styleTabRRU active ActiveMenuClick ActiveMenuScroll paddingZero activeMenuRRU menus1 d-flex align-items-center cursorPointer"
                   data-id="1" id="v-servers-tab" data-bs-toggle="pill" data-bs-target="#v-servers-home" type="button"
                   role="tab" aria-controls="v-servers-home" aria-selected="true">
                   <span class="ms-xxl-2">Home</span>
@@ -246,26 +246,26 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0">
-              <h2 class="accordion-header my-3">
-                <button class="styleTabRRU border-0 d-flex align-items-center opacity-50" type="button" role="tab">
+            <div class="bg-transparent border-0 accordion-item">
+              <h2 class="my-3 accordion-header">
+                <button class="border-0 opacity-50 styleTabRRU d-flex align-items-center" type="button" role="tab">
                   <span class="ms-xxl-2">Map</span>
                 </button>
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0">
-              <h2 class="accordion-header my-3">
-                <button class="styleTabRRU border-0 d-flex align-items-center opacity-50" type="button" role="tab">
+            <div class="bg-transparent border-0 accordion-item">
+              <h2 class="my-3 accordion-header">
+                <button class="border-0 opacity-50 styleTabRRU d-flex align-items-center" type="button" role="tab">
                   <span class="ms-xxl-2">Configuration</span>
                 </button>
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0" id="facepalte">
-              <h2 class="accordion-header my-3">
+            <div class="bg-transparent border-0 accordion-item" id="facepalte">
+              <h2 class="my-3 accordion-header">
                 <button
-                  class="clickTab styleTabRRU border-0 d-flex align-items-center ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus9 cursorPointer"
+                  class="border-0 clickTab styleTabRRU d-flex align-items-center ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus9 cursorPointer"
                   data-id="9" type="button" id="v-facePlate-tab" data-bs-toggle="pill" data-bs-target="#v-facePlate"
                   aria-controls="v-facePlate" aria-expanded="false">
                   <span class="ms-xxl-2">Face Plate</span>
@@ -273,9 +273,9 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0 tabFaults">
-              <h2 class="accordion-header my-3 custom-dropdown">
-                <button class="styleTabRRU border-0 d-flex align-items-center" type="button" role="tab"
+            <div class="bg-transparent border-0 accordion-item tabFaults">
+              <h2 class="my-3 accordion-header custom-dropdown">
+                <button class="border-0 styleTabRRU d-flex align-items-center" type="button" role="tab"
                   id="menuFaultsRRU">
                   <span class="ms-xxl-2 me-2">Faults</span>
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"
@@ -287,10 +287,10 @@
 
                 <ul class="custom-dropdown-content">
                   <li>
-                    <div class="accordion-item bg-transparent border-0">
-                      <h2 class="accordion-header my-3">
+                    <div class="bg-transparent border-0 accordion-item">
+                      <h2 class="my-3 accordion-header">
                         <button
-                          class="clickTab styleTabRRUsubMenu border-0 ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus12 d-flex align-items-center cursorPointer"
+                          class="border-0 clickTab styleTabRRUsubMenu ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus12 d-flex align-items-center cursorPointer"
                           data-id="12" type="button" id="v-logManagement-tab" role="tab" data-bs-toggle="pill"
                           data-bs-target="#v-logManagement" aria-controls="v-logManagement" aria-selected="false">
                           <span class="ms-xxl-2">Log Management</span>
@@ -299,10 +299,10 @@
                     </div>
                   </li>
                   <li>
-                    <div class="accordion-item bg-transparent border-0">
-                      <h2 class="accordion-header my-3">
+                    <div class="bg-transparent border-0 accordion-item">
+                      <h2 class="my-3 accordion-header">
                         <button
-                          class="clickTab styleTabRRUsubMenu border-0 ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus13 d-flex align-items-center cursorPointer"
+                          class="border-0 clickTab styleTabRRUsubMenu ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus13 d-flex align-items-center cursorPointer"
                           data-id="13" type="button" id="v-performanceManagement-tab" role="tab" data-bs-toggle="pill"
                           data-bs-target="#v-performanceManagement" aria-controls="v-performanceManagement"
                           aria-selected="false">
@@ -315,9 +315,9 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0">
-              <h2 class="accordion-header my-3 custom-dropdown">
-                <button class="styleTabRRU border-0 d-flex align-items-center" type="button" role="tab"
+            <div class="bg-transparent border-0 accordion-item">
+              <h2 class="my-3 accordion-header custom-dropdown">
+                <button class="border-0 styleTabRRU d-flex align-items-center" type="button" role="tab"
                   id="menuSettingRRU">
                   <span class="ms-xxl-2 me-2">Setting</span>
 
@@ -330,10 +330,10 @@
 
                 <ul class="custom-dropdown-content">
                   <li>
-                    <div class="accordion-item bg-transparent border-0">
-                      <h2 class="accordion-header my-3">
+                    <div class="bg-transparent border-0 accordion-item">
+                      <h2 class="my-3 accordion-header">
                         <button
-                          class="clickTab styleTabRRUsubMenu border-0 ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus5 d-flex align-items-center cursorPointer"
+                          class="border-0 clickTab styleTabRRUsubMenu ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus5 d-flex align-items-center cursorPointer"
                           data-id="5" type="button" id="v-module-tab" role="tab" data-bs-toggle="pill"
                           data-bs-target="#v-module" aria-controls="v-module" aria-selected="false">
                           <span class="ms-xxl-2">Modules</span>
@@ -342,9 +342,9 @@
                     </div>
                   </li>
                   <li>
-                    <div class="accordion-item bg-transparent border-0">
-                      <h2 class="accordion-header my-3">
-                        <button class="styleTabRRUsubMenu border-0 d-flex align-items-center opacity-50" type="button"
+                    <div class="bg-transparent border-0 accordion-item">
+                      <h2 class="my-3 accordion-header">
+                        <button class="border-0 opacity-50 styleTabRRUsubMenu d-flex align-items-center" type="button"
                           role="tab">
                           <span class="ms-xxl-2">System</span>
                         </button>
@@ -352,10 +352,10 @@
                     </div>
                   </li>
                   <li>
-                    <div class="accordion-item bg-transparent border-0 tabHistory">
-                      <h2 class="accordion-header my-3">
+                    <div class="bg-transparent border-0 accordion-item tabHistory">
+                      <h2 class="my-3 accordion-header">
                         <button
-                          class="clickTab styleTabRRUsubMenu border-0 ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus4 d-flex align-items-center cursorPointer"
+                          class="border-0 clickTab styleTabRRUsubMenu ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus4 d-flex align-items-center cursorPointer"
                           data-id="4" type="button" id="v-log-tab" role="tab" data-bs-toggle="pill"
                           data-bs-target="#v-log" aria-controls="v-log" aria-selected="false">
                           <span class="ms-xxl-2">History</span>
@@ -367,10 +367,10 @@
               </h2>
             </div>
 
-            <div class="accordion-item bg-transparent border-0 tabAdmin">
-              <h2 class="accordion-header my-3">
+            <div class="bg-transparent border-0 accordion-item tabAdmin">
+              <h2 class="my-3 accordion-header">
                 <button
-                  class="clickTab styleTabRRU border-0 ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus2 d-flex align-items-center"
+                  class="border-0 clickTab styleTabRRU ActiveMenuClick ActiveMenuScroll paddingZero collapsed menus2 d-flex align-items-center"
                   data-id="1" id="v-users-tab" data-bs-toggle="pill" data-bs-target="#v-users" type="button" role="tab"
                   aria-controls="v-users" aria-selected="false">
                   Admin
@@ -380,7 +380,7 @@
           </nav>
         </div>
         <div class="iconMenuHamber">
-          <button class="btn p-0 mt-3 ms-2" type="button" data-bs-toggle="offcanvas"
+          <button class="p-0 mt-3 btn ms-2" type="button" data-bs-toggle="offcanvas"
             data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
             <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-list"
               viewBox="0 0 16 16">
@@ -396,24 +396,24 @@
         <div class="offcanvas offcanvas-start divMenuHumber backOffcanvas" data-bs-scroll="true" tabindex="-1"
           id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel">
           <div class="offcanvas-header">
-            <h5 class="offcanvas-title text-white" id="offcanvasWithBothOptionsLabel">
+            <h5 class="text-white offcanvas-title" id="offcanvasWithBothOptionsLabel">
               Menu
             </h5>
-            <button type="button" class="btn-close bg-white opacity-100" data-bs-dismiss="offcanvas" aria-label="Close"
+            <button type="button" class="bg-white opacity-100 btn-close" data-bs-dismiss="offcanvas" aria-label="Close"
               id="closeOffcanvas"></button>
           </div>
           <div class="offcanvas-body">
             <div class="mb-3 w-100 d-flex justify-content-center align-items-center">
               <div class="backLogo w-75 d-flex justify-content-center align-items-center" id="backLogo">
-                <img id="logo" class="w-75 my-3" alt="logo" />
+                <img id="logo" class="my-3 w-75" alt="logo" />
               </div>
             </div>
-            <div class="bgSpecifications text-white">
+            <div class="text-white bgSpecifications">
               <div class="pt-2 ps-4">
                 <span class="username">Username:</span>
                 <span id="userName"></span>
               </div>
-              <div class="mt-3 pb-4 ps-4">
+              <div class="pb-4 mt-3 ps-4">
                 <span class="yourRole">Your Role:</span>
                 <span id="role"></span>
               </div>
@@ -421,10 +421,10 @@
 
             <div class="accordion nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
               <!-- App Management Item -->
-              <div class="accordion-item bg-transparent border-0">
-                <h2 class="accordion-header my-3">
+              <div class="bg-transparent border-0 accordion-item">
+                <h2 class="my-3 accordion-header">
                   <button
-                    class="clickTab styleButton border-0 active ActiveMenuClick ActiveMenuScroll activeMenu menus1"
+                    class="border-0 clickTab styleButton active ActiveMenuClick ActiveMenuScroll activeMenu menus1"
                     data-id="1" id="v-servers-tab" data-bs-toggle="pill" data-bs-target="#v-servers-home" type="button"
                     role="tab" aria-controls="v-servers-home" aria-selected="true">
                     <!-- <svg
@@ -447,9 +447,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus5"
+              <div class="bg-transparent border-0 accordion-item">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus5"
                     data-id="5" type="button" id="v-module-tab" role="tab" data-bs-toggle="pill"
                     data-bs-target="#v-module" aria-controls="v-module" aria-selected="false">
                     <!-- <svg
@@ -470,9 +470,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0">
-                <h2 class="accordion-header my-3">
-                  <button class="styleButton border-0 ActiveMenuClick collapsed menus2" data-id="1" type="button"
+              <div class="bg-transparent border-0 accordion-item">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 styleButton ActiveMenuClick collapsed menus2" data-id="1" type="button"
                     id="v-userManagement" data-bs-toggle="collapse" data-bs-target="#collapseAppManagement"
                     aria-expanded="false" aria-controls="collapseAppManagement">
                     <span class="ms-2">User Management</span>
@@ -484,13 +484,13 @@
                   </button>
                 </h2>
                 <div id="collapseAppManagement" class="accordion-collapse collapse">
-                  <div class="accordion-body p-0">
-                    <!-- <div id="class-access-level" class="ms-3 mb-3 d-flex">
+                  <div class="p-0 accordion-body">
+                    <!-- <div id="class-access-level" class="mb-3 ms-3 d-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor"
                         class="bi bi-circle-fill iconSubMenu1" viewBox="0 0 16 16">
                         <circle cx="8" cy="8" r="8" />
                       </svg>
-                      <button class="clickTab styleButton border-0 subMenuClick subMenu subMenu1" data-id="1"
+                      <button class="border-0 clickTab styleButton subMenuClick subMenu subMenu1" data-id="1"
                         id="v-access-levels-tab" data-bs-toggle="pill" data-bs-target="#v-access-levels" type="button"
                         role="tab" aria-controls="v-access-levels" aria-selected="false">
                         Access Levels
@@ -501,7 +501,7 @@
                         class="bi bi-circle-fill iconSubMenu1" viewBox="0 0 16 16">
                         <circle cx="8" cy="8" r="8" />
                       </svg>
-                      <button class="clickTab styleButton border-0 subMenuClick subMenu subMenu2" data-id="1"
+                      <button class="border-0 clickTab styleButton subMenuClick subMenu subMenu2" data-id="1"
                         id="v-users-tab" data-bs-toggle="pill" data-bs-target="#v-users" type="button" role="tab"
                         aria-controls="v-users" aria-selected="false">
                         Users
@@ -511,9 +511,9 @@
                 </div>
               </div>
 
-              <div class="accordion-item bg-transparent border-0" id="menuSubscribers">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus6"
+              <div class="bg-transparent border-0 accordion-item" id="menuSubscribers">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus6"
                     data-id="6" type="button" id="v-subscribers-tab" role="tab" data-bs-toggle="pill"
                     data-bs-target="#v-subscribers" aria-controls="v-subscribers" aria-selected="false">
                     <!-- <svg
@@ -533,9 +533,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0" id="tabTrace">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus10"
+              <div class="bg-transparent border-0 accordion-item" id="tabTrace">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus10"
                     data-id="10" type="button" id="v-trace-tab" role="tab" data-bs-toggle="pill"
                     data-bs-target="#v-trace" aria-controls="v-trace" aria-selected="false">
                     <!-- <svg
@@ -555,9 +555,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0" id="tabPing">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus7"
+              <div class="bg-transparent border-0 accordion-item" id="tabPing">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus7"
                     data-id="7" type="button" id="v-ping-tab" role="tab" data-bs-toggle="pill" data-bs-target="#v-ping"
                     aria-controls="v-ping" aria-selected="false">
                     <!-- <svg
@@ -577,9 +577,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0" id="tabRoute">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus11"
+              <div class="bg-transparent border-0 accordion-item" id="tabRoute">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus11"
                     data-id="11" type="button" id="v-route-tab" data-bs-toggle="pill" data-bs-target="#v-route"
                     aria-controls="v-route" aria-expanded="false">
                     <span class="ms-2">Route</span>
@@ -587,9 +587,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0" id="tabKpi">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus14"
+              <div class="bg-transparent border-0 accordion-item" id="tabKpi">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus14"
                     data-id="14" type="button" id="v-kpi-tab" data-bs-toggle="pill" data-bs-target="#v-kpi"
                     aria-controls="v-kpi" aria-expanded="false">
                     <span class="ms-2">KPI</span>
@@ -597,9 +597,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus3"
+              <div class="bg-transparent border-0 accordion-item">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus3"
                     data-id="3" type="button" id="V-monitoring-tab" data-bs-toggle="pill" data-bs-target="#v-monitoring"
                     aria-controls="v-monitoring" aria-expanded="false">
                     <span class="ms-2">Monitoring</span>
@@ -607,9 +607,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0" id="facepalte">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus9"
+              <div class="bg-transparent border-0 accordion-item" id="facepalte">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus9"
                     data-id="9" type="button" id="v-facePlate-tab" data-bs-toggle="pill" data-bs-target="#v-facePlate"
                     aria-controls="v-facePlate" aria-expanded="false">
                     <span class="ms-2">Face Plate</span>
@@ -617,9 +617,9 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus4"
+              <div class="bg-transparent border-0 accordion-item">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus4"
                     data-id="4" type="button" id="v-log-tab" role="tab" data-bs-toggle="pill" data-bs-target="#v-log"
                     aria-controls="v-log" aria-selected="false">
                     <!-- <svg
@@ -639,15 +639,15 @@
                 </h2>
               </div>
 
-              <div class="accordion-item bg-transparent border-0">
-                <h2 class="accordion-header my-3">
-                  <button class="clickTab styleButton border-0 ActiveMenuClick ActiveMenuScroll collapsed menus8"
+              <!-- <div class="bg-transparent border-0 accordion-item">
+                <h2 class="my-3 accordion-header">
+                  <button class="border-0 clickTab styleButton ActiveMenuClick ActiveMenuScroll collapsed menus8"
                     data-id="8" type="button" id="v-setting-tab" role="tab" data-bs-toggle="pill"
                     data-bs-target="#v-setting" aria-controls="v-setting" aria-selected="false">
                     <span class="ms-2">Settings</span>
                   </button>
                 </h2>
-              </div>
+              </div> -->
 
               <div class="align-items-center">
                 <div class="logOut w-100">
@@ -677,18 +677,18 @@
             <div class="row">
               <div class="col-12">
                 <h1 class="mb-4">BBU Management</h1>
-                <div class="card shadow-sm rounded-4 h-50 p-0 pb-4 mb-4">
-                  <div class="card-body cardBodyMain p-4">
-                    <h4 class="card-title mb-4">
+                <div class="p-0 pb-4 mb-4 shadow-sm card rounded-4 h-50">
+                  <div class="p-4 card-body cardBodyMain">
+                    <h4 class="mb-4 card-title">
                       Config and view settings of 4G/5G core and RAN
                     </h4>
                     <div class="row g-4">
                       <div class="col-md-6">
-                        <div class="card h-100 rounded-4 p-2" style="
+                        <div class="p-2 card h-100 rounded-4" style="
                               border-left: 4px solid #158af2;
                               box-shadow: -4px 0 8px -2px rgba(21, 138, 242, 0.3);
                             ">
-                          <div class="card-body p-4 d-flex flex-column">
+                          <div class="p-4 card-body d-flex flex-column">
                             <h5 class="card-title">
                               <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
                                 class="bi bi-broadcast text-primary" viewBox="0 0 16 16">
@@ -724,11 +724,11 @@
                         </div>
                       </div>
                       <div class="col-md-6">
-                        <div class="card h-100 rounded-4 p-2" style="
+                        <div class="p-2 card h-100 rounded-4" style="
                               border-left: 4px solid #158af2;
                               box-shadow: -4px 0 8px -2px rgba(21, 138, 242, 0.3);
                             ">
-                          <div class="card-body p-4 d-flex flex-column">
+                          <div class="p-4 card-body d-flex flex-column">
                             <h5 class="card-title">
                               <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
                                 class="bi bi-phone text-primary" viewBox="0 0 16 16">
@@ -767,16 +767,16 @@
                     </div>
                   </div>
                 </div>
-                <div class="card shadow-sm rounded-4 p-0">
-                  <div class="card-body p-4 cardBodyMain">
+                <div class="p-0 shadow-sm card rounded-4">
+                  <div class="p-4 card-body cardBodyMain">
                     <div class="row g-4">
                       <div class="col-md-6">
-                        <div class="card h-100 rounded-4 p-2" style="
+                        <div class="p-2 card h-100 rounded-4" style="
                               border-left: 4px solid #158af2;
                               box-shadow: -4px 0 8px -2px rgba(21, 138, 242, 0.3);
                             ">
-                          <div class="card-body p-4 d-flex flex-column">
-                            <h5 class="card-title pb-4">RRU Configuration</h5>
+                          <div class="p-4 card-body d-flex flex-column">
+                            <h5 class="pb-4 card-title">RRU Configuration</h5>
 
                             <div class="mt-auto">
                               <div class="d-flex justify-content-between align-items-center">
@@ -801,15 +801,15 @@
                         </div>
                       </div>
                       <div class="col-md-6">
-                        <div class="card h-100 rounded-4 p-2" style="
+                        <div class="p-2 card h-100 rounded-4" style="
                               border-left: 4px solid #158af2;
                               box-shadow: -4px 0 8px -2px rgba(21, 138, 242, 0.3);
                             ">
-                          <div class="card-body p-4 d-flex flex-column">
-                            <h5 class="card-title pb-4">Faceplate</h5>
+                          <div class="p-4 card-body d-flex flex-column">
+                            <h5 class="pb-4 card-title">Faceplate</h5>
                             <div class="mt-auto">
                               <div class="d-flex justify-content-center align-items-center">
-                                <a class="btn btn-danger px-5 rounded-3">
+                                <a class="px-5 btn btn-danger rounded-3">
                                   View
                                 </a>
                               </div>
@@ -827,12 +827,12 @@
             <div class="row">
               <div class="col-12">
                 <h1 class="mb-4">LTE Configuration</h1>
-                <div class="card shadow-sm rounded-4 p-0">
-                  <div class="card-body p-4">
+                <div class="p-0 shadow-sm card rounded-4">
+                  <div class="p-4 card-body">
                     <div class="row g-4">
                       <div class="col-12">
                         <div class="list-group">
-                          <a class="list-group-item list-group-item-action d-flex align-items-center p-3 cursorPointer"
+                          <a class="p-3 list-group-item list-group-item-action d-flex align-items-center cursorPointer"
                             id="enbModule">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor"
                               class="bi bi-file-text text-primary me-2" viewBox="0 0 16 16">
@@ -843,7 +843,7 @@
                             </svg>
                             <span class="fs-5">enb.conf</span>
                           </a>
-                          <a class="list-group-item list-group-item-action d-flex align-items-center p-3 cursorPointer"
+                          <a class="p-3 list-group-item list-group-item-action d-flex align-items-center cursorPointer"
                             id="rrModule">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor"
                               class="bi bi-file-text text-primary me-2" viewBox="0 0 16 16">
@@ -854,7 +854,7 @@
                             </svg>
                             <span class="fs-5">rr.conf</span>
                           </a>
-                          <a class="list-group-item list-group-item-action d-flex align-items-center p-3 cursorPointer"
+                          <a class="p-3 list-group-item list-group-item-action d-flex align-items-center cursorPointer"
                             id="sibModule">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor"
                               class="bi bi-file-text text-primary me-2" viewBox="0 0 16 16">
@@ -877,12 +877,12 @@
             <div class="row">
               <div class="col-12">
                 <h1 class="mb-4">GSM Configuration</h1>
-                <div class="card shadow-sm rounded-4 p-0">
-                  <div class="card-body p-4">
+                <div class="p-0 shadow-sm card rounded-4">
+                  <div class="p-4 card-body">
                     <div class="row g-4">
                       <div class="col-12">
                         <div class="list-group">
-                          <a class="list-group-item list-group-item-action d-flex align-items-center p-3 cursorPointer"
+                          <a class="p-3 list-group-item list-group-item-action d-flex align-items-center cursorPointer"
                             id="bscModule">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor"
                               class="bi bi-file-text text-primary me-2" viewBox="0 0 16 16">
@@ -906,13 +906,13 @@
               <div class="col-12">
                 <h1 class="mb-4">enb Configuration</h1>
 
-                <div class="alert alert-warning mb-4" role="alert">
+                <div class="mb-4 alert alert-warning" role="alert">
                   <i class="bi bi-exclamation-triangle me-2"></i>
                   Configuration file does not exist
                 </div>
 
-                <div class="card shadow-sm rounded-4 p-0 mb-5">
-                  <div class="card-body p-4">
+                <div class="p-0 mb-5 shadow-sm card rounded-4">
+                  <div class="p-4 card-body">
                     <!-- enb_id Configuration -->
                     <div class="mb-4">
                       <label for="enbId" class="form-label">enb_id</label>
@@ -991,19 +991,19 @@
                     <div class="mb-4">
                       <label for="mmeAddr" class="form-label">mme_addr</label>
                       <div class="d-flex align-items-center">
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="127" id="mmeAddr1" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="0" id="mmeAddr2" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="1" id="mmeAddr3" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="100" id="mmeAddr4" />
                       </div>
@@ -1016,19 +1016,19 @@
                     <div class="mb-4">
                       <label for="gtpBindAddr" class="form-label">gtp_bind_addr</label>
                       <div class="d-flex align-items-center">
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="127" id="gtpBindAddr1" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="0" id="gtpBindAddr2" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="1" id="gtpBindAddr3" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="1" id="gtpBindAddr4" />
                       </div>
@@ -1041,19 +1041,19 @@
                     <div class="mb-4">
                       <label for="s1cBindAddr" class="form-label">s1c_bind_addr</label>
                       <div class="d-flex align-items-center">
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="127" id="s1cBindAddr1" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="0" id="s1cBindAddr2" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="1" id="s1cBindAddr3" />
                         <span class="mx-1">.</span>
-                        <input type="text" class="form-control text-center" style="width: 70px" maxlength="3"
+                        <input type="text" class="text-center form-control" style="width: 70px" maxlength="3"
                           pattern="\d{1,3}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                           value="1" id="s1cBindAddr4" />
                       </div>
@@ -1081,7 +1081,7 @@
                     <div id="mimoSettings" class="mb-4" style="display: none">
                       <div class="card bg-light">
                         <div class="card-body">
-                          <h6 class="card-title mb-3">MIMO Settings</h6>
+                          <h6 class="mb-3 card-title">MIMO Settings</h6>
                           <div class="mb-3">
                             <label for="tm" class="form-label">tm</label>
                             <select class="form-select" id="tm">
@@ -1112,7 +1112,7 @@
                     </div>
 
                     <!-- Save Changes Button -->
-                    <div class="d-flex justify-content-end mt-4">
+                    <div class="mt-4 d-flex justify-content-end">
                       <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#saveModal">
                         <i class="bi bi-save"></i> Save Changes
                       </button>
@@ -1127,13 +1127,13 @@
               <div class="col-12">
                 <h1 class="mb-4">rr Configuration</h1>
 
-                <div class="alert alert-warning mb-4" role="alert">
+                <div class="mb-4 alert alert-warning" role="alert">
                   <i class="bi bi-exclamation-triangle me-2"></i>
                   Configuration file does not exist
                 </div>
 
-                <div class="card shadow-sm rounded-4 p-0 mb-5">
-                  <div class="card-body p-4">
+                <div class="p-0 mb-5 shadow-sm card rounded-4">
+                  <div class="p-4 card-body">
                     <!-- Number of Cells Selection -->
                     <div class="mb-4">
                       <label for="numCells" class="form-label">Number of Cells</label>
@@ -1154,9 +1154,9 @@
                     <!-- Cell Configurations -->
                     <div class="mb-4">
                       <!-- Cell 0 -->
-                      <div class="card bg-light mb-4" data-cell="0" style="display: block">
+                      <div class="mb-4 card bg-light" data-cell="0" style="display: block">
                         <div class="card-body">
-                          <h6 class="card-title mb-3">Cell 1</h6>
+                          <h6 class="mb-3 card-title">Cell 1</h6>
                           <div class="mb-3">
                             <label for="cellId0" class="form-label">cell_id</label>
                             <div class="input-group">
@@ -1225,17 +1225,17 @@
                           </div>
 
                           <!-- Handover Settings Card -->
-                          <div id="hoSettings0" class="card mt-3" style="display: block">
+                          <div id="hoSettings0" class="mt-3 card" style="display: block">
                             <div class="card-body">
-                              <h6 class="card-title mb-3">
+                              <h6 class="mb-3 card-title">
                                 Handover Settings
                               </h6>
                               <div class="mb-3">
                                 <label class="form-label">meas_cell_list</label>
                                 <!-- First meas cell -->
-                                <div class="card bg-light mb-3">
+                                <div class="mb-3 card bg-light">
                                   <div class="card-body">
-                                    <h6 class="card-subtitle mb-3">
+                                    <h6 class="mb-3 card-subtitle">
                                       Measurement Cell 1
                                     </h6>
                                     <div class="mb-3">
@@ -1272,7 +1272,7 @@
                                 <!-- Second meas cell -->
                                 <div class="card bg-light">
                                   <div class="card-body">
-                                    <h6 class="card-subtitle mb-3">
+                                    <h6 class="mb-3 card-subtitle">
                                       Measurement Cell 2
                                     </h6>
                                     <div class="mb-3">
@@ -1313,9 +1313,9 @@
                       </div>
 
                       <!-- Cell 1 -->
-                      <div class="card bg-light mb-4" data-cell="1" style="display: none">
+                      <div class="mb-4 card bg-light" data-cell="1" style="display: none">
                         <div class="card-body">
-                          <h6 class="card-title mb-3">Cell 2</h6>
+                          <h6 class="mb-3 card-title">Cell 2</h6>
                           <div class="mb-3">
                             <label for="cellId1" class="form-label">cell_id</label>
                             <div class="input-group">
@@ -1384,17 +1384,17 @@
                           </div>
 
                           <!-- Handover Settings Card -->
-                          <div id="hoSettings1" class="card mt-3" style="display: block">
+                          <div id="hoSettings1" class="mt-3 card" style="display: block">
                             <div class="card-body">
-                              <h6 class="card-title mb-3">
+                              <h6 class="mb-3 card-title">
                                 Handover Settings
                               </h6>
                               <div class="mb-3">
                                 <label class="form-label">meas_cell_list</label>
                                 <!-- First meas cell -->
-                                <div class="card bg-light mb-3">
+                                <div class="mb-3 card bg-light">
                                   <div class="card-body">
-                                    <h6 class="card-subtitle mb-3">
+                                    <h6 class="mb-3 card-subtitle">
                                       Measurement Cell 1
                                     </h6>
                                     <div class="mb-3">
@@ -1431,7 +1431,7 @@
                                 <!-- Second meas cell -->
                                 <div class="card bg-light">
                                   <div class="card-body">
-                                    <h6 class="card-subtitle mb-3">
+                                    <h6 class="mb-3 card-subtitle">
                                       Measurement Cell 2
                                     </h6>
                                     <div class="mb-3">
@@ -1472,9 +1472,9 @@
                       </div>
 
                       <!-- Cell 2 -->
-                      <div class="card bg-light mb-4" data-cell="2" style="display: none">
+                      <div class="mb-4 card bg-light" data-cell="2" style="display: none">
                         <div class="card-body">
-                          <h6 class="card-title mb-3">Cell 3</h6>
+                          <h6 class="mb-3 card-title">Cell 3</h6>
                           <div class="mb-3">
                             <label for="cellId2" class="form-label">cell_id</label>
                             <div class="input-group">
@@ -1543,17 +1543,17 @@
                           </div>
 
                           <!-- Handover Settings Card -->
-                          <div id="hoSettings2" class="card mt-3" style="display: block">
+                          <div id="hoSettings2" class="mt-3 card" style="display: block">
                             <div class="card-body">
-                              <h6 class="card-title mb-3">
+                              <h6 class="mb-3 card-title">
                                 Handover Settings
                               </h6>
                               <div class="mb-3">
                                 <label class="form-label">meas_cell_list</label>
                                 <!-- First meas cell -->
-                                <div class="card bg-light mb-3">
+                                <div class="mb-3 card bg-light">
                                   <div class="card-body">
-                                    <h6 class="card-subtitle mb-3">
+                                    <h6 class="mb-3 card-subtitle">
                                       Measurement Cell 1
                                     </h6>
                                     <div class="mb-3">
@@ -1590,7 +1590,7 @@
                                 <!-- Second meas cell -->
                                 <div class="card bg-light">
                                   <div class="card-body">
-                                    <h6 class="card-subtitle mb-3">
+                                    <h6 class="mb-3 card-subtitle">
                                       Measurement Cell 2
                                     </h6>
                                     <div class="mb-3">
@@ -1636,7 +1636,7 @@
                     <!-- Additional configuration options will go here -->
 
                     <!-- Save Changes Button -->
-                    <div class="d-flex justify-content-end mt-4">
+                    <div class="mt-4 d-flex justify-content-end">
                       <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#saveModal">
                         <i class="bi bi-save"></i> Save Changes
                       </button>
@@ -1651,13 +1651,13 @@
               <div class="col-12">
                 <h1 class="mb-4">sib Configuration</h1>
 
-                <div class="alert alert-warning mb-4" role="alert">
+                <div class="mb-4 alert alert-warning" role="alert">
                   <i class="bi bi-exclamation-triangle me-2"></i>
                   Configuration file does not exist
                 </div>
 
-                <div class="card shadow-sm rounded-4 p-0 mb-5">
-                  <div class="card-body p-4">
+                <div class="p-0 mb-5 shadow-sm card rounded-4">
+                  <div class="p-4 card-body">
                     <div class="mb-4">
                       <label for="prachFreqOffset" class="form-label">prach_freq_offset</label>
                       <input type="number" class="form-control" id="prachFreqOffset" placeholder="4" min="0"
@@ -1669,7 +1669,7 @@
                     </div>
 
                     <!-- Save Changes Button -->
-                    <div class="d-flex justify-content-end mt-4">
+                    <div class="mt-4 d-flex justify-content-end">
                       <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#saveModal">
                         <i class="bi bi-save"></i> Save Changes
                       </button>
@@ -1684,13 +1684,13 @@
               <div class="col-12">
                 <h1 class="mb-4">bsc Configuration</h1>
 
-                <div class="alert alert-warning mb-4" role="alert">
+                <div class="mb-4 alert alert-warning" role="alert">
                   <i class="bi bi-exclamation-triangle me-2"></i>
                   Configuration file does not exist
                 </div>
 
-                <div class="card shadow-sm rounded-4 p-0 mb-5">
-                  <div class="card-body p-4">
+                <div class="p-0 mb-5 shadow-sm card rounded-4">
+                  <div class="p-4 card-body">
                     <!-- Number of BTS Selection -->
                     <div class="mb-4">
                       <label for="numBts" class="form-label">Number of BTS Units</label>
@@ -1743,9 +1743,9 @@
                     <!-- BTS Configurations -->
                     <div class="mb-4">
                       <!-- BTS 0 -->
-                      <div class="card bg-light mb-4" data-bts="0" style="display: block">
+                      <div class="mb-4 card bg-light" data-bts="0" style="display: block">
                         <div class="card-body">
-                          <h6 class="card-title mb-3">bts 0</h6>
+                          <h6 class="mb-3 card-title">bts 0</h6>
                           <div class="mb-3">
                             <label for="band0" class="form-label">band</label>
                             <select class="form-select" id="band0">
@@ -1826,9 +1826,9 @@
                       </div>
 
                       <!-- BTS 1 -->
-                      <div class="card bg-light mb-4" data-bts="1" style="display: block">
+                      <div class="mb-4 card bg-light" data-bts="1" style="display: block">
                         <div class="card-body">
-                          <h6 class="card-title mb-3">bts 1</h6>
+                          <h6 class="mb-3 card-title">bts 1</h6>
                           <div class="mb-3">
                             <label for="band1" class="form-label">band</label>
                             <select class="form-select" id="band1">
@@ -1909,9 +1909,9 @@
                       </div>
 
                       <!-- BTS 2 -->
-                      <div class="card bg-light mb-4" data-bts="2" style="display: block">
+                      <div class="mb-4 card bg-light" data-bts="2" style="display: block">
                         <div class="card-body">
-                          <h6 class="card-title mb-3">bts 2</h6>
+                          <h6 class="mb-3 card-title">bts 2</h6>
                           <div class="mb-3">
                             <label for="band2" class="form-label">band</label>
                             <select class="form-select" id="band2">
@@ -1993,7 +1993,7 @@
                     </div>
 
                     <!-- Save Changes Button -->
-                    <div class="d-flex justify-content-end mt-4">
+                    <div class="mt-4 d-flex justify-content-end">
                       <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#saveModal">
                         <i class="bi bi-save"></i> Save Changes
                       </button>
@@ -2027,13 +2027,13 @@
           </div>
           <main class="col-md-12 dashboard-content">
             <!-- <div
-                class="d-flex justify-content-between align-items-center mb-4 flex-wrap"
+                class="flex-wrap mb-4 d-flex justify-content-between align-items-center"
               ></div> -->
             <div>
               <h2 class="mb-3 textDashbord">Dashboard</h2>
             </div>
 
-            <div class="card-main mb-4">
+            <div class="mb-4 card-main">
               <h3 class="textSettingBox">Settings Management</h3>
               <p class="textTitleBox">
                 Configuration and View of 4G/5G Core and RAN Settings
@@ -2090,7 +2090,7 @@
                           <input minlength="1" class="form-control" id="editPathRunConfigServer" type="text"
                             name="nameEditPathRunConfigServer" aria-label="default input example" required />
                         </div>
-                        <div class="d-flex flex-row-reverse">
+                        <div class="flex-row-reverse d-flex">
                           <button type="button" id="subServer"
                             class="btn btn-success d-inline-flex align-items-center replace-server">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -2147,7 +2147,7 @@
                           <input minlength="1" class="form-control" id="addPathRunConfigServer" type="text"
                             name="nameAddPathRunConfigServer" aria-label="default input example" required />
                         </div>
-                        <div class="d-flex flex-row-reverse">
+                        <div class="flex-row-reverse d-flex">
                           <button type="button" id="subAddServer"
                             class="btn btn-success d-inline-flex align-items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
@@ -2185,13 +2185,13 @@
                   </h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-2">
+                <div class="p-2 modal-body">
                   Are you sure you want to turn off the server
                   <span id="spanPauseServer" class="text-danger"></span>
                   ?
                 </div>
                 <div class="modal-footer">
-                  <form class="w-100 was-validated d-flex flex-row-reverse">
+                  <form class="flex-row-reverse w-100 was-validated d-flex">
                     <button type="button" id="pauseClick" class="btn btn-primary" data-bs-dismiss="modal">
                       I am sure
                     </button>
@@ -2214,13 +2214,13 @@
                   </h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-2">
+                <div class="p-2 modal-body">
                   Are you sure you want to turn on the server
                   <span id="spanPlayServer" class="text-danger"></span>
                   ?
                 </div>
                 <div class="modal-footer">
-                  <form class="w-100 was-validated d-flex flex-row-reverse">
+                  <form class="flex-row-reverse w-100 was-validated d-flex">
                     <button type="button" id="playClick" class="btn btn-primary" data-bs-dismiss="modal">
                       I am sure
                     </button>
@@ -2264,7 +2264,7 @@
                         <label class="form-check-label" for="showPasswordDeletServer">Show Password</label>
                         <input type="checkbox" class="form-check-input" id="showPasswordDeletServer" required />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="subDeletServer" type="button" class="btn btn-danger">
                           Delete Server
                           <span id="spanTrashServer" class="fs-6"></span>
@@ -2316,7 +2316,7 @@
                         <label class="form-check-label" for="showPasswordServer">Show Password</label>
                         <input type="checkbox" class="form-check-input" id="showPasswordServer" required />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="savePasswordServer" type="button" class="btn btn-success">
                           Save
                         </button>
@@ -2422,7 +2422,7 @@
                           />
                         </div>
 
-                        <div class="d-flex flex-row-reverse">
+                        <div class="flex-row-reverse d-flex">
                           <button
                             class="btn btn-primary"
                             type="button"
@@ -2448,12 +2448,12 @@
         </div>
         <div class="tab-pane fade" id="v-access-levels" role="tabpanel" aria-labelledby="v-access-levels-tab"
           tabindex="0">
-          <table class="table table-striped mt-3">
+          <table class="table mt-3 table-striped">
             <tbody>
               <tr>
                 <th scope="col" class="thTableAccessLevel">
                   <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
-                    class="bi bi-person-add m-2" viewBox="0 0 16 16">
+                    class="m-2 bi bi-person-add" viewBox="0 0 16 16">
                     <path
                       d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
                     <path
@@ -2467,7 +2467,7 @@
                       d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
                   </svg>
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                    class="bi bi-eye-fill m-2" viewBox="0 0 16 16">
+                    class="m-2 bi bi-eye-fill" viewBox="0 0 16 16">
                     <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
                     <path
                       d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
@@ -2483,7 +2483,7 @@
               <tr>
                 <th scope="col" class="thTableAccessLevel">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                    class="bi bi-pencil-square m-2" viewBox="0 0 16 16">
+                    class="m-2 bi bi-pencil-square" viewBox="0 0 16 16">
                     <path
                       d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
                     <path fill-rule="evenodd"
@@ -2506,7 +2506,7 @@
               <tr>
                 <th scope="col" class="thTableAccessLevel">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                    class="bi bi-eye-fill m-2" viewBox="0 0 16 16">
+                    class="m-2 bi bi-eye-fill" viewBox="0 0 16 16">
                     <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
                     <path
                       d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
@@ -2596,7 +2596,7 @@
                         <label class="form-check-label" for="showPasswordAddUser">Show Password</label>
                         <input type="checkbox" class="form-check-input" id="showPasswordAddUser" required />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="addTableUsers" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
@@ -2720,7 +2720,7 @@
                         <label class="form-check-label" for="showPasswordEditUser">Show Password</label>
                         <input type="checkbox" class="form-check-input" id="showPasswordEditUser" />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="addEditUser" type="button" class="btn btn-success d-inline-flex align-items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             class="bi bi-pencil-fill me-2" viewBox="0 0 16 16">
@@ -2760,7 +2760,7 @@
               </div>
             </div>
             <div class=" col-1 userQuestionBox d-flex justify-content-center align-items-center">
-              <div class="userQuestionInit  ">
+              <div class="userQuestionInit ">
                 <div class="userQuestionModal">
                   <ul>
                     <li class="UsersLevels" data-role="admin">admin</li>
@@ -2780,7 +2780,7 @@
           </div>
           <div class="divTableResponsive divTableResUser">
             <div id="tableResponsiveUser" class="table-responsive table-responsiveUser">
-              <table class="table table-bordered table-striped text-center mt-3" id="usersTable">
+              <table class="table mt-3 text-center table-bordered table-striped" id="usersTable">
                 <thead>
                   <tr>
                     <th scope="col">Row</th>
@@ -2798,7 +2798,7 @@
             </div>
           </div>
           <nav>
-            <ul class="pagination paginationUser justify-content-center mt-3" id="paginationUser"></ul>
+            <ul class="mt-3 pagination paginationUser justify-content-center" id="paginationUser"></ul>
           </nav>
           <!-- Modal -->
           <div class="modal fade" id="removeUserModal" tabindex="-1" aria-labelledby="exampleModalLabel"
@@ -2809,13 +2809,13 @@
                   <h5 class="modal-title">Remove the User</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-2">
+                <div class="p-2 modal-body">
                   Are you sure you want to delete the user
                   <span id="spanRemoveUser" class="text-danger"></span>
                   ?
                 </div>
                 <div class="modal-footer">
-                  <form class="w-100 was-validated d-flex flex-row-reverse">
+                  <form class="flex-row-reverse w-100 was-validated d-flex">
                     <button type="button" id="removeUserModalClick" class="btn btn-danger" data-bs-dismiss="modal">
                       Delete User
                     </button>
@@ -2853,10 +2853,10 @@
                 <div id="step-1" class="content" role="tabpanel" aria-labelledby="steppertrigger1"></div>
                 <div id="step-2" class="content" role="tabpanel" aria-labelledby="steppertrigger2">
                   <iframe id="traceFrame" width="100%" height="550px"></iframe>
-                  <button class="btn btn-success mt-3" type="button" id="endStep">
+                  <button class="mt-3 btn btn-success" type="button" id="endStep">
                     Back to Select Server and Module
                   </button>
-                  <!-- <ul class="nav nav-tabs mt-2">
+                  <!-- <ul class="mt-2 nav nav-tabs">
                       <li class="nav-item">
                         <button
                           class="nav-link active"
@@ -2881,7 +2881,7 @@
                       </li>
                     </ul> -->
 
-                  <!-- <div class="tab-content mt-3">
+                  <!-- <div class="mt-3 tab-content">
                       <div
                         class="tab-pane fade show active"
                         id="tabMain"
@@ -2897,7 +2897,7 @@
                           height="550px"
                         ></iframe>
                         <button
-                          class="btn btn-success mt-3"
+                          class="mt-3 btn btn-success"
                           type="button"
                           id="endStep2"
                         >
@@ -2917,7 +2917,7 @@
               <h2 class="textHeaderPing ms-3">Ping</h2>
             </div>
             <hr class="w-75" />
-            <div class="d-flex flex-column w-50 divPing ms-3 mt-4">
+            <div class="mt-4 d-flex flex-column w-50 divPing ms-3">
               <div class="d-flex justify-content-between align-items-center">
                 <h6 class="replace-server">Server:</h6>
                 <select class="my-2 inputPing form-select w-75" id="serverIdPing"></select>
@@ -2956,8 +2956,8 @@
                     name="inputPassPing"
                   />
                 </div> -->
-              <div class="d-flex justify-content-end mt-4">
-                <button id="submitPing" class="my-2 bg-primary rounded-2 py-2 px-3 btnPing">
+              <div class="mt-4 d-flex justify-content-end">
+                <button id="submitPing" class="px-3 py-2 my-2 bg-primary rounded-2 btnPing">
                   <div class="loaderPing me-2" id="loaderPing"></div>
                   Show Interface
                 </button>
@@ -2987,7 +2987,7 @@
             </div>
             <div class="w-100 d-flex justify-content-center align-items-center">
               <div id="idFormGetRoute"
-                class="d-none flex-column justify-content-center align-items-center formGetRoute w-25 mt-5 p-4">
+                class="p-4 mt-5 d-none flex-column justify-content-center align-items-center formGetRoute w-25">
                 <div class="mb-3 w-100">
                   <label class="replace-server">Server:</label>
                   <select class="my-2 form-select w-100" id="serverIdRouteShowToBox"></select>
@@ -3042,7 +3042,7 @@
               </div>
             </div>
             <div id="idGetRoute"
-              class="d-flex justify-content-between align-items-center col-xl-6 col-md-8 col-sm-10 col-12 mt-3">
+              class="mt-3 d-flex justify-content-between align-items-center col-xl-6 col-md-8 col-sm-10 col-12">
               <div class="col-8 col-lg-7 col-xl-6 d-flex justify-content-between align-items-center">
                 <h6 class="replace-server">Server:</h6>
                 <select class="my-2 form-select w-75" id="serverIdRouteShow"></select>
@@ -3054,7 +3054,7 @@
               </div>
             </div>
           </div>
-          <table class="table table-bordered table-striped table-hover align-middle text-center mt-3">
+          <table class="table mt-3 text-center align-middle table-bordered table-striped table-hover">
             <thead id="tHeadRoute">
               <tr>
                 <th>Route</th>
@@ -3128,20 +3128,20 @@
                       <div class="mb-3">
                         <label class="form-label">Destination Address</label>
                         <div>
-                          <div class="mb-3 mt-2 ms-4">
-                            <label for="destinationIpRoute" class="form-label opacity-75">Destination IP
+                          <div class="mt-2 mb-3 ms-4">
+                            <label for="destinationIpRoute" class="opacity-75 form-label">Destination IP
                               Address</label>
                             <input class="form-control" id="destinationIpRoute" placeholder="127.0.0.1" type="text"
                               name="name_destinationIpRoute" aria-label="default input example" />
                           </div>
                           <div class="mb-3 ms-4">
-                            <label for="interfaceRoute" class="form-label opacity-75">Interface (optional)</label>
+                            <label for="interfaceRoute" class="opacity-75 form-label">Interface (optional)</label>
                             <input class="form-control" id="interfaceRoute" type="text" name="name_interfaceRoute"
                               aria-label="default input example" />
                           </div>
                         </div>
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="buttonSendRoute" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           Add
@@ -3229,21 +3229,21 @@
                       <div class="mb-3">
                         <label class="form-label">Destination Address</label>
                         <div>
-                          <div class="mb-3 mt-2 ms-4">
-                            <label for="destinationIpRouteRemove" class="form-label opacity-75">Destination IP
+                          <div class="mt-2 mb-3 ms-4">
+                            <label for="destinationIpRouteRemove" class="opacity-75 form-label">Destination IP
                               Address</label>
                             <input class="form-control" id="destinationIpRouteRemove" placeholder="127.0.0.1"
                               type="text" name="name_destinationIpRouteRemove" aria-label="default input example" />
                           </div>
-                          <div class="mb-3 mt-2 ms-4">
-                            <label for="interfaceRouteRemove" class="form-label opacity-75">Interface
+                          <div class="mt-2 mb-3 ms-4">
+                            <label for="interfaceRouteRemove" class="opacity-75 form-label">Interface
                               (optional)</label>
                             <input class="form-control" id="interfaceRouteRemove" type="text"
                               name="name_interfaceRouteRemove" aria-label="default input example" />
                           </div>
                         </div>
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="buttonRemoveRoute" type="button"
                           class="btn btn-danger d-inline-flex align-items-center">
                           Delete
@@ -3276,7 +3276,7 @@
                     <form class="w-100">
                       <div class="mb-3">
                         <label for="kpiAddFile" class="form-label replace-server">KPI File</label>
-                        <div class="input-group mb-3">
+                        <div class="mb-3 input-group">
                           <input type="file" class="form-control" id="kpiAddFile" />
                         </div>
                       </div>
@@ -3285,7 +3285,7 @@
                         <input class="form-control" id="kpiPath" type="text" placeholder="/var/folder/"
                           name="name_kpiPath" aria-label="default input example" />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="buttonInitKpi" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           Set
@@ -3302,12 +3302,12 @@
               </div>
             </div>
           </div>
-          <button type="button" class="btn btn-primary me-2 mt-2" id="initKpi" data-bs-toggle="modal"
+          <button type="button" class="mt-2 btn btn-primary me-2" id="initKpi" data-bs-toggle="modal"
             data-bs-target="#modalKpi">
             Set New KPI
           </button>
 
-          <table class="table table-bordered table-striped text-center mt-3" id="kpiTable">
+          <table class="table mt-3 text-center table-bordered table-striped" id="kpiTable">
             <thead>
               <tr>
                 <th scope="col" class="fs-5">
@@ -3348,7 +3348,7 @@
                           aria-label="default input example" />
                       </div>
 
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="buttonAddMonitoring" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           Add Monitoring
@@ -3385,7 +3385,7 @@
                         <input class="form-control" id="moduleEditAddress" type="text" name="nameModuleEditAddress"
                           aria-label="default input example" />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="buttonEditMonitoring" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           Edit Monitoring
@@ -3411,13 +3411,13 @@
                   </h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-2">
+                <div class="p-2 modal-body">
                   Are you sure you want to delete the tab
                   <span id="spanDeleteMonitoring" class="text-danger"></span>
                   ?
                 </div>
                 <div class="modal-footer">
-                  <form class="w-100 was-validated d-flex flex-row-reverse">
+                  <form class="flex-row-reverse w-100 was-validated d-flex">
                     <button type="button" id="deleteTabMonitoring" class="btn btn-primary" data-bs-dismiss="modal">
                       I am sure
                     </button>
@@ -3432,7 +3432,7 @@
           <button id="EditMonitoring" class="d-none" data-bs-toggle="modal" data-bs-target="#editMonitoring"></button>
           <button id="DeleteMonitoring" class="d-none" data-bs-toggle="modal"
             data-bs-target="#deleteMonitoring"></button>
-          <ul class="nav nav-tabs mt-2" id="monitoringTabs">
+          <ul class="mt-2 nav nav-tabs" id="monitoringTabs">
             <li class="nav-item">
               <button class="nav-link" id="addTabBtn" data-bs-toggle="modal" data-bs-target="#addMonitoring">
                 +
@@ -3440,26 +3440,26 @@
             </li>
           </ul>
 
-          <div class="tab-content mt-3" id="monitoringTabContent"></div>
+          <div class="mt-3 tab-content" id="monitoringTabContent"></div>
         </div>
 
         <div class="tab-pane fade" id="v-facePlate" role="tabpanel" aria-labelledby="v-facePlate-tab" tabindex="0">
           <div class="d-flex justify-content-between">
             <div class="w-50 divFacePlate" dir="rtl">
               <div class="d-flex justify-content-end w-100">
-                <div class="facePlateDivsSide position-relative mt-4">
+                <div class="mt-4 facePlateDivsSide position-relative">
                   <img src="../assets/img/satellite.png" class="iconSatellite3" />
                   <img src="../assets/img/satellite2.png" class="iconSatellite4" />
-                  <div class="itemsGreenSide d-flex flex-column justify-content-center align-items-center m-2 p-2">
+                  <div class="p-2 m-2 itemsGreenSide d-flex flex-column justify-content-center align-items-center">
                     <p class="pFan">ODU</p>
                     <div id="glowing-circle-green"></div>
                   </div>
-                  <div class="itemsWhiteSide d-flex flex-column justify-content-center align-items-center m-2 p-2">
+                  <div class="p-2 m-2 itemsWhiteSide d-flex flex-column justify-content-center align-items-center">
                     <p class="pFan">ODU</p>
                     <div id="glowing-circle-white"></div>
                   </div>
                 </div>
-                <div class="facePlateOne mt-4 position-relative">
+                <div class="mt-4 facePlateOne position-relative">
                   <div class="d-flex">
                     <div class="itemRed d-flex justify-content-between">
                       <p>SNMP</p>
@@ -3516,7 +3516,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="buttonDivFacePlate mt-3">
+                      <div class="mt-3 buttonDivFacePlate">
                         <div class="d-flex">
                           <div class="item d-flex justify-content-center align-items-center">
                             <p class="m-0 ms-3">LAN</p>
@@ -3543,19 +3543,19 @@
             </div>
             <div class="w-50 divFacePlate">
               <div class="d-flex justify-content-end w-100">
-                <div class="facePlateDivsSide position-relative mt-4">
+                <div class="mt-4 facePlateDivsSide position-relative">
                   <img src="../assets/img/satellite.png" class="iconSatellite" />
                   <img src="../assets/img/satellite2.png" class="iconSatellite2" />
-                  <div class="itemsGreenSide d-flex flex-column justify-content-center align-items-center m-2 p-2">
+                  <div class="p-2 m-2 itemsGreenSide d-flex flex-column justify-content-center align-items-center">
                     <p class="pFan">ODU</p>
                     <div id="glowing-circle-green"></div>
                   </div>
-                  <div class="itemsWhiteSide d-flex flex-column justify-content-center align-items-center m-2 p-2">
+                  <div class="p-2 m-2 itemsWhiteSide d-flex flex-column justify-content-center align-items-center">
                     <p class="pFan">ODU</p>
                     <div id="glowing-circle-white"></div>
                   </div>
                 </div>
-                <div class="facePlateOne mt-4 position-relative">
+                <div class="mt-4 facePlateOne position-relative">
                   <div class="d-flex">
                     <div class="itemRed d-flex justify-content-between">
                       <p>SNMP</p>
@@ -3612,7 +3612,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="buttonDivFacePlate mt-3">
+                      <div class="mt-3 buttonDivFacePlate">
                         <div class="d-flex">
                           <div class="item d-flex justify-content-center align-items-center">
                             <p class="m-0 me-3">LAN</p>
@@ -3639,9 +3639,9 @@
             </div>
           </div>
           <!-- <div class="d-flex justify-content-between">
-              <div class="facePlateOne mt-4 ms-3 py-3">
+              <div class="py-3 mt-4 facePlateOne ms-3">
                 <div
-                  class="w-100 p-3 d-flex justify-content-around divBoxServerFacePlate"
+                  class="p-3 w-100 d-flex justify-content-around divBoxServerFacePlate"
                 >
                   <div
                     class="position-relative d-flex justify-content-center align-items-center boxServerFacePlate"
@@ -3657,7 +3657,7 @@
                   </div>
                 </div>
                 <div
-                  class="w-100 p-3 d-flex justify-content-around divBoxServerFacePlate"
+                  class="p-3 w-100 d-flex justify-content-around divBoxServerFacePlate"
                 >
                   <div
                     class="position-relative d-flex justify-content-center align-items-center boxServerFacePlate"
@@ -3673,7 +3673,7 @@
                   </div>
                 </div>
                 <div
-                  class="w-100 p-3 d-flex justify-content-around divBoxMiniServerFacePlate"
+                  class="p-3 w-100 d-flex justify-content-around divBoxMiniServerFacePlate"
                 >
                   <div
                     class="position-relative d-flex justify-content-center align-items-center boxMiniServerFacePlate"
@@ -3702,7 +3702,7 @@
                   </div>
                 </div>
                 <div
-                  class="w-100 p-3 d-flex justify-content-around divBoxMiniServerFacePlate"
+                  class="p-3 w-100 d-flex justify-content-around divBoxMiniServerFacePlate"
                 >
                   <div
                     class="position-relative d-flex justify-content-center align-items-center boxMiniServerFacePlate"
@@ -3731,9 +3731,9 @@
                   </div>
                 </div>
               </div>
-              <div class="facePlateOne mt-4 me-3 py-3">
+              <div class="py-3 mt-4 facePlateOne me-3">
                 <div
-                  class="w-100 p-3 d-flex justify-content-around divBoxServerFacePlate"
+                  class="p-3 w-100 d-flex justify-content-around divBoxServerFacePlate"
                 >
                   <div
                     class="position-relative d-flex justify-content-center align-items-center boxServerFacePlate"
@@ -3749,7 +3749,7 @@
                   </div>
                 </div>
                 <div
-                  class="w-100 p-3 d-flex justify-content-around divBoxServerFacePlate"
+                  class="p-3 w-100 d-flex justify-content-around divBoxServerFacePlate"
                 >
                   <div
                     class="position-relative d-flex justify-content-center align-items-center boxServerFacePlate"
@@ -3765,7 +3765,7 @@
                   </div>
                 </div>
                 <div
-                  class="w-100 p-3 d-flex justify-content-around divBoxMiniServerFacePlate"
+                  class="p-3 w-100 d-flex justify-content-around divBoxMiniServerFacePlate"
                 >
                   <div
                     class="position-relative d-flex justify-content-center align-items-center boxMiniServerFacePlate"
@@ -3794,7 +3794,7 @@
                   </div>
                 </div>
                 <div
-                  class="w-100 p-3 d-flex justify-content-around divBoxMiniServerFacePlate"
+                  class="p-3 w-100 d-flex justify-content-around divBoxMiniServerFacePlate"
                 >
                   <div
                     class="position-relative d-flex justify-content-center align-items-center boxMiniServerFacePlate"
@@ -3841,7 +3841,7 @@
         </div>
 
         <div class="tab-pane fade" id="v-log" role="tabpanel" aria-labelledby="v-log-tab" tabindex="0">
-          <div class="d-flex justify-content-end align-items-center gap-2 mt-3 mb-2">
+          <div class="gap-2 mt-3 mb-2 d-flex justify-content-end align-items-center">
             <p class="FilterByText">Filter By:</p>
             <select name="FilterBy" class="form-select-sm" id="FilterBy">
               <option value="Date">DATE</option>
@@ -3852,7 +3852,7 @@
             <div class="d-flex FilterBox" id="FilterBox">
 
             </div>
-            <select id="logExportFormat" class="form-select form-select-sm w-auto">
+            <select id="logExportFormat" class="w-auto form-select form-select-sm">
               <option value="csv">CSV</option>
               <option value="json">JSON</option>
             </select>
@@ -3860,7 +3860,7 @@
           </div>
           <div class="divTableResponsive">
             <div id="tableResponsiveLog" class="table-responsive">
-              <table class="table table-bordered table-striped text-center mt-2" id="logTable">
+              <table class="table mt-2 text-center table-bordered table-striped" id="logTable">
                 <thead>
                   <tr>
                     <th scope="col">Row</th>
@@ -3900,7 +3900,7 @@
         </div>
 
         <div class="tab-pane fade" id="v-module" role="tabpanel" aria-labelledby="v-module-tab" tabindex="0">
-          <button type="button" id="addModal" class="btn btn-primary mt-3 d-flex align-items-center"
+          <button type="button" id="addModal" class="mt-3 btn btn-primary d-flex align-items-center"
             data-bs-toggle="modal" data-bs-target="#addModule">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
               class="bi bi-plus-circle-fill me-2" viewBox="0 0 16 16">
@@ -3911,7 +3911,7 @@
           </button>
           <div class="divTableResponsive">
             <div id="tableResponsive" class="table-responsive">
-              <table class="table table-bordered table-striped text-center mt-3" id="moduleTable">
+              <table class="table mt-3 text-center table-bordered table-striped" id="moduleTable">
                 <thead>
                   <tr>
                     <th scope="col" class="fs-5">
@@ -3945,7 +3945,7 @@
             </div>
           </div>
           <nav>
-            <div class="w-100 mt-5" id="divImgModule">
+            <div class="mt-5 w-100" id="divImgModule">
               <div class="d-flex justify-content-center w-100">
                 <img id="imageAddModule" width="300px" height="300px" src="../assets/img/addModule.png"
                   alt="Add a Module" />
@@ -3954,7 +3954,7 @@
                 <h2>Add a Module</h2>
               </div>
             </div>
-            <ul class="pagination paginationModule justify-content-center mt-3" id="paginationModule"></ul>
+            <ul class="mt-3 pagination paginationModule justify-content-center" id="paginationModule"></ul>
           </nav>
           <div class="modal fade" id="removeModule" tabindex="-1" aria-labelledby="exampleModalLabel"
             aria-hidden="true">
@@ -3964,7 +3964,7 @@
                   <h5 class="modal-title">Remove the Module</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-2">
+                <div class="p-2 modal-body">
                   Are you sure you want to delete the module
                   <span id="spanRemoveModule" class="text-danger"></span>
                   ?
@@ -3973,7 +3973,7 @@
                 </div>
 
                 <div class="modal-footer">
-                  <form class="w-100 was-validated d-flex flex-row-reverse">
+                  <form class="flex-row-reverse w-100 was-validated d-flex">
                     <button type="button" id="subDeletModule" class="btn btn-danger">
                       Delete Module
                     </button>
@@ -4005,7 +4005,7 @@
                       <div class="mb-3" id="divModuleFileScheduling">
                         <label for="moduleFileScheduling" class="form-label">Module File
                         </label>
-                        <div class="input-group mb-3">
+                        <div class="mb-3 input-group">
                           <input type="file" class="form-control" id="moduleFileScheduling" />
                         </div>
                       </div>
@@ -4016,10 +4016,10 @@
                       </div>
                       <div class="mb-3" id="currentPasswordScheduling">
                         <label for="currentSystemPassword" class="form-label">Current System Password</label>
-                        <input class="form-control mb-4" id="currentSystemPassword" type="password"
+                        <input class="mb-4 form-control" id="currentSystemPassword" type="password"
                           name="nameCurrentSystemPassword" aria-label="default input example" />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="buttonSchedulingModule" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           Scheduling Module
@@ -4032,7 +4032,7 @@
                             Scheduling Module
                           </button> -->
                         <button id="buttonDeleteSchedulingModule" type="button"
-                          class="btn btn-block border border-black border-1 d-none align-items-center me-2">
+                          class="border border-black btn btn-block border-1 d-none align-items-center me-2">
                           Delete Scheduling
                         </button>
                         <button type="button" class="btn btn-danger d-inline-flex align-items-center me-2"
@@ -4066,7 +4066,7 @@
                       <div class="mb-3">
                         <label for="moduleFile" class="form-label">Module File
                         </label>
-                        <div class="input-group mb-3">
+                        <div class="mb-3 input-group">
                           <input type="file" class="form-control" id="moduleFile" />
                         </div>
                       </div>
@@ -4177,7 +4177,7 @@
                             </label>
                           </div>
                         </div> -->
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="buttonUpdateModule" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -4223,7 +4223,7 @@
                       <div class="mb-3">
                         <label for="moduleAddFile" class="form-label">Module File
                         </label>
-                        <div class="input-group mb-3">
+                        <div class="mb-3 input-group">
                           <input type="file" class="form-control" id="moduleAddFile" />
                         </div>
                       </div>
@@ -4332,7 +4332,7 @@
                             </label>
                           </div>
                         </div> -->
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="buttonAddModule" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
@@ -4362,12 +4362,12 @@
         </div>
         <div class="tab-pane fade" id="v-subscribers" role="tabpanel" aria-labelledby="v-subscribers-tab" tabindex="0">
           <img src="../assets/img/Monitor-cuate.svg" width="100%" height="640px"></img>
-          <div class="d-flex divInputMonitoring mt-3 justify-content-center">
+          <div class="mt-3 d-flex divInputMonitoring justify-content-center">
             <input type="text" id="urlSubscribers" placeholder="Enter the subscribers URL"
-              class="form-control w-50 mb-1" />
+              class="mb-1 form-control w-50" />
             <div class="divButtonsMonitoring">
               <!-- <button
-                  class="btn btn-success mb-2 ms-3"
+                  class="mb-2 btn btn-success ms-3"
                   id="buttonOpenIframe1"
                 >
                   <svg
@@ -4387,7 +4387,7 @@
                   </svg>
                   OPEN
                 </button> -->
-              <button class="btn btn-primary mb-1 ms-3" id="buttonSubscribers">
+              <button class="mb-1 btn btn-primary ms-3" id="buttonSubscribers">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                   class="bi bi-eye-fill me-1" viewBox="0 0 16 16">
                   <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
@@ -4404,7 +4404,7 @@
               <h2 class="textHeaderPing ms-3">Settings</h2>
             </div>
             <hr class="w-100" />
-            <ul class="nav nav-tabs mt-2">
+            <ul class="mt-2 nav nav-tabs">
               <li class="nav-item">
                 <button class="nav-link active" id="smsTab" aria-current="page" data-bs-toggle="tab"
                   data-bs-target="#tabSms">
@@ -4427,13 +4427,13 @@
                 </button>
               </li>
             </ul>
-            <div class="d-flex flex-column justify-content-between mt-4 ms-4 divSetting tab-content">
+            <div class="mt-4 d-flex flex-column justify-content-between ms-4 divSetting tab-content">
               <div class="tab-pane fade show active" id="tabSms">
                 <div class="col-lg-8 col-12 divLoginSMS">
                   <h5 class="ms-2">Login SMS</h5>
                   <hr class="w-75" />
                   <div class="d-flex ms-3" id="toggleSMS">
-                    <h6 class="mb-0 me-3 mt-1 d-flex align-items-center loginSMS"></h6>
+                    <h6 class="mt-1 mb-0 me-3 d-flex align-items-center loginSMS"></h6>
                     <div class="mt-3">
                       <label class="switch">
                         <input type="checkbox" class="inputToggle" id="idInputToggleLoginSMS" />
@@ -4442,7 +4442,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-lg-8 col-12 my-5">
+                <div class="my-5 col-lg-8 col-12">
                   <h5 class="ms-2">Config Connection SMS</h5>
                   <hr class="w-75" />
                   <div class="mt-3">
@@ -4520,7 +4520,7 @@
                       </button>
                     </div>
                   </div>
-                  <table class="table table-bordered table-striped text-center d-none mt-3" id="backupTable">
+                  <table class="table mt-3 text-center table-bordered table-striped d-none" id="backupTable">
                     <thead>
                       <tr>
                         <th scope="col" class="fs-5">
@@ -4536,7 +4536,7 @@
                     </thead>
                     <tbody id="tBodyBackup"></tbody>
                   </table>
-                  <ul class="pagination paginationBackup justify-content-center mt-3" id="paginationBackup"></ul>
+                  <ul class="mt-3 pagination paginationBackup justify-content-center" id="paginationBackup"></ul>
                 </div>
               </div>
               <div class="tab-pane fade show" id="tabCaptcha">
@@ -4546,7 +4546,7 @@
                     <hr class="w-75" />
                     <div class="ms-3" id="toggleCaptcha">
                       <div class="d-flex">
-                        <h6 class="mb-0 me-3 mt-1 d-flex align-items-center reCaptcha"></h6>
+                        <h6 class="mt-1 mb-0 me-3 d-flex align-items-center reCaptcha"></h6>
                         <div class="mt-3 flex-column">
                           <label class="switch">
                             <input type="checkbox" class="inputToggle" id="idInputToggleReCaptcha" />
@@ -4554,7 +4554,7 @@
                           </label>
                         </div>
                       </div>
-                      <button id="buttonConnectionReCaptcha" class="rounded-2 bg-primary mt-3" data-bs-toggle="modal"
+                      <button id="buttonConnectionReCaptcha" class="mt-3 rounded-2 bg-primary" data-bs-toggle="modal"
                         data-bs-target="#ConnectionReCaptcha">
                         Connection Data
                       </button>
@@ -4567,7 +4567,7 @@
                   <h5 class="ms-2">2FA (Two-Factor Authentication)</h5>
                   <hr class="w-75" />
                   <div class="d-flex ms-3" id="toggle2FA">
-                    <h6 class="mb-0 me-3 mt-1 d-flex align-items-center h2fa"></h6>
+                    <h6 class="mt-1 mb-0 me-3 d-flex align-items-center h2fa"></h6>
                     <div class="mt-3">
                       <label class="switch">
                         <input type="checkbox" class="inputToggle" id="idInputToggle" />
@@ -4576,7 +4576,7 @@
                     </div>
                   </div>
                 </div>
-                <!-- <div class="col-lg-8 col-12 mt-5">
+                <!-- <div class="mt-5 col-lg-8 col-12">
                     <h5 class="ms-2 replace-server">Server IP</h5>
                     <hr class="w-75" />
                     <div class="mt-3">
@@ -4630,7 +4630,7 @@
                         <input class="form-control" id="specialNumberConfigSMS" type="text"
                           name="name_specialNumberConfigSMS" aria-label="default input example" />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="SubmitConfigSMS" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           Submit
@@ -4667,7 +4667,7 @@
                         <input class="form-control" id="recaptchaSiteName" type="text" name="name_recaptchaSiteName"
                           aria-label="default input example" />
                       </div>
-                      <div class="d-flex flex-row-reverse">
+                      <div class="flex-row-reverse d-flex">
                         <button id="SubmitConfigReCaptcha" type="button"
                           class="btn btn-success d-inline-flex align-items-center">
                           Submit
@@ -4716,7 +4716,7 @@
                             few days?</label
                           >
                           <input
-                            class="form-control mb-3"
+                            class="mb-3 form-control"
                             type="number"
                             id="dayBackup"
                             min="1"
@@ -4767,7 +4767,7 @@
                             aria-label="default input example"
                           />
                         </div>
-                        <div class="d-flex flex-row-reverse">
+                        <div class="flex-row-reverse d-flex">
                           <button
                             id="SubmitBackup"
                             type="button"
@@ -4796,9 +4796,9 @@
             title="Iframe Example"></iframe>
           <div class="d-flex divInputMonitoring">
             <input type="text" id="url_input_a" placeholder="Enter URL for iframe zabbix"
-              class="form-control mb-2 w-50" />
+              class="mb-2 form-control w-50" />
             <div class="divButtonsMonitoring">
-              <button class="btn btn-success mb-2 ms-3" id="buttonOpenIframe1">
+              <button class="mb-2 btn btn-success ms-3" id="buttonOpenIframe1">
                 <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
                   class="bi bi-link-45deg me-1" viewBox="0 0 16 16">
                   <path
@@ -4809,7 +4809,7 @@
                 OPEN
               </button>
               <!-- <button
-                  class="btn btn-primary mb-2 ms-3"
+                  class="mb-2 btn btn-primary ms-3"
                   id="buttonIframe1"
                 >
                   <svg
@@ -4840,9 +4840,9 @@
             title="Iframe Example"></iframe>
 
           <div class="d-flex divInputMonitoringELK">
-            <input type="text" id="url_input_b" placeholder="Enter URL for iframe Elk" class="form-control mb-2 w-50" />
+            <input type="text" id="url_input_b" placeholder="Enter URL for iframe Elk" class="mb-2 form-control w-50" />
             <div class="divButtonsMonitoringELK">
-              <button class="btn btn-success mb-2 ms-3" id="buttonOpenIframe2">
+              <button class="mb-2 btn btn-success ms-3" id="buttonOpenIframe2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
                   class="bi bi-link-45deg me-1" viewBox="0 0 16 16">
                   <path
@@ -4853,7 +4853,7 @@
                 OPEN
               </button>
               <!-- <button
-                  class="btn btn-primary mb-2 ms-3"
+                  class="mb-2 btn btn-primary ms-3"
                   id="buttonIframe2"
                 >
                   <svg

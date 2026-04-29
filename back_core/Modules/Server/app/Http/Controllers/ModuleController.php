@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Throwable;
 use Modules\Server\Helpers\SshHelper;
 use Modules\Server\Http\Requests\EditModuleRequest;
 use Modules\Server\Http\Requests\Module\ExpertModuleFileIsServerRequset;
@@ -420,6 +421,7 @@ class ModuleController extends ApiController
                     ]);
                 }
 
+                $this->assertSshDeletePreflight($server, $serverCredentials);
                 $this->cleanupModuleArtifactsFromServer($module, $server, $serverCredentials);
             }
 
@@ -446,12 +448,88 @@ class ModuleController extends ApiController
 
             return response()->json(['msg' => 'Module Deleted', 'module' => $module]);
 
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
-                return response()->json(['success' => false, 'msg' => $e->getMessage()], 422);
+
+            $msg = null;
+            if ($e instanceof ValidationException) {
+                $errors = $e->errors();
+                $msg = $errors['msg'][0] ?? null;
+            }
+
+            $msg = $msg ?: $this->normalizeSshDeleteFailureMessage($e) ?: $e->getMessage();
+
+            return response()->json(['success' => false, 'msg' => $msg], 422);
         }
+    }
+
+    private function assertSshDeletePreflight(Server $server, array $credentials): void
+    {
+        $username = (string) $credentials['username'];
+        $password = (string) $credentials['password'];
+        $port = (int) ($credentials['port'] ?? 22);
+
+        $sshHelper = new SshHelper($server->ip, $username, $password, $port);
+        $preflightMarker = '__SSH_DELETE_PREFLIGHT_OK__';
+
+        try {
+            $output = $sshHelper->runCommandModule('echo ' . escapeshellarg($preflightMarker), 'delete-module-preflight', 'deleteModule.assertSshDeletePreflight');
+            if (! str_contains((string) $output, $preflightMarker)) {
+                $normalized = $this->normalizeSshDeleteFailureMessage($output);
+                throw ValidationException::withMessages([
+                    'msg' => $normalized ?: 'Unable to connect to the selected server using the provided SSH credentials.',
+                ]);
+            }
+        } catch (Throwable $e) {
+            $normalized = $this->normalizeSshDeleteFailureMessage($e) ?: 'Unable to connect to the selected server using the provided SSH credentials.';
+            if (str_contains($normalized, 'SSH authentication failed.')) {
+                $normalized = 'SSH authentication failed for server ' . $server->name . '. Please check the SSH username and password.';
+            }
+
+            throw ValidationException::withMessages(['msg' => $normalized]);
+        }
+    }
+
+    private function normalizeSshDeleteFailureMessage(Throwable|string|null $errorOrOutput): ?string
+    {
+        $raw = $errorOrOutput instanceof Throwable ? $errorOrOutput->getMessage() : (string) $errorOrOutput;
+        $value = strtolower(trim($raw));
+
+        if ($value === '') {
+            return null;
+        }
+
+        $authNeedles = [
+            'permission denied', 'authentication failed', 'unable to authenticate', 'failed to authenticate',
+            'auth fail', 'all configured authentication methods failed', 'ssh was not successful',
+            'password', 'login incorrect', 'your server login credentials are incorrect',
+        ];
+
+        foreach ($authNeedles as $needle) {
+            if (str_contains($value, $needle)) {
+                return 'SSH authentication failed. Please check the SSH username and password.';
+            }
+        }
+
+        $connectionNeedles = [
+            'connection refused', 'no route to host', 'network is unreachable', 'operation timed out',
+            'timed out', 'could not resolve hostname', 'name or service not known', 'connection timed out',
+            'unable to connect', 'connection closed'
+        ];
+
+        foreach ($connectionNeedles as $needle) {
+            if (str_contains($value, $needle)) {
+                return 'Unable to connect to the selected server using the provided SSH credentials.';
+            }
+        }
+
+        if (str_contains($value, 'ssh command execution failed') || str_contains($value, 'remote_command_failed')) {
+            return 'Unable to connect to the selected server using the provided SSH credentials.';
+        }
+
+        return null;
     }
 
     private function cleanupModuleArtifactsFromServer(Module $module, Server $server, array $credentials): void
@@ -503,46 +581,13 @@ class ModuleController extends ApiController
         $sshHelper = new SshHelper($server->ip, $username, $password, $port);
         try {
             $output = $sshHelper->runCommandModule($command, 'delete-module-cleanup', 'deleteModule.cleanupModuleArtifactsFromServer');
-            $normalizedOutput = strtolower(trim((string) $output));
-            if ($normalizedOutput !== '') {
-                if (
-                    str_contains($normalizedOutput, 'permission denied')
-                    || str_contains($normalizedOutput, 'authentication failed')
-                    || str_contains($normalizedOutput, 'unable to authenticate')
-                    || str_contains($normalizedOutput, 'ssh was not successful')
-                    || str_contains($normalizedOutput, 'ssh command execution failed')
-                ) {
-                    throw ValidationException::withMessages([
-                        'msg' => 'SSH authentication failed. Please check the SSH username and password.',
-                    ]);
-                }
-                if (
-                    str_contains($normalizedOutput, 'connection refused')
-                    || str_contains($normalizedOutput, 'no route to host')
-                    || str_contains($normalizedOutput, 'timed out')
-                ) {
-                    throw ValidationException::withMessages([
-                        'msg' => 'Unable to connect to the selected server using the provided SSH credentials.',
-                    ]);
-                }
+            $normalizedOutput = $this->normalizeSshDeleteFailureMessage($output);
+            if ($normalizedOutput) {
+                throw ValidationException::withMessages(['msg' => $normalizedOutput]);
             }
-        } catch (\Throwable $e) {
-            $message = strtolower($e->getMessage());
-            if (
-                str_contains($message, 'auth')
-                || str_contains($message, 'permission denied')
-                || str_contains($message, 'unable to authenticate')
-                || str_contains($message, 'ssh was not successful')
-                || str_contains($message, 'ssh command execution failed')
-            ) {
-                throw ValidationException::withMessages([
-                    'msg' => 'SSH authentication failed. Please check the SSH username and password.',
-                ]);
-            }
-
-            throw ValidationException::withMessages([
-                'msg' => 'Unable to connect to the selected server using the provided SSH credentials.',
-            ]);
+        } catch (Throwable $e) {
+            $normalized = $this->normalizeSshDeleteFailureMessage($e) ?: 'Unable to connect to the selected server using the provided SSH credentials.';
+            throw ValidationException::withMessages(['msg' => $normalized]);
         }
     }
 

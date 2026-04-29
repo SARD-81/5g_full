@@ -192,6 +192,9 @@ class ConfParserService
                 $separator = $matches[4];
                 $valueRaw = $matches[6];
                 $value = trim($valueRaw, " \t\"'");
+                if ($separator === '=' && $key === 'LoadExtension') {
+                    $value = self::parseLoadExtensionValue($valueRaw);
+                }
 
                 if ($currentSection) {
                     self::addValue($data[$currentSection], $key, $value);
@@ -436,6 +439,22 @@ class ConfParserService
                 }
             }
 
+            if ($key === 'LoadExtension') {
+                if (is_array($value)) {
+                    $path = (string) ($value['value'] ?? '');
+                    $argument = isset($value['argument']) ? (string) $value['argument'] : '';
+                    $value = $argument !== ''
+                        ? '"' . $path . '" : "' . $argument . '";'
+                        : '"' . $path . '";';
+                } else {
+                    $text = trim((string) $value);
+                    if (!str_ends_with($text, ';')) {
+                        $text .= ';';
+                    }
+                    $value = $text;
+                }
+            }
+
             $lines[] = sprintf(
                 '%s%s%s%s%s%s',
                 $format['prefix'] ?? '',
@@ -465,6 +484,25 @@ class ConfParserService
         }
 
         $target[$key] = $value;
+    }
+
+    private static function parseLoadExtensionValue(string $rawValue): mixed
+    {
+        $trimmed = trim($rawValue);
+        $trimmed = preg_replace('/;\s*$/', '', $trimmed) ?? $trimmed;
+
+        if (preg_match('/^"([^"]+)"\s*:\s*"([^"]+)"$/', $trimmed, $matches)) {
+            return [
+                'value' => $matches[1],
+                'argument' => $matches[2],
+            ];
+        }
+
+        if (preg_match('/^"([^"]+)"$/', $trimmed, $matches)) {
+            return ['value' => $matches[1]];
+        }
+
+        return trim($trimmed, " \t\"'");
     }
 
     public static function normalizeLegacyDirectiveMeta(array $payload): array

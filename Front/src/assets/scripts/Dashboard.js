@@ -6071,7 +6071,7 @@ function resolveDeleteServersCredentials(serverIds = []) {
       return {
         isValid: false,
         message:
-          "SSH credentials are required for all module servers. Please enter or update SSH credentials and try again.",
+          "Please enter SSH username and password.",
       };
     }
 
@@ -6211,12 +6211,26 @@ async function DeleteModules() {
         showToast("Module deleted successfully", "success");
       },
       errorCallback: function (errorPayload, errorResponse) {
+        const errors = errorPayload?.errors;
+        let firstValidationError = "";
+
+        if (errors && typeof errors === "object") {
+          const firstErrorValue = Object.values(errors)[0];
+          if (Array.isArray(firstErrorValue) && firstErrorValue.length > 0) {
+            firstValidationError = firstErrorValue[0];
+          } else if (typeof firstErrorValue === "string") {
+            firstValidationError = firstErrorValue;
+          }
+        }
+
         const message =
           errorPayload?.msg ||
+          firstValidationError ||
           errorPayload?.message ||
           errorResponse?.data?.msg ||
           errorResponse?.data?.message ||
-          "Module delete failed.";
+          "Failed to delete module. Please check SSH credentials and try again.";
+
         showToast(message, "error");
       },
     });

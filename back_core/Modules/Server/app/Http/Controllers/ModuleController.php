@@ -376,8 +376,23 @@ class ModuleController extends ApiController
 
         } catch (QueryException $e) {
             DB::rollBack();
+            $sqlState = (string) $e->getCode();
+            $errorInfo = $e->errorInfo ?? [];
+            $driverCode = (int) ($errorInfo[1] ?? 0);
+            $driverMessage = strtolower((string) ($errorInfo[2] ?? $e->getMessage()));
+
+            if (
+                ($sqlState === '23000' || $driverCode === 1062)
+                && str_contains($driverMessage, 'modules_service_key_unique')
+            ) {
+                throw ValidationException::withMessages([
+                    'type' => 'Unable to create module because the database still enforces a legacy unique index on service_key. Please run database migrations.',
+                ]);
+            }
+
+            report($e);
             throw ValidationException::withMessages([
-                'type' => 'A module with this Module Type and config format already exists on the selected server.',
+                'msg' => 'Unable to create module due to a database error. Please try again.',
             ]);
         } catch (Exception $e) {
             DB::rollBack();
@@ -487,10 +502,39 @@ class ModuleController extends ApiController
 
         $sshHelper = new SshHelper($server->ip, $username, $password, $port);
         try {
-            $sshHelper->runCommandModule($command, 'delete-module-cleanup', 'deleteModule.cleanupModuleArtifactsFromServer');
+            $output = $sshHelper->runCommandModule($command, 'delete-module-cleanup', 'deleteModule.cleanupModuleArtifactsFromServer');
+            $normalizedOutput = strtolower(trim((string) $output));
+            if ($normalizedOutput !== '') {
+                if (
+                    str_contains($normalizedOutput, 'permission denied')
+                    || str_contains($normalizedOutput, 'authentication failed')
+                    || str_contains($normalizedOutput, 'unable to authenticate')
+                    || str_contains($normalizedOutput, 'ssh was not successful')
+                    || str_contains($normalizedOutput, 'ssh command execution failed')
+                ) {
+                    throw ValidationException::withMessages([
+                        'msg' => 'SSH authentication failed. Please check the SSH username and password.',
+                    ]);
+                }
+                if (
+                    str_contains($normalizedOutput, 'connection refused')
+                    || str_contains($normalizedOutput, 'no route to host')
+                    || str_contains($normalizedOutput, 'timed out')
+                ) {
+                    throw ValidationException::withMessages([
+                        'msg' => 'Unable to connect to the selected server using the provided SSH credentials.',
+                    ]);
+                }
+            }
         } catch (\Throwable $e) {
             $message = strtolower($e->getMessage());
-            if (str_contains($message, 'auth') || str_contains($message, 'permission denied') || str_contains($message, 'unable to authenticate')) {
+            if (
+                str_contains($message, 'auth')
+                || str_contains($message, 'permission denied')
+                || str_contains($message, 'unable to authenticate')
+                || str_contains($message, 'ssh was not successful')
+                || str_contains($message, 'ssh command execution failed')
+            ) {
                 throw ValidationException::withMessages([
                     'msg' => 'SSH authentication failed. Please check the SSH username and password.',
                 ]);

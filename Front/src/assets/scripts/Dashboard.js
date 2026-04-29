@@ -6210,10 +6210,12 @@ async function DeleteModules() {
         document.getElementById("subDeletModule").click();
         showToast("Module deleted successfully", "success");
       },
-      errorCallback: function (error) {
+      errorCallback: function (errorPayload, errorResponse) {
         const message =
-          error?.response?.data?.msg ||
-          error?.response?.data?.message ||
+          errorPayload?.msg ||
+          errorPayload?.message ||
+          errorResponse?.data?.msg ||
+          errorResponse?.data?.message ||
           "Module delete failed.";
         showToast(message, "error");
       },

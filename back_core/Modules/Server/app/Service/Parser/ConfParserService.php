@@ -60,22 +60,67 @@ class ConfParserService
                 continue;
             }
 
-            if (preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)=(\s*)"([^"]*)"(?:\s*)\{\s*$/', $line, $blockMatches)) {
+            if (preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)(?:=(\s*)(?:"([^"]*)"(\s*))?)?\{\s*(.*?)\s*$/', $line, $blockMatches)) {
                 $blockKey = trim($blockMatches[2]);
-                $blockEntry = ['value' => $blockMatches[5]];
+                $blockEntry = [];
+                if (isset($blockMatches[5]) && $blockMatches[5] !== '') {
+                    $blockEntry['value'] = $blockMatches[5];
+                }
                 $blockMetaEntries = [];
-                $baseIndent = $blockMatches[1] . '    ';
+                $baseIndent = ($blockMatches[1] ?? '') . '    ';
+                $inlineContent = trim((string) ($blockMatches[7] ?? ''));
+                $openedInlineAndClosed = false;
 
-                for ($index++; $index < count($lines); $index++) {
-                    $blockLine = $lines[$index];
-                    if (preg_match('/^\s*}\s*;\s*$/', $blockLine)) {
-                        break;
+                if ($inlineContent !== '') {
+                    if (preg_match('/^(.*?)\}\s*;\s*$/', $inlineContent, $inlineCloseMatch)) {
+                        $inlineContent = trim($inlineCloseMatch[1]);
+                        $openedInlineAndClosed = true;
                     }
+                    if ($inlineContent !== '') {
+                        foreach (preg_split('/;/', $inlineContent) as $inlinePart) {
+                            $inlinePart = trim((string) $inlinePart);
+                            if ($inlinePart === '') {
+                                continue;
+                            }
+                            if (preg_match('/^([^=:]+?)(\s*)([=:])(\s*)(.*)$/', $inlinePart, $nestedKvMatches)) {
+                                $nestedKey = trim($nestedKvMatches[1]);
+                                $nestedRawValue = trim((string) $nestedKvMatches[5]);
+                                $nestedValue = trim($nestedRawValue, " \t\"'");
+                                self::addValue($blockEntry, $nestedKey, $nestedValue);
+                                $blockMetaEntries[] = [
+                                    'type' => 'kv',
+                                    'key' => $nestedKey,
+                                    'rawFormat' => [
+                                        'prefix' => $baseIndent,
+                                        'suffixKey' => $nestedKvMatches[2],
+                                        'separator' => $nestedKvMatches[3],
+                                        'valuePrefix' => $nestedKvMatches[4],
+                                        'terminator' => ';',
+                                    ],
+                                ];
+                            } else {
+                                self::addValue($blockEntry, '_directives', self::normalizeDirectiveValue($inlinePart));
+                                $blockMetaEntries[] = [
+                                    'type' => 'directive',
+                                    'key' => self::normalizeDirectiveValue($inlinePart),
+                                    'rawFormat' => ['prefix' => $baseIndent, 'terminator' => ';'],
+                                ];
+                            }
+                        }
+                    }
+                }
 
-                    if (trim($blockLine) === '') {
-                        $blockMetaEntries[] = ['type' => 'empty', 'raw' => $blockLine];
-                        continue;
-                    }
+                if (! $openedInlineAndClosed) {
+                    for ($index++; $index < count($lines); $index++) {
+                        $blockLine = $lines[$index];
+                        if (preg_match('/^\s*}\s*;\s*$/', $blockLine)) {
+                            break;
+                        }
+
+                        if (trim($blockLine) === '') {
+                            $blockMetaEntries[] = ['type' => 'empty', 'raw' => $blockLine];
+                            continue;
+                        }
 
                     if (preg_match('/^\s*[#;]/', $blockLine)) {
                         $blockMetaEntries[] = ['type' => 'comment', 'raw' => $blockLine];
@@ -115,7 +160,8 @@ class ConfParserService
                         continue;
                     }
 
-                    $blockMetaEntries[] = ['type' => 'raw', 'raw' => $blockLine];
+                        $blockMetaEntries[] = ['type' => 'raw', 'raw' => $blockLine];
+                    }
                 }
 
                 if ($currentSection) {
@@ -248,16 +294,21 @@ class ConfParserService
                     continue;
                 }
 
-                $blockValue = trim((string) ($entry['value'] ?? ''));
-                $lines[] = sprintf(
-                    '%s%s%s%s%s%s {',
-                    $format['prefix'] ?? '',
-                    $key,
-                    $format['suffixKey'] ?? ' ',
-                    $format['separator'] ?? '=',
-                    $format['valuePrefix'] ?? ' "',
-                    $blockValue . ($format['valueSuffix'] ?? '"'),
-                );
+                $hasBlockValue = array_key_exists('value', $entry) && trim((string) $entry['value']) !== '';
+                if ($hasBlockValue) {
+                    $blockValue = trim((string) $entry['value']);
+                    $lines[] = sprintf(
+                        '%s%s%s%s%s%s {',
+                        $format['prefix'] ?? '',
+                        $key,
+                        $format['suffixKey'] ?? ' ',
+                        $format['separator'] ?? '=',
+                        $format['valuePrefix'] ?? ' "',
+                        $blockValue . ($format['valueSuffix'] ?? '"'),
+                    );
+                } else {
+                    $lines[] = sprintf('%s%s {', $format['prefix'] ?? '', $key);
+                }
 
                 $blockMetaEntries = $item['entries'] ?? [];
                 $blockKeyCounters = [];

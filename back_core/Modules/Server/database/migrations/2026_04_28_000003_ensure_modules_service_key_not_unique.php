@@ -15,12 +15,23 @@ return new class extends Migration
 
         $driver = DB::getDriverName();
         if ($driver === 'mysql') {
-            DB::statement('ALTER TABLE modules DROP INDEX IF EXISTS modules_service_key_unique');
+            $schema = DB::getDatabaseName();
+            $indexExists = DB::table('information_schema.statistics')
+                ->where('table_schema', $schema)
+                ->where('table_name', 'modules')
+                ->where('index_name', 'modules_service_key_unique')
+                ->exists();
+
+            if ($indexExists) {
+                DB::statement('ALTER TABLE modules DROP INDEX modules_service_key_unique');
+            }
             return;
         }
 
         Schema::table('modules', function (Blueprint $table) {
-            $table->dropUnique('modules_service_key_unique');
+            if (Schema::hasColumn('modules', 'service_key')) {
+                $table->dropUnique('modules_service_key_unique');
+            }
         });
     }
 

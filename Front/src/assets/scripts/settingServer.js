@@ -1606,15 +1606,38 @@ function parseConfToJsonWithComments(confText) {
     }
 
     // ۴. کلید و مقدار (جدا کردن فقط بر اساس اولین مساوی)
-    const blockMatch = rawLine.match(/^(\s*)([A-Za-z0-9_.-]+)(\s*)=(\s*)"([^"]*)"(?:\s*)\{\s*$/);
+    const blockMatch = rawLine.match(/^(\s*)([A-Za-z0-9_.-]+)(\s*)=(\s*)"([^"]*)"(?:\s*)\{\s*(.*?)\s*$/);
     if (blockMatch) {
       const blockKey = blockMatch[2].trim();
       const blockEntry = { value: blockMatch[5] };
       const entries = [];
+      let inlineTail = (blockMatch[6] || "").trim();
+      let isInlineClosed = false;
 
-      for (i = i + 1; i < lines.length; i++) {
-        const blockRawLine = lines[i];
-        if (/^\s*}\s*;\s*$/.test(blockRawLine)) break;
+      if (inlineTail) {
+        const inlineClose = inlineTail.match(/^(.*?)\}\s*;\s*$/);
+        if (inlineClose) {
+          inlineTail = inlineClose[1].trim();
+          isInlineClosed = true;
+        }
+        inlineTail.split(";").map((v) => v.trim()).filter(Boolean).forEach((part) => {
+          const idx = part.indexOf("=");
+          if (idx !== -1) {
+            const nestedKey = part.substring(0, idx).trim();
+            const nestedValue = part.substring(idx + 1).trim().replace(/^"|"$/g, "");
+            addValue(blockEntry, nestedKey, nestedValue);
+            entries.push({ type: "kv", key: nestedKey });
+          } else {
+            addValue(blockEntry, "_directives", part.replace(/^;+|;+$/g, ""));
+            entries.push({ type: "directive", key: part.replace(/^;+|;+$/g, "") });
+          }
+        });
+      }
+
+      if (!isInlineClosed) {
+        for (i = i + 1; i < lines.length; i++) {
+          const blockRawLine = lines[i];
+          if (/^\s*}\s*;\s*$/.test(blockRawLine)) break;
 
         if (!blockRawLine.trim()) {
           entries.push({ type: "empty", raw: blockRawLine });
@@ -1644,6 +1667,7 @@ function parseConfToJsonWithComments(confText) {
         }
 
         entries.push({ type: "raw", raw: blockRawLine });
+        }
       }
 
       if (currentSection) {
@@ -1681,11 +1705,17 @@ function parseConfToJsonWithComments(confText) {
 
       const valueSuffix = rawValuePart.substring(valuePrefix.length + value.length);
 
-      if (currentSection) {
-        addValue(result[currentSection], key, value);
-      } else {
-        addValue(result, key, value);
-      }
+      const loadExtensionMatch = key === "LoadExtension"
+        ? rawValuePart.match(/^\s*"([^"]+)"(?:\s*:\s*"([^"]+)")?\s*;?\s*$/)
+        : null;
+      const normalizedValue = loadExtensionMatch
+        ? (loadExtensionMatch[2]
+          ? { value: loadExtensionMatch[1], argument: loadExtensionMatch[2] }
+          : { value: loadExtensionMatch[1] })
+        : value;
+
+      if (currentSection) addValue(result[currentSection], key, normalizedValue);
+      else addValue(result, key, normalizedValue);
 
       meta.push({
         type: "kv",
@@ -1958,7 +1988,6 @@ function setJsonEditor(data) {
   // 🌟 ADDED: اعمال ریجکس روی مقادیر استخراج شده اگر فایل از نوع conf باشد
   // اگر میخواهید روی فایل‌های JSON هم اعمال شود، شرط if (isConf) را بردارید
   if (isConf) {
-    parsedData = extractValuesWithRegex(parsedData);
     parsedData = normalizeConfDuplicateCopyKeys(parsedData);
   }
 

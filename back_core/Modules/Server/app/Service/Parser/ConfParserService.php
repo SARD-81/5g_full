@@ -193,7 +193,7 @@ class ConfParserService
                 continue;
             }
 
-            if (preg_match('/^(\s*)([^=:]+?)(\s*)([=:])(\s*)(.*)$/', $line, $matches)) {
+            if (preg_match('/^(\s*)([^=:]+?)(\s*)([=:])(\s*)(.*?)(;?)\s*$/', $line, $matches)) {
                 $key = trim($matches[2]);
                 $separator = $matches[4];
                 $valueRaw = $matches[6];
@@ -221,6 +221,7 @@ class ConfParserService
                         'valuePrefix' => $matches[5],
                         'quoted' => $parsedValue['quoted'],
                         'quote' => $parsedValue['quote'],
+                        'terminator' => $matches[7] === ';' ? ';' : '',
                     ],
                 ];
                 continue;
@@ -451,35 +452,32 @@ class ConfParserService
             }
 
             if ($key === 'LoadExtension') {
-                if (is_array($value)) {
-                    $path = (string) ($value['value'] ?? '');
-                    $argument = isset($value['argument']) ? (string) $value['argument'] : '';
-                    if ($path === '') {
-                        continue;
-                    }
-                    $value = $argument !== ''
-                        ? '"' . trim($path, '"') . '" : "' . trim($argument, '"') . '";'
-                        : '"' . trim($path, '"') . '";';
-                } else {
-                    $text = trim((string) $value);
-                    if ($text === '') {
-                        continue;
-                    }
-                    if (!str_ends_with($text, ';')) {
-                        $text .= ';';
-                    }
-                    $value = $text;
+                $serializedLoadExtension = self::serializeLoadExtensionValue($value);
+                if ($serializedLoadExtension === null) {
+                    continue;
                 }
+
+                $lines[] = sprintf(
+                    '%s%s%s%s%s%s',
+                    $format['prefix'] ?? '',
+                    $key,
+                    $format['suffixKey'] ?? '',
+                    $format['separator'] ?? '=',
+                    $format['valuePrefix'] ?? '',
+                    $serializedLoadExtension,
+                );
+                continue;
             }
 
             $lines[] = sprintf(
-                '%s%s%s%s%s%s',
+                '%s%s%s%s%s%s%s',
                 $format['prefix'] ?? '',
                 $key,
                 $format['suffixKey'] ?? '',
                 $format['separator'] ?? '=',
                 $format['valuePrefix'] ?? '',
                 self::serializeScalarValue($value, $format),
+                $format['terminator'] ?? '',
             );
         }
 
@@ -628,6 +626,36 @@ class ConfParserService
         }
 
         return $remaining;
+    }
+
+    private static function serializeLoadExtensionValue(mixed $value): ?string
+    {
+        if (is_array($value)) {
+            $path = trim((string) ($value['value'] ?? ''), " \t\"'");
+            if ($path === '') {
+                return null;
+            }
+
+            $argument = isset($value['argument']) ? trim((string) $value['argument'], " \t\"'") : '';
+            if ($argument !== '') {
+                return '"' . $path . '" : "' . $argument . '";';
+            }
+
+            return '"' . $path . '";';
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return null;
+        }
+
+        $parsed = self::parseLoadExtensionValue($text);
+        if (is_array($parsed)) {
+            return self::serializeLoadExtensionValue($parsed);
+        }
+
+        $normalized = trim((string) $parsed, " \t\"'");
+        return $normalized === '' ? null : '"' . $normalized . '";';
     }
 
     private static function parseScalarToken(string $rawValue): array

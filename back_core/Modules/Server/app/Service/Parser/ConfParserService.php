@@ -85,7 +85,8 @@ class ConfParserService
                             if (preg_match('/^([^=:]+?)(\s*)([=:])(\s*)(.*)$/', $inlinePart, $nestedKvMatches)) {
                                 $nestedKey = trim($nestedKvMatches[1]);
                                 $nestedRawValue = trim((string) $nestedKvMatches[5]);
-                                $nestedValue = trim($nestedRawValue, " \t\"'");
+                                $nestedParsed = self::parseScalarToken($nestedRawValue);
+                                $nestedValue = $nestedParsed['value'];
                                 self::addValue($blockEntry, $nestedKey, $nestedValue);
                                 $blockMetaEntries[] = [
                                     'type' => 'kv',
@@ -96,6 +97,8 @@ class ConfParserService
                                         'separator' => $nestedKvMatches[3],
                                         'valuePrefix' => $nestedKvMatches[4],
                                         'terminator' => ';',
+                                        'quoted' => $nestedParsed['quoted'],
+                                        'quote' => $nestedParsed['quote'],
                                     ],
                                 ];
                             } else {
@@ -130,7 +133,8 @@ class ConfParserService
                     if (preg_match('/^(\s*)([^=:]+?)(\s*)([=:])(\s*)(.*?)(;?)\s*$/', $blockLine, $nestedKvMatches)) {
                         $nestedKey = trim($nestedKvMatches[2]);
                         $nestedRawValue = trim((string) $nestedKvMatches[6]);
-                        $nestedValue = trim($nestedRawValue, " \t\"'");
+                        $nestedParsed = self::parseScalarToken($nestedRawValue);
+                        $nestedValue = $nestedParsed['value'];
                         self::addValue($blockEntry, $nestedKey, $nestedValue);
                         $blockMetaEntries[] = [
                             'type' => 'kv',
@@ -141,6 +145,8 @@ class ConfParserService
                                 'separator' => $nestedKvMatches[4],
                                 'valuePrefix' => $nestedKvMatches[5],
                                 'terminator' => $nestedKvMatches[7] === ';' ? ';' : '',
+                                'quoted' => $nestedParsed['quoted'],
+                                'quote' => $nestedParsed['quote'],
                             ],
                         ];
                         continue;
@@ -191,7 +197,8 @@ class ConfParserService
                 $key = trim($matches[2]);
                 $separator = $matches[4];
                 $valueRaw = $matches[6];
-                $value = trim($valueRaw, " \t\"'");
+                $parsedValue = self::parseScalarToken($valueRaw);
+                $value = $parsedValue['value'];
                 if ($separator === '=' && $key === 'LoadExtension') {
                     $value = self::parseLoadExtensionValue($valueRaw);
                 }
@@ -212,6 +219,8 @@ class ConfParserService
                         'suffixKey' => $matches[3],
                         'separator' => $separator,
                         'valuePrefix' => $matches[5],
+                        'quoted' => $parsedValue['quoted'],
+                        'quote' => $parsedValue['quote'],
                     ],
                 ];
                 continue;
@@ -338,6 +347,7 @@ class ConfParserService
                             ? ($nestedCandidate[$counter] ?? '')
                             : ($counter === 0 ? $nestedCandidate : '');
 
+                        $serializedNestedValue = self::serializeScalarValue($nestedValue, $nestedFormat);
                         $lines[] = sprintf(
                             '%s%s%s%s%s%s%s',
                             $nestedFormat['prefix'] ?? $defaultIndent,
@@ -345,7 +355,7 @@ class ConfParserService
                             $nestedFormat['suffixKey'] ?? ' ',
                             $nestedFormat['separator'] ?? '=',
                             $nestedFormat['valuePrefix'] ?? ' ',
-                            (string) $nestedValue,
+                            $serializedNestedValue,
                             $nestedFormat['terminator'] ?? ';',
                         );
                         continue;
@@ -355,14 +365,16 @@ class ConfParserService
                         $nestedFormat = $blockMeta['rawFormat'] ?? [];
                         $candidateDirectives = $entry['_directives'] ?? [];
                         $directivesList = is_array($candidateDirectives) ? $candidateDirectives : [$candidateDirectives];
-                        $directiveIndex = count($usedDirectives);
+                        $counterKey = '__directives';
+                        $directiveIndex = $blockKeyCounters[$counterKey] ?? 0;
+                        $blockKeyCounters[$counterKey] = $directiveIndex + 1;
                         $directiveValue = $directivesList[$directiveIndex] ?? null;
                         if (!is_string($directiveValue) || trim($directiveValue) === '') {
                             continue;
                         }
 
                         $normalizedDirective = self::normalizeDirectiveValue($directiveValue);
-                        $usedDirectives[] = $normalizedDirective;
+                        $usedDirectives[$directiveIndex] = $normalizedDirective;
                         $lines[] = sprintf(
                             '%s%s%s',
                             $nestedFormat['prefix'] ?? $defaultIndent,
@@ -390,7 +402,6 @@ class ConfParserService
                 $jsonRef = $section ? ($jsonData[$section] ?? null) : $jsonData;
 
                 if (!is_array($jsonRef) || !array_key_exists('_directives', $jsonRef)) {
-                    $lines[] = $item['raw'] ?? '';
                     continue;
                 }
 
@@ -443,11 +454,17 @@ class ConfParserService
                 if (is_array($value)) {
                     $path = (string) ($value['value'] ?? '');
                     $argument = isset($value['argument']) ? (string) $value['argument'] : '';
+                    if ($path === '') {
+                        continue;
+                    }
                     $value = $argument !== ''
-                        ? '"' . $path . '" : "' . $argument . '";'
-                        : '"' . $path . '";';
+                        ? '"' . trim($path, '"') . '" : "' . trim($argument, '"') . '";'
+                        : '"' . trim($path, '"') . '";';
                 } else {
                     $text = trim((string) $value);
+                    if ($text === '') {
+                        continue;
+                    }
                     if (!str_ends_with($text, ';')) {
                         $text .= ';';
                     }
@@ -462,7 +479,7 @@ class ConfParserService
                 $format['suffixKey'] ?? '',
                 $format['separator'] ?? '=',
                 $format['valuePrefix'] ?? '',
-                (string) $value,
+                self::serializeScalarValue($value, $format),
             );
         }
 
@@ -500,6 +517,13 @@ class ConfParserService
 
         if (preg_match('/^"([^"]+)"$/', $trimmed, $matches)) {
             return ['value' => $matches[1]];
+        }
+
+        if (preg_match('/^([^:]+?)\s*:\s*(.+)$/', $trimmed, $matches)) {
+            return [
+                'value' => trim($matches[1], " \t\"'"),
+                'argument' => trim($matches[2], " \t\"'"),
+            ];
         }
 
         return trim($trimmed, " \t\"'");
@@ -604,5 +628,32 @@ class ConfParserService
         }
 
         return $remaining;
+    }
+
+    private static function parseScalarToken(string $rawValue): array
+    {
+        $trimmed = trim($rawValue);
+        $trimmed = preg_replace('/;\s*$/', '', $trimmed) ?? $trimmed;
+        if (preg_match('/^(["\'])(.*)\1$/s', $trimmed, $m)) {
+            return ['value' => $m[2], 'quoted' => true, 'quote' => $m[1]];
+        }
+
+        return ['value' => trim($trimmed, " \t\"'"), 'quoted' => false, 'quote' => null];
+    }
+
+    private static function serializeScalarValue(mixed $value, array $format): string
+    {
+        $text = (string) $value;
+        if (!($format['quoted'] ?? false)) {
+            return $text;
+        }
+
+        $quote = (string) ($format['quote'] ?? '"');
+        $clean = trim($text);
+        if (preg_match('/^(["\']).*\1$/s', $clean)) {
+            $clean = substr($clean, 1, -1);
+        }
+
+        return $quote . $clean . $quote;
     }
 }

@@ -6232,6 +6232,7 @@ async function DeleteModules() {
           "Failed to delete module. Please check SSH credentials and try again.";
 
         showToast(message, "error");
+        return true;
       },
     });
   } finally {

@@ -499,8 +499,8 @@ if (
   }
 }
 
-const isConf = container?.dataset?.isConf === "true";
-const meta = container?._confMeta || []; // ✅ اینجا گرفتیم
+const isConf = container.dataset.isConf === "true";
+const meta = container._confMeta; // ✅ اینجا گرفتیم
 
 
   if (isConf) {
@@ -1955,13 +1955,9 @@ let descriptionsData;
 let finalObject;
 
 function setJsonEditor(data) {
-  const container = document.getElementById("jsoneditor");
 
-  container.innerHTML = "";
-  container._jsonEditorInstance = null;
-  container._confMeta = [];
-  container._confOriginalKey = null;
-  container.dataset.isConf = "false";
+  document.getElementById("jsoneditor").innerHTML = "";
+  const container = document.getElementById("jsoneditor");
 
   let parsedData = data;
   let isConf = false;
@@ -1976,11 +1972,6 @@ function setJsonEditor(data) {
   if (!isConf && hasConfLikeLegacyRawShape(data)) {
     parsedData = normalizeConfDuplicateCopyKeys(data);
     container._confMeta = data.meta || [];
-    isConf = true;
-  }
-  if (!isConf && currentEffectiveConfigFormat === "conf" && typeof data === "object" && data !== null) {
-    parsedData = normalizeConfDuplicateCopyKeys(data.data || data);
-    container._confMeta = Array.isArray(data.meta) ? data.meta : [];
     isConf = true;
   }
 

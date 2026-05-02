@@ -224,6 +224,9 @@ class ConfParserService
             'directive' => [],
         ];
 
+        $metaEntryTotals = self::countMetaEntryTotals($meta);
+        $metaEntrySeen = [];
+
         foreach ($meta as $item) {
             $type = $item['type'] ?? 'raw';
 
@@ -248,11 +251,34 @@ class ConfParserService
                 }
 
                 if ($key === 'LoadExtension') {
-                    $lines[] = self::serializeLoadExtensionLine($key, $value, $item['rawFormat'] ?? []);
+                    $line = self::serializeLoadExtensionLine($key, $value, $item['rawFormat'] ?? []);
+                    if ($line !== '') {
+                        $lines[] = $line;
+                    }
+                
+                    self::appendExtraValuesAfterLastMetaItem(
+                        $lines,
+                        $jsonData,
+                        $item,
+                        $counters,
+                        $metaEntryTotals,
+                        $metaEntrySeen
+                    );
+                
                     continue;
                 }
-
+                
                 $lines[] = self::serializeKvLine($key, $value, $item['rawFormat'] ?? []);
+                
+                self::appendExtraValuesAfterLastMetaItem(
+                    $lines,
+                    $jsonData,
+                    $item,
+                    $counters,
+                    $metaEntryTotals,
+                    $metaEntrySeen
+                );
+                
                 continue;
             }
 
@@ -275,7 +301,16 @@ class ConfParserService
                     $lines,
                     self::serializeBlock($key, $entry, $item['rawFormat'] ?? [], $item['entries'] ?? [], (bool) ($item['inline'] ?? false))
                 );
-
+                
+                self::appendExtraValuesAfterLastMetaItem(
+                    $lines,
+                    $jsonData,
+                    $item,
+                    $counters,
+                    $metaEntryTotals,
+                    $metaEntrySeen
+                );
+                
                 continue;
             }
 
@@ -293,7 +328,7 @@ class ConfParserService
             }
         }
 
-        self::appendExtraValues($lines, $jsonData, $meta, $counters);
+        self::appendExtraRootDirectives($lines, $jsonData, $counters);
 
         return implode("\n", $lines);
     }
@@ -943,6 +978,152 @@ class ConfParserService
                 );
             }
         }
+    }
+}
+
+private static function countMetaEntryTotals(array $meta): array
+{
+    $totals = [];
+
+    foreach ($meta as $item) {
+        $type = $item['type'] ?? '';
+        $key = $item['key'] ?? null;
+
+        if (!in_array($type, ['kv', 'block'], true)) {
+            continue;
+        }
+
+        if (!is_string($key) || $key === '') {
+            continue;
+        }
+
+        $section = isset($item['section']) && is_string($item['section']) && $item['section'] !== ''
+            ? $item['section']
+            : null;
+
+        $counterKey = self::counterKey($section, $key, $type);
+        $totals[$counterKey] = ($totals[$counterKey] ?? 0) + 1;
+    }
+
+    return $totals;
+}
+
+private static function appendExtraValuesAfterLastMetaItem(
+    array &$lines,
+    array $jsonData,
+    array $metaItem,
+    array $counters,
+    array $metaEntryTotals,
+    array &$metaEntrySeen
+): void {
+    $type = $metaItem['type'] ?? '';
+    $key = $metaItem['key'] ?? null;
+
+    if (!in_array($type, ['kv', 'block'], true)) {
+        return;
+    }
+
+    if (!is_string($key) || $key === '') {
+        return;
+    }
+
+    // فعلاً فقط برای کلیدهای تکراری مهم و شناخته‌شده اعمال شود تا رفتارهای دیگر تغییر نکند.
+    if (!in_array($key, ['ConnectPeer', 'LoadExtension'], true)) {
+        return;
+    }
+
+    $section = isset($metaItem['section']) && is_string($metaItem['section']) && $metaItem['section'] !== ''
+        ? $metaItem['section']
+        : null;
+
+    $counterKey = self::counterKey($section, $key, $type);
+
+    $metaEntrySeen[$counterKey] = ($metaEntrySeen[$counterKey] ?? 0) + 1;
+
+    if ($metaEntrySeen[$counterKey] < ($metaEntryTotals[$counterKey] ?? 0)) {
+        return;
+    }
+
+    $scope = self::getScope($jsonData, $section);
+
+    if (!array_key_exists($key, $scope)) {
+        return;
+    }
+
+    $items = is_array($scope[$key]) && array_is_list($scope[$key])
+        ? $scope[$key]
+        : [$scope[$key]];
+
+    $used = $counters[$type][$counterKey] ?? count($items);
+
+    for ($i = $used; $i < count($items); $i++) {
+        $itemValue = $items[$i];
+
+        if ($type === 'kv' && $key === 'LoadExtension') {
+            $line = self::serializeLoadExtensionLine($key, $itemValue, [
+                'prefix' => $metaItem['rawFormat']['prefix'] ?? '',
+                'suffixKey' => $metaItem['rawFormat']['suffixKey'] ?? ' ',
+                'separator' => $metaItem['rawFormat']['separator'] ?? '=',
+                'valuePrefix' => $metaItem['rawFormat']['valuePrefix'] ?? ' ',
+                'terminator' => $metaItem['rawFormat']['terminator'] ?? ';',
+                'loadExtension' => [
+                    'valueQuoted' => true,
+                    'valueQuote' => '"',
+                    'argumentQuoted' => true,
+                    'argumentQuote' => '"',
+                    'argumentSeparator' => ' : ',
+                ],
+            ]);
+
+            if ($line !== '') {
+                $lines[] = $line;
+            }
+
+            continue;
+        }
+
+        if ($type === 'block' && $key === 'ConnectPeer' && is_array($itemValue)) {
+            $format = $metaItem['rawFormat'] ?? [
+                'prefix' => '',
+                'suffixKey' => ' ',
+                'separator' => '=',
+                'valuePrefix' => ' ',
+                'quoted' => true,
+                'quote' => '"',
+                'childIndent' => '    ',
+            ];
+
+            $entries = self::buildExtraBlockEntriesFromData(
+                $itemValue,
+                $metaItem['entries'] ?? [],
+                $format['childIndent'] ?? '    '
+            );
+
+            $inline = array_key_exists('inline', $metaItem)
+                ? (bool) $metaItem['inline']
+                : true;
+
+            $lines = array_merge(
+                $lines,
+                self::serializeBlock($key, $itemValue, $format, $entries, $inline)
+            );
+        }
+    }
+}
+
+private static function appendExtraRootDirectives(array &$lines, array $jsonData, array $counters): void
+{
+    $used = $counters['directive'][self::counterKey(null, '_directives', 'directive')] ?? 0;
+    $directives = self::listify($jsonData['_directives'] ?? []);
+
+    for ($i = $used; $i < count($directives); $i++) {
+        $directive = $directives[$i];
+
+        if (!is_string($directive) || trim($directive) === '') {
+            continue;
+        }
+
+        $lines[] = self::normalizeDirectiveValue($directive) . ';';
     }
 }
 

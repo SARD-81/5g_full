@@ -2177,3 +2177,22 @@ button.iconAccessLevel {
   background-color: rgb(169, 169, 169);
   color: white;
 }
+
+.Gui {
+  width: 100%;
+  height: 50px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 15px;
+  padding: 5px;
+}
+
+.Gui>p {
+  margin-left: 10px;
+  width: fit-content;
+  height: fit-content;
+  margin-right: 10px;
+  padding-top: 15px;
+}

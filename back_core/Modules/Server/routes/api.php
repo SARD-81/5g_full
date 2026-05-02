@@ -5,6 +5,7 @@ use Modules\Server\Http\Controllers\ModuleController;
 use Modules\Server\Http\Controllers\ServerController;
 use Modules\Server\Http\Controllers\CommandController;
 use \Modules\Server\Http\Controllers\ModuleScheduleController;
+use Modules\Server\Http\Controllers\GUIController;
 
 /*
  *--------------------------------------------------------------------------
@@ -40,7 +41,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['permission:module/read|role:admin|expert'])->get('show-all-modules', [ModuleController::class, 'showAllModules']);
     Route::middleware(['permission:module/update|role:admin|expert'])->post('edit-module', [ModuleController::class, 'editModule']);
 
-    Route::middleware(['role:admin|expert'])->get('module/schedule', [ModuleScheduleController::class, 'index']);
+    Route::middleware(['role:admin|expert'])->group(function(){
+        Route::get('module/schedule', [ModuleScheduleController::class, 'index']);
+        Route::post('run-gui-endpoint', [GUIController::class, 'run']);
+        });
     Route::middleware(['role:admin'])->group(function () {
         Route::post('module/schedule', [ModuleScheduleController::class, 'store']);
         Route::put('module/schedule/{schedule}', [ModuleScheduleController::class, 'update']);

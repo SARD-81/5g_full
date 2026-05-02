@@ -43,6 +43,7 @@ class ConfParserService
 
         for ($index = 0; $index < count($lines); $index++) {
             $line = $lines[$index];
+
             if (trim($line) === '') {
                 $meta[] = ['type' => 'empty', 'raw' => $line];
                 continue;
@@ -60,179 +61,113 @@ class ConfParserService
                 continue;
             }
 
-            if (preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)(?:=(\s*)(?:"([^"]*)"(\s*))?)?\{\s*(.*?)\s*$/', $line, $blockMatches)) {
-                $blockKey = trim($blockMatches[2]);
-                $blockEntry = [];
-                if (isset($blockMatches[5]) && $blockMatches[5] !== '') {
-                    $blockEntry['value'] = $blockMatches[5];
-                }
+            $inlineBlock = self::parseInlineBlock($line);
+            if ($inlineBlock !== null) {
+                self::addValueToScope($data, $currentSection, $inlineBlock['key'], $inlineBlock['value']);
+
+                $meta[] = [
+                    'type' => 'block',
+                    'key' => $inlineBlock['key'],
+                    'section' => $currentSection,
+                    'inline' => true,
+                    'raw' => $line,
+                    'rawFormat' => $inlineBlock['rawFormat'],
+                    'entries' => $inlineBlock['entries'],
+                ];
+
+                continue;
+            }
+
+            $blockStart = self::parseBlockStart($line);
+            if ($blockStart !== null) {
+                $blockEntry = $blockStart['value'];
                 $blockMetaEntries = [];
-                $baseIndent = ($blockMatches[1] ?? '') . '    ';
-                $inlineContent = trim((string) ($blockMatches[7] ?? ''));
-                $openedInlineAndClosed = false;
+                $defaultIndent = $blockStart['rawFormat']['childIndent'] ?? '    ';
 
-                if ($inlineContent !== '') {
-                    if (preg_match('/^(.*?)\}\s*;\s*$/', $inlineContent, $inlineCloseMatch)) {
-                        $inlineContent = trim($inlineCloseMatch[1]);
-                        $openedInlineAndClosed = true;
+                for ($index++; $index < count($lines); $index++) {
+                    $blockLine = $lines[$index];
+
+                    if (preg_match('/^\s*}\s*;\s*$/', $blockLine)) {
+                        break;
                     }
-                    if ($inlineContent !== '') {
-                        foreach (preg_split('/;/', $inlineContent) as $inlinePart) {
-                            $inlinePart = trim((string) $inlinePart);
-                            if ($inlinePart === '') {
-                                continue;
-                            }
-                            if (preg_match('/^([^=:]+?)(\s*)([=:])(\s*)(.*)$/', $inlinePart, $nestedKvMatches)) {
-                                $nestedKey = trim($nestedKvMatches[1]);
-                                $nestedRawValue = trim((string) $nestedKvMatches[5]);
-                                $nestedParsed = self::parseScalarToken($nestedRawValue);
-                                $nestedValue = $nestedParsed['value'];
-                                self::addValue($blockEntry, $nestedKey, $nestedValue);
-                                $blockMetaEntries[] = [
-                                    'type' => 'kv',
-                                    'key' => $nestedKey,
-                                    'rawFormat' => [
-                                        'prefix' => $baseIndent,
-                                        'suffixKey' => $nestedKvMatches[2],
-                                        'separator' => $nestedKvMatches[3],
-                                        'valuePrefix' => $nestedKvMatches[4],
-                                        'terminator' => ';',
-                                        'quoted' => $nestedParsed['quoted'],
-                                        'quote' => $nestedParsed['quote'],
-                                    ],
-                                ];
-                            } else {
-                                self::addValue($blockEntry, '_directives', self::normalizeDirectiveValue($inlinePart));
-                                $blockMetaEntries[] = [
-                                    'type' => 'directive',
-                                    'key' => self::normalizeDirectiveValue($inlinePart),
-                                    'rawFormat' => ['prefix' => $baseIndent, 'terminator' => ';'],
-                                ];
-                            }
-                        }
+
+                    if (trim($blockLine) === '') {
+                        $blockMetaEntries[] = ['type' => 'empty', 'raw' => $blockLine];
+                        continue;
                     }
-                }
-
-                if (! $openedInlineAndClosed) {
-                    for ($index++; $index < count($lines); $index++) {
-                        $blockLine = $lines[$index];
-                        if (preg_match('/^\s*}\s*;\s*$/', $blockLine)) {
-                            break;
-                        }
-
-                        if (trim($blockLine) === '') {
-                            $blockMetaEntries[] = ['type' => 'empty', 'raw' => $blockLine];
-                            continue;
-                        }
 
                     if (preg_match('/^\s*[#;]/', $blockLine)) {
                         $blockMetaEntries[] = ['type' => 'comment', 'raw' => $blockLine];
                         continue;
                     }
 
-                    if (preg_match('/^(\s*)([^=:]+?)(\s*)([=:])(\s*)(.*?)(;?)\s*$/', $blockLine, $nestedKvMatches)) {
-                        $nestedKey = trim($nestedKvMatches[2]);
-                        $nestedRawValue = trim((string) $nestedKvMatches[6]);
-                        $nestedParsed = self::parseScalarToken($nestedRawValue);
-                        $nestedValue = $nestedParsed['value'];
-                        self::addValue($blockEntry, $nestedKey, $nestedValue);
+                    $nestedKv = self::parseKvLine($blockLine);
+                    if ($nestedKv !== null) {
+                        self::addValue($blockEntry, $nestedKv['key'], $nestedKv['value']);
                         $blockMetaEntries[] = [
                             'type' => 'kv',
-                            'key' => $nestedKey,
-                            'rawFormat' => [
-                                'prefix' => $nestedKvMatches[1],
-                                'suffixKey' => $nestedKvMatches[3],
-                                'separator' => $nestedKvMatches[4],
-                                'valuePrefix' => $nestedKvMatches[5],
-                                'terminator' => $nestedKvMatches[7] === ';' ? ';' : '',
-                                'quoted' => $nestedParsed['quoted'],
-                                'quote' => $nestedParsed['quote'],
-                            ],
+                            'key' => $nestedKv['key'],
+                            'raw' => $blockLine,
+                            'rawFormat' => $nestedKv['rawFormat'],
                         ];
                         continue;
                     }
 
                     $nestedDirective = self::parseDirectiveLine($blockLine);
                     if ($nestedDirective !== null) {
-                        self::addValue($blockEntry, '_directives', $nestedDirective['key']);
+                        self::addDirective($blockEntry, $nestedDirective['key']);
                         $blockMetaEntries[] = [
                             'type' => 'directive',
                             'key' => $nestedDirective['key'],
+                            'raw' => $blockLine,
                             'rawFormat' => [
-                                'prefix' => $nestedDirective['prefix'],
-                                'terminator' => $nestedDirective['terminator'],
+                                'prefix' => $nestedDirective['prefix'] ?: $defaultIndent,
+                                'terminator' => $nestedDirective['terminator'] ?: ';',
                             ],
                         ];
                         continue;
                     }
 
-                        $blockMetaEntries[] = ['type' => 'raw', 'raw' => $blockLine];
-                    }
+                    $blockMetaEntries[] = ['type' => 'raw', 'raw' => $blockLine];
                 }
 
-                if ($currentSection) {
-                    self::addValue($data[$currentSection], $blockKey, $blockEntry);
-                } else {
-                    self::addValue($data, $blockKey, $blockEntry);
-                }
+                self::addValueToScope($data, $currentSection, $blockStart['key'], $blockEntry);
 
                 $meta[] = [
                     'type' => 'block',
-                    'key' => $blockKey,
+                    'key' => $blockStart['key'],
                     'section' => $currentSection,
-                    'rawFormat' => [
-                        'prefix' => $blockMatches[1],
-                        'suffixKey' => $blockMatches[3],
-                        'separator' => '=',
-                        'valuePrefix' => $blockMatches[4] . '"',
-                        'valueSuffix' => '"',
-                        'childIndent' => $baseIndent,
-                    ],
+                    'inline' => false,
+                    'raw' => $blockStart['raw'],
+                    'rawFormat' => $blockStart['rawFormat'],
                     'entries' => $blockMetaEntries,
                 ];
+
                 continue;
             }
 
-            if (preg_match('/^(\s*)([^=:]+?)(\s*)([=:])(\s*)(.*?)(;?)\s*$/', $line, $matches)) {
-                $key = trim($matches[2]);
-                $separator = $matches[4];
-                $valueRaw = $matches[6];
-                $parsedValue = self::parseScalarToken($valueRaw);
-                $value = $parsedValue['value'];
-                if ($separator === '=' && $key === 'LoadExtension') {
-                    $value = self::parseLoadExtensionValue($valueRaw);
-                }
-
-                if ($currentSection) {
-                    self::addValue($data[$currentSection], $key, $value);
-                } else {
-                    self::addValue($data, $key, $value);
-                }
+            $kv = self::parseKvLine($line);
+            if ($kv !== null) {
+                self::addValueToScope($data, $currentSection, $kv['key'], $kv['value']);
 
                 $meta[] = [
                     'type' => 'kv',
-                    'key' => $key,
+                    'key' => $kv['key'],
                     'section' => $currentSection,
                     'raw' => $line,
-                    'rawFormat' => [
-                        'prefix' => $matches[1],
-                        'suffixKey' => $matches[3],
-                        'separator' => $separator,
-                        'valuePrefix' => $matches[5],
-                        'quoted' => $parsedValue['quoted'],
-                        'quote' => $parsedValue['quote'],
-                        'terminator' => $matches[7] === ';' ? ';' : '',
-                    ],
+                    'rawFormat' => $kv['rawFormat'],
                 ];
+
                 continue;
             }
 
             $directive = self::parseDirectiveLine($line);
             if ($directive !== null) {
                 if ($currentSection) {
-                    self::addValue($data[$currentSection], '_directives', $directive['key']);
+                    $data[$currentSection] ??= [];
+                    self::addDirective($data[$currentSection], $directive['key']);
                 } else {
-                    self::addValue($data, '_directives', $directive['key']);
+                    self::addDirective($data, $directive['key']);
                 }
 
                 $meta[] = [
@@ -242,9 +177,10 @@ class ConfParserService
                     'raw' => $line,
                     'rawFormat' => [
                         'prefix' => $directive['prefix'],
-                        'terminator' => $directive['terminator'],
+                        'terminator' => $directive['terminator'] ?: ';',
                     ],
                 ];
+
                 continue;
             }
 
@@ -259,19 +195,22 @@ class ConfParserService
         ];
     }
 
-    public static function serialize(array|string $data): string
+    public static function serialize(array|string $payload): string
     {
-        if (is_string($data)) {
-            return $data;
+        if (is_string($payload)) {
+            return $payload;
         }
 
-        $payload = $data;
-        if (isset($payload['format']) && $payload['format'] === 'conf') {
-            $meta = $payload['meta'] ?? [];
+        if (($payload['format'] ?? null) === 'conf') {
             $jsonData = $payload['data'] ?? [];
-        } else {
             $meta = $payload['meta'] ?? [];
+        } else {
             $jsonData = $payload['data'] ?? $payload;
+            $meta = $payload['meta'] ?? [];
+        }
+
+        if (!is_array($jsonData)) {
+            $jsonData = [];
         }
 
         if (!is_array($meta) || $meta === []) {
@@ -279,8 +218,11 @@ class ConfParserService
         }
 
         $lines = [];
-        $keyCounters = [];
-        $directiveCounters = [];
+        $counters = [
+            'kv' => [],
+            'block' => [],
+            'directive' => [],
+        ];
 
         foreach ($meta as $item) {
             $type = $item['type'] ?? 'raw';
@@ -290,210 +232,538 @@ class ConfParserService
                 continue;
             }
 
+            if ($type === 'kv') {
+                $section = $item['section'] ?? null;
+                $key = $item['key'] ?? null;
+
+                if (!is_string($key) || $key === '') {
+                    continue;
+                }
+
+                $scope = self::getScope($jsonData, $section);
+                $value = self::consumeValue($scope, $key, $counters['kv'], self::counterKey($section, $key, 'kv'));
+
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                if ($key === 'LoadExtension') {
+                    $lines[] = self::serializeLoadExtensionLine($key, $value, $item['rawFormat'] ?? []);
+                    continue;
+                }
+
+                $lines[] = self::serializeKvLine($key, $value, $item['rawFormat'] ?? []);
+                continue;
+            }
+
             if ($type === 'block') {
                 $section = $item['section'] ?? null;
-                $key = $item['key'] ?? '';
-                $format = $item['rawFormat'] ?? [];
-                $jsonRef = $section ? ($jsonData[$section] ?? null) : $jsonData;
-                $counterKey = ($section ?? 'root') . '.' . $key . '.__block';
-                $index = $keyCounters[$counterKey] ?? 0;
-                $keyCounters[$counterKey] = $index + 1;
-                $candidate = is_array($jsonRef) ? ($jsonRef[$key] ?? null) : null;
-                $entry = is_array($candidate) && array_is_list($candidate)
-                    ? ($candidate[$index] ?? null)
-                    : ($index === 0 ? $candidate : null);
+                $key = $item['key'] ?? null;
+
+                if (!is_string($key) || $key === '') {
+                    continue;
+                }
+
+                $scope = self::getScope($jsonData, $section);
+                $entry = self::consumeValue($scope, $key, $counters['block'], self::counterKey($section, $key, 'block'));
 
                 if (!is_array($entry)) {
                     continue;
                 }
 
-                $hasBlockValue = array_key_exists('value', $entry) && trim((string) $entry['value']) !== '';
-                if ($hasBlockValue) {
-                    $blockValue = trim((string) $entry['value']);
-                    $lines[] = sprintf(
-                        '%s%s%s%s%s%s {',
-                        $format['prefix'] ?? '',
-                        $key,
-                        $format['suffixKey'] ?? ' ',
-                        $format['separator'] ?? '=',
-                        $format['valuePrefix'] ?? ' "',
-                        $blockValue . ($format['valueSuffix'] ?? '"'),
-                    );
-                } else {
-                    $lines[] = sprintf('%s%s {', $format['prefix'] ?? '', $key);
-                }
-
-                $blockMetaEntries = $item['entries'] ?? [];
-                $blockKeyCounters = [];
-                $usedDirectives = [];
-                $defaultIndent = $format['childIndent'] ?? '    ';
-
-                foreach ($blockMetaEntries as $blockMeta) {
-                    $blockType = $blockMeta['type'] ?? 'raw';
-                    if (in_array($blockType, ['comment', 'empty', 'raw'], true)) {
-                        $lines[] = $blockMeta['raw'] ?? '';
-                        continue;
-                    }
-
-                    if ($blockType === 'kv') {
-                        $nestedKey = $blockMeta['key'] ?? null;
-                        if (!$nestedKey) {
-                            continue;
-                        }
-                        $nestedFormat = $blockMeta['rawFormat'] ?? [];
-                        $counter = $blockKeyCounters[$nestedKey] ?? 0;
-                        $blockKeyCounters[$nestedKey] = $counter + 1;
-                        $nestedCandidate = $entry[$nestedKey] ?? '';
-                        $nestedValue = is_array($nestedCandidate)
-                            ? ($nestedCandidate[$counter] ?? '')
-                            : ($counter === 0 ? $nestedCandidate : '');
-
-                        $serializedNestedValue = self::serializeScalarValue($nestedValue, $nestedFormat);
-                        $lines[] = sprintf(
-                            '%s%s%s%s%s%s%s',
-                            $nestedFormat['prefix'] ?? $defaultIndent,
-                            $nestedKey,
-                            $nestedFormat['suffixKey'] ?? ' ',
-                            $nestedFormat['separator'] ?? '=',
-                            $nestedFormat['valuePrefix'] ?? ' ',
-                            $serializedNestedValue,
-                            $nestedFormat['terminator'] ?? ';',
-                        );
-                        continue;
-                    }
-
-                    if ($blockType === 'directive') {
-                        $nestedFormat = $blockMeta['rawFormat'] ?? [];
-                        $candidateDirectives = $entry['_directives'] ?? [];
-                        $directivesList = is_array($candidateDirectives) ? $candidateDirectives : [$candidateDirectives];
-                        $counterKey = '__directives';
-                        $directiveIndex = $blockKeyCounters[$counterKey] ?? 0;
-                        $blockKeyCounters[$counterKey] = $directiveIndex + 1;
-                        $directiveValue = $directivesList[$directiveIndex] ?? null;
-                        if (!is_string($directiveValue) || trim($directiveValue) === '') {
-                            continue;
-                        }
-
-                        $normalizedDirective = self::normalizeDirectiveValue($directiveValue);
-                        $usedDirectives[$directiveIndex] = $normalizedDirective;
-                        $lines[] = sprintf(
-                            '%s%s%s',
-                            $nestedFormat['prefix'] ?? $defaultIndent,
-                            $normalizedDirective,
-                            $nestedFormat['terminator'] ?? ';',
-                        );
-                    }
-                }
-
-                $extraDirectives = self::remainingDirectives($entry['_directives'] ?? [], $usedDirectives);
-                foreach ($extraDirectives as $directive) {
-                    $lines[] = $defaultIndent . self::normalizeDirectiveValue($directive) . ';';
-                }
-                $lines[] = ($format['prefix'] ?? '') . '};';
-                continue;
-            }
-
-            if ($type !== 'kv') {
-                if ($type !== 'directive') {
-                    continue;
-                }
-
-                $section = $item['section'] ?? null;
-                $format = $item['rawFormat'] ?? [];
-                $jsonRef = $section ? ($jsonData[$section] ?? null) : $jsonData;
-
-                if (!is_array($jsonRef) || !array_key_exists('_directives', $jsonRef)) {
-                    continue;
-                }
-
-                $candidate = $jsonRef['_directives'];
-                $counterKey = ($section ?? 'root') . '._directives';
-                $index = $directiveCounters[$counterKey] ?? 0;
-                $directiveCounters[$counterKey] = $index + 1;
-
-                if (is_array($candidate)) {
-                    $directiveValue = $candidate[$index] ?? null;
-                } elseif ($index === 0) {
-                    $directiveValue = $candidate;
-                } else {
-                    $directiveValue = null;
-                }
-
-                if (!is_string($directiveValue) || trim($directiveValue) === '') {
-                    $lines[] = $item['raw'] ?? '';
-                    continue;
-                }
-
-                $lines[] = sprintf('%s%s%s', $format['prefix'] ?? '', self::normalizeDirectiveValue($directiveValue), $format['terminator'] ?? '');
-                continue;
-            }
-
-            $section = $item['section'] ?? null;
-            $key = $item['key'] ?? null;
-            $format = $item['rawFormat'] ?? [];
-
-            if (!$key) {
-                $lines[] = $item['raw'] ?? '';
-                continue;
-            }
-
-            $jsonRef = $section ? ($jsonData[$section] ?? null) : $jsonData;
-            $value = '';
-            if (is_array($jsonRef) && array_key_exists($key, $jsonRef)) {
-                $candidate = $jsonRef[$key];
-                if (is_array($candidate)) {
-                    $counterKey = ($section ?? 'root') . '_' . $key;
-                    $index = $keyCounters[$counterKey] ?? 0;
-                    $value = $candidate[$index] ?? '';
-                    $keyCounters[$counterKey] = $index + 1;
-                } else {
-                    $value = $candidate;
-                }
-            }
-
-            if ($key === 'LoadExtension') {
-                $serializedLoadExtension = self::serializeLoadExtensionValue($value);
-                if ($serializedLoadExtension === null) {
-                    continue;
-                }
-
-                $lines[] = sprintf(
-                    '%s%s%s%s%s%s',
-                    $format['prefix'] ?? '',
-                    $key,
-                    $format['suffixKey'] ?? '',
-                    $format['separator'] ?? '=',
-                    $format['valuePrefix'] ?? '',
-                    $serializedLoadExtension,
+                $lines = array_merge(
+                    $lines,
+                    self::serializeBlock($key, $entry, $item['rawFormat'] ?? [], $item['entries'] ?? [], (bool) ($item['inline'] ?? false))
                 );
+
                 continue;
             }
 
-            $lines[] = sprintf(
-                '%s%s%s%s%s%s%s',
-                $format['prefix'] ?? '',
-                $key,
-                $format['suffixKey'] ?? '',
-                $format['separator'] ?? '=',
-                $format['valuePrefix'] ?? '',
-                self::serializeScalarValue($value, $format),
-                $format['terminator'] ?? '',
-            );
+            if ($type === 'directive') {
+                $section = $item['section'] ?? null;
+                $scope = self::getScope($jsonData, $section);
+                $format = $item['rawFormat'] ?? [];
+                $directive = self::consumeDirective($scope, $counters['directive'], self::counterKey($section, '_directives', 'directive'));
+
+                if ($directive === null || trim((string) $directive) === '') {
+                    continue;
+                }
+
+                $lines[] = self::serializeDirectiveLine((string) $directive, $format);
+            }
         }
 
-        foreach (self::remainingDirectives($jsonData['_directives'] ?? [], []) as $directive) {
-            $lines[] = self::normalizeDirectiveValue($directive) . ';';
-        }
+        self::appendExtraValues($lines, $jsonData, $meta, $counters);
 
         return implode("\n", $lines);
+    }
+
+    private static function parseKvLine(string $line): ?array
+    {
+        if (!preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)([=:])(\s*)(.*?)(\s*;\s*)?$/', $line, $matches)) {
+            return null;
+        }
+
+        $key = trim($matches[2]);
+        $rawValue = $matches[6];
+        $terminator = isset($matches[7]) && trim($matches[7]) === ';' ? ';' : '';
+
+        if ($key === 'LoadExtension' && $matches[4] === '=') {
+            $parsedLoadExtension = self::parseLoadExtensionValue($rawValue);
+
+            return [
+                'key' => $key,
+                'value' => $parsedLoadExtension['value'],
+                'rawFormat' => [
+                    'prefix' => $matches[1],
+                    'suffixKey' => $matches[3],
+                    'separator' => $matches[4],
+                    'valuePrefix' => $matches[5],
+                    'terminator' => $terminator,
+                    'loadExtension' => $parsedLoadExtension['format'],
+                ],
+            ];
+        }
+
+        $parsed = self::parseScalarToken($rawValue);
+
+        return [
+            'key' => $key,
+            'value' => $parsed['value'],
+            'rawFormat' => [
+                'prefix' => $matches[1],
+                'suffixKey' => $matches[3],
+                'separator' => $matches[4],
+                'valuePrefix' => $matches[5],
+                'terminator' => $terminator,
+                'quoted' => $parsed['quoted'],
+                'quote' => $parsed['quote'],
+            ],
+        ];
+    }
+
+    private static function parseInlineBlock(string $line): ?array
+    {
+        if (!preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)(?:=(\s*)(?:(["\'])(.*?)\5\s*)?)?\{\s*(.*?)\s*}\s*;\s*$/', $line, $matches)) {
+            return null;
+        }
+
+        $key = trim($matches[2]);
+        $entry = [];
+        $entries = [];
+        $childIndent = ($matches[1] ?? '') . '    ';
+
+        if (($matches[6] ?? '') !== '') {
+            $entry['value'] = $matches[6];
+        }
+
+        $inlineContent = trim($matches[7] ?? '');
+        foreach (self::splitConfStatements($inlineContent) as $statement) {
+            $statement = trim($statement);
+
+            if ($statement === '') {
+                continue;
+            }
+
+            $nestedKv = self::parseKvLine($childIndent . $statement . ';');
+            if ($nestedKv !== null) {
+                self::addValue($entry, $nestedKv['key'], $nestedKv['value']);
+                $entries[] = [
+                    'type' => 'kv',
+                    'key' => $nestedKv['key'],
+                    'rawFormat' => $nestedKv['rawFormat'],
+                ];
+                continue;
+            }
+
+            $directive = self::parseDirectiveLine($childIndent . $statement . ';');
+            if ($directive !== null) {
+                self::addDirective($entry, $directive['key']);
+                $entries[] = [
+                    'type' => 'directive',
+                    'key' => $directive['key'],
+                    'rawFormat' => [
+                        'prefix' => $childIndent,
+                        'terminator' => ';',
+                    ],
+                ];
+            }
+        }
+
+        return [
+            'key' => $key,
+            'value' => $entry,
+            'entries' => $entries,
+            'rawFormat' => [
+                'prefix' => $matches[1],
+                'suffixKey' => $matches[3],
+                'separator' => isset($matches[4]) && $matches[4] !== '' ? '=' : '',
+                'valuePrefix' => $matches[4] ?? ' ',
+                'quoted' => ($matches[5] ?? '') !== '',
+                'quote' => $matches[5] ?: '"',
+                'childIndent' => $childIndent,
+            ],
+        ];
+    }
+
+    private static function parseBlockStart(string $line): ?array
+    {
+        if (!preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)(?:=(\s*)(?:(["\'])(.*?)\5\s*)?)?\{\s*$/', $line, $matches)) {
+            return null;
+        }
+
+        $entry = [];
+        if (($matches[6] ?? '') !== '') {
+            $entry['value'] = $matches[6];
+        }
+
+        return [
+            'key' => trim($matches[2]),
+            'raw' => $line,
+            'value' => $entry,
+            'rawFormat' => [
+                'prefix' => $matches[1],
+                'suffixKey' => $matches[3],
+                'separator' => isset($matches[4]) && $matches[4] !== '' ? '=' : '',
+                'valuePrefix' => $matches[4] ?? ' ',
+                'quoted' => ($matches[5] ?? '') !== '',
+                'quote' => $matches[5] ?: '"',
+                'childIndent' => ($matches[1] ?? '') . '    ',
+            ],
+        ];
+    }
+
+    private static function parseLoadExtensionValue(string $rawValue): array
+    {
+        $trimmed = trim($rawValue);
+        $trimmed = preg_replace('/\s*;\s*$/', '', $trimmed) ?? $trimmed;
+
+        if (preg_match('/^(["\'])(.*?)\1\s*:\s*(["\'])(.*?)\3$/', $trimmed, $matches)) {
+            return [
+                'value' => [
+                    'value' => $matches[2],
+                    'argument' => $matches[4],
+                ],
+                'format' => [
+                    'valueQuoted' => true,
+                    'valueQuote' => $matches[1],
+                    'argumentQuoted' => true,
+                    'argumentQuote' => $matches[3],
+                    'argumentSeparator' => ' : ',
+                ],
+            ];
+        }
+
+        if (preg_match('/^(["\'])(.*?)\1$/', $trimmed, $matches)) {
+            return [
+                'value' => [
+                    'value' => $matches[2],
+                ],
+                'format' => [
+                    'valueQuoted' => true,
+                    'valueQuote' => $matches[1],
+                    'argumentQuoted' => true,
+                    'argumentQuote' => '"',
+                    'argumentSeparator' => ' : ',
+                ],
+            ];
+        }
+
+        if (preg_match('/^(.+?)\s*:\s*(.+)$/', $trimmed, $matches)) {
+            return [
+                'value' => [
+                    'value' => trim($matches[1], " \t\"'"),
+                    'argument' => trim($matches[2], " \t\"'"),
+                ],
+                'format' => [
+                    'valueQuoted' => str_starts_with(trim($matches[1]), '"') || str_starts_with(trim($matches[1]), "'"),
+                    'valueQuote' => '"',
+                    'argumentQuoted' => str_starts_with(trim($matches[2]), '"') || str_starts_with(trim($matches[2]), "'"),
+                    'argumentQuote' => '"',
+                    'argumentSeparator' => ' : ',
+                ],
+            ];
+        }
+
+        return [
+            'value' => [
+                'value' => trim($trimmed, " \t\"'"),
+            ],
+            'format' => [
+                'valueQuoted' => str_starts_with($trimmed, '"') || str_starts_with($trimmed, "'"),
+                'valueQuote' => '"',
+                'argumentQuoted' => true,
+                'argumentQuote' => '"',
+                'argumentSeparator' => ' : ',
+            ],
+        ];
+    }
+
+    private static function serializeLoadExtensionLine(string $key, mixed $value, array $format): string
+    {
+        $loadFormat = $format['loadExtension'] ?? [];
+        $prefix = $format['prefix'] ?? '';
+        $suffixKey = $format['suffixKey'] ?? ' ';
+        $separator = $format['separator'] ?? '=';
+        $valuePrefix = $format['valuePrefix'] ?? ' ';
+        $terminator = $format['terminator'] ?? ';';
+
+        if (is_string($value)) {
+            $value = [
+                'value' => trim($value, " \t;\"'"),
+            ];
+        }
+
+        if (!is_array($value)) {
+            return '';
+        }
+
+        $path = trim((string) ($value['value'] ?? ''), " \t;\"'");
+        if ($path === '') {
+            return '';
+        }
+
+        $pathText = self::quoteIfNeeded($path, $loadFormat['valueQuoted'] ?? true, $loadFormat['valueQuote'] ?? '"');
+
+        $argument = array_key_exists('argument', $value) ? trim((string) $value['argument'], " \t;\"'") : '';
+        if ($argument !== '') {
+            $argumentText = self::quoteIfNeeded($argument, $loadFormat['argumentQuoted'] ?? true, $loadFormat['argumentQuote'] ?? '"');
+            $pathText .= ($loadFormat['argumentSeparator'] ?? ' : ') . $argumentText;
+        }
+
+        return $prefix . $key . $suffixKey . $separator . $valuePrefix . $pathText . $terminator;
+    }
+
+    private static function serializeKvLine(string $key, mixed $value, array $format): string
+    {
+        return sprintf(
+            '%s%s%s%s%s%s%s',
+            $format['prefix'] ?? '',
+            $key,
+            $format['suffixKey'] ?? '',
+            $format['separator'] ?? '=',
+            $format['valuePrefix'] ?? '',
+            self::serializeScalarValue($value, $format),
+            $format['terminator'] ?? ''
+        );
+    }
+
+    private static function serializeBlock(string $key, array $entry, array $format, array $entries, bool $inline): array
+    {
+        $blockValue = array_key_exists('value', $entry) ? trim((string) $entry['value']) : '';
+        $prefix = $format['prefix'] ?? '';
+        $childIndent = $format['childIndent'] ?? '    ';
+
+        $bodyParts = [];
+        $bodyLines = [];
+        $nestedCounters = [];
+        $directiveCounter = 0;
+
+        foreach ($entries as $entryMeta) {
+            $type = $entryMeta['type'] ?? 'raw';
+
+            if ($type === 'kv') {
+                $nestedKey = $entryMeta['key'] ?? null;
+                if (!$nestedKey) {
+                    continue;
+                }
+
+                $value = self::consumeValue($entry, $nestedKey, $nestedCounters, $nestedKey);
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                $line = self::serializeKvLine($nestedKey, $value, $entryMeta['rawFormat'] ?? ['prefix' => $childIndent, 'terminator' => ';']);
+                $bodyLines[] = $line;
+                $bodyParts[] = trim($line);
+                continue;
+            }
+
+            if ($type === 'directive') {
+                $directives = self::listify($entry['_directives'] ?? []);
+                $directive = $directives[$directiveCounter] ?? null;
+                $directiveCounter++;
+
+                if (!is_string($directive) || trim($directive) === '') {
+                    continue;
+                }
+
+                $line = self::serializeDirectiveLine($directive, $entryMeta['rawFormat'] ?? ['prefix' => $childIndent, 'terminator' => ';']);
+                $bodyLines[] = $line;
+                $bodyParts[] = trim($line);
+                continue;
+            }
+
+            if (in_array($type, ['comment', 'empty', 'raw'], true)) {
+                $bodyLines[] = $entryMeta['raw'] ?? '';
+            }
+        }
+
+        $directives = self::listify($entry['_directives'] ?? []);
+        for ($i = $directiveCounter; $i < count($directives); $i++) {
+            $directive = $directives[$i];
+            if (!is_string($directive) || trim($directive) === '') {
+                continue;
+            }
+            $line = $childIndent . self::normalizeDirectiveValue($directive) . ';';
+            $bodyLines[] = $line;
+            $bodyParts[] = trim($line);
+        }
+
+        if ($inline) {
+            $head = self::serializeBlockHeader($key, $blockValue, $format, true);
+            return [$head . ' ' . implode(' ', array_filter($bodyParts)) . ' };'];
+        }
+
+        $lines = [self::serializeBlockHeader($key, $blockValue, $format, false)];
+        $lines = array_merge($lines, $bodyLines);
+        $lines[] = $prefix . '};';
+
+        return $lines;
+    }
+
+    private static function serializeBlockHeader(string $key, string $value, array $format, bool $inline): string
+    {
+        $prefix = $format['prefix'] ?? '';
+        $suffixKey = $format['suffixKey'] ?? ' ';
+        $separator = $format['separator'] ?? '=';
+        $valuePrefix = $format['valuePrefix'] ?? ' ';
+        $hasValue = $value !== '';
+
+        if (!$hasValue) {
+            return $prefix . $key . ' {';
+        }
+
+        $quotedValue = self::quoteIfNeeded($value, $format['quoted'] ?? true, $format['quote'] ?? '"');
+
+        return $prefix . $key . $suffixKey . $separator . $valuePrefix . $quotedValue . ' {';
+    }
+
+    private static function serializeDirectiveLine(string $directive, array $format): string
+    {
+        $normalized = self::normalizeDirectiveValue($directive);
+        if ($normalized === '') {
+            return '';
+        }
+
+        return ($format['prefix'] ?? '') . $normalized . ($format['terminator'] ?? ';');
+    }
+
+    private static function parseDirectiveLine(string $line): ?array
+    {
+        if (!preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)(;?)\s*$/', $line, $matches)) {
+            return null;
+        }
+
+        if (in_array($matches[2], ['{', '}'], true)) {
+            return null;
+        }
+
+        return [
+            'prefix' => $matches[1],
+            'key' => $matches[2],
+            'terminator' => $matches[4] === ';' ? ';' : '',
+        ];
+    }
+
+    private static function parseScalarToken(string $rawValue): array
+    {
+        $trimmed = trim($rawValue);
+        $trimmed = preg_replace('/\s*;\s*$/', '', $trimmed) ?? $trimmed;
+
+        if (preg_match('/^(["\'])([^"\']*)\1$/', $trimmed, $matches)) {
+            return [
+                'value' => $matches[2],
+                'quoted' => true,
+                'quote' => $matches[1],
+            ];
+        }
+
+        return [
+            'value' => $trimmed,
+            'quoted' => false,
+            'quote' => null,
+        ];
+    }
+
+    private static function serializeScalarValue(mixed $value, array $format): string
+    {
+        $text = trim((string) $value);
+
+        if (!($format['quoted'] ?? false)) {
+            return $text;
+        }
+
+        return self::quoteIfNeeded($text, true, $format['quote'] ?? '"');
+    }
+
+    private static function quoteIfNeeded(string $value, bool $quoted, string $quote = '"'): string
+    {
+        $clean = trim($value);
+
+        if (preg_match('/^(["\'])(.*)\1$/s', $clean, $matches)) {
+            $clean = $matches[2];
+        }
+
+        if (!$quoted) {
+            return $clean;
+        }
+
+        return $quote . $clean . $quote;
+    }
+
+    private static function splitConfStatements(string $content): array
+    {
+        $parts = [];
+        $buffer = '';
+        $quote = null;
+        $length = strlen($content);
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = $content[$i];
+
+            if (($char === '"' || $char === "'") && ($i === 0 || $content[$i - 1] !== '\\')) {
+                if ($quote === null) {
+                    $quote = $char;
+                } elseif ($quote === $char) {
+                    $quote = null;
+                }
+            }
+
+            if ($char === ';' && $quote === null) {
+                $parts[] = $buffer;
+                $buffer = '';
+                continue;
+            }
+
+            $buffer .= $char;
+        }
+
+        if (trim($buffer) !== '') {
+            $parts[] = $buffer;
+        }
+
+        return $parts;
+    }
+
+    private static function addValueToScope(array &$data, ?string $section, string $key, mixed $value): void
+    {
+        if ($section) {
+            $data[$section] ??= [];
+            self::addValue($data[$section], $key, $value);
+            return;
+        }
+
+        self::addValue($data, $key, $value);
     }
 
     private static function addValue(array &$target, string $key, mixed $value): void
     {
         if (array_key_exists($key, $target)) {
-            if (!is_array($target[$key])) {
+            if (!is_array($target[$key]) || !array_is_list($target[$key])) {
                 $target[$key] = [$target[$key]];
             }
+
             $target[$key][] = $value;
             return;
         }
@@ -501,30 +771,145 @@ class ConfParserService
         $target[$key] = $value;
     }
 
-    private static function parseLoadExtensionValue(string $rawValue): mixed
+    private static function addDirective(array &$target, string $directive): void
     {
-        $trimmed = trim($rawValue);
-        $trimmed = preg_replace('/;\s*$/', '', $trimmed) ?? $trimmed;
-
-        if (preg_match('/^"([^"]+)"\s*:\s*"([^"]+)"$/', $trimmed, $matches)) {
-            return [
-                'value' => $matches[1],
-                'argument' => $matches[2],
-            ];
+        $normalized = self::normalizeDirectiveValue($directive);
+        if ($normalized === '') {
+            return;
         }
 
-        if (preg_match('/^"([^"]+)"$/', $trimmed, $matches)) {
-            return ['value' => $matches[1]];
+        $target['_directives'] ??= [];
+        if (!is_array($target['_directives'])) {
+            $target['_directives'] = [$target['_directives']];
         }
 
-        if (preg_match('/^([^:]+?)\s*:\s*(.+)$/', $trimmed, $matches)) {
-            return [
-                'value' => trim($matches[1], " \t\"'"),
-                'argument' => trim($matches[2], " \t\"'"),
-            ];
+        $target['_directives'][] = $normalized;
+    }
+
+    private static function normalizeDirectiveValue(string $directive): string
+    {
+        $normalized = trim($directive);
+        $normalized = ltrim($normalized, ';');
+        $normalized = rtrim($normalized, ';');
+
+        return trim($normalized);
+    }
+
+    private static function getScope(array $jsonData, ?string $section): array
+    {
+        if ($section === null || $section === '') {
+            return $jsonData;
         }
 
-        return trim($trimmed, " \t\"'");
+        $scope = $jsonData[$section] ?? [];
+
+        return is_array($scope) ? $scope : [];
+    }
+
+    private static function consumeValue(array $scope, string $key, array &$counters, string $counterKey): mixed
+    {
+        if (!array_key_exists($key, $scope)) {
+            return null;
+        }
+
+        $candidate = $scope[$key];
+
+        if (is_array($candidate) && array_is_list($candidate)) {
+            $index = $counters[$counterKey] ?? 0;
+            $counters[$counterKey] = $index + 1;
+
+            return $candidate[$index] ?? null;
+        }
+
+        $index = $counters[$counterKey] ?? 0;
+        $counters[$counterKey] = $index + 1;
+
+        return $index === 0 ? $candidate : null;
+    }
+
+    private static function consumeDirective(array $scope, array &$counters, string $counterKey): ?string
+    {
+        $directives = self::listify($scope['_directives'] ?? []);
+        $index = $counters[$counterKey] ?? 0;
+        $counters[$counterKey] = $index + 1;
+
+        $value = $directives[$index] ?? null;
+
+        return is_string($value) ? $value : null;
+    }
+
+    private static function appendExtraValues(array &$lines, array $jsonData, array $meta, array $counters): void
+    {
+        $metaKeys = [];
+        foreach ($meta as $item) {
+            if (($item['section'] ?? null) !== null) {
+                continue;
+            }
+            if (in_array(($item['type'] ?? ''), ['kv', 'block'], true) && isset($item['key'])) {
+                $metaKeys[$item['key']] = $item['type'];
+            }
+        }
+
+        foreach ($jsonData as $key => $value) {
+            if ($key === '_directives') {
+                $used = $counters['directive'][self::counterKey(null, '_directives', 'directive')] ?? 0;
+                $directives = self::listify($value);
+                for ($i = $used; $i < count($directives); $i++) {
+                    if (is_string($directives[$i]) && trim($directives[$i]) !== '') {
+                        $lines[] = self::normalizeDirectiveValue($directives[$i]) . ';';
+                    }
+                }
+                continue;
+            }
+
+            if (isset($metaKeys[$key])) {
+                $type = $metaKeys[$key];
+                $counterKey = self::counterKey(null, $key, $type);
+                $used = $counters[$type][$counterKey] ?? 0;
+                $items = (is_array($value) && array_is_list($value)) ? $value : [$value];
+
+                for ($i = $used; $i < count($items); $i++) {
+                    if ($key === 'LoadExtension') {
+                        $line = self::serializeLoadExtensionLine($key, $items[$i], [
+                            'prefix' => '',
+                            'suffixKey' => ' ',
+                            'separator' => '=',
+                            'valuePrefix' => ' ',
+                            'terminator' => ';',
+                            'loadExtension' => [
+                                'valueQuoted' => true,
+                                'valueQuote' => '"',
+                                'argumentQuoted' => true,
+                                'argumentQuote' => '"',
+                                'argumentSeparator' => ' : ',
+                            ],
+                        ]);
+
+                        if ($line !== '') {
+                            $lines[] = $line;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static function listify(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_is_list($value) ? $value : [$value];
+        }
+
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        return [$value];
+    }
+
+    private static function counterKey(?string $section, string $key, string $type): string
+    {
+        return ($section ?: 'root') . '.' . $key . '.' . $type;
     }
 
     public static function normalizeLegacyDirectiveMeta(array $payload): array
@@ -554,12 +939,11 @@ class ConfParserService
             $section = $item['section'] ?? null;
             if (is_string($section) && $section !== '') {
                 $data[$section] ??= [];
-                if (!is_array($data[$section])) {
-                    continue;
+                if (is_array($data[$section])) {
+                    self::addDirective($data[$section], $directive['key']);
                 }
-                self::addValue($data[$section], '_directives', $directive['key']);
             } else {
-                self::addValue($data, '_directives', $directive['key']);
+                self::addDirective($data, $directive['key']);
             }
 
             $meta[$index] = [
@@ -569,7 +953,7 @@ class ConfParserService
                 'raw' => $rawLine,
                 'rawFormat' => [
                     'prefix' => $directive['prefix'],
-                    'terminator' => $directive['terminator'],
+                    'terminator' => $directive['terminator'] ?: ';',
                 ],
             ];
         }
@@ -578,110 +962,5 @@ class ConfParserService
         $payload['meta'] = $meta;
 
         return $payload;
-    }
-
-    private static function parseDirectiveLine(string $line): ?array
-    {
-        if (!preg_match('/^(\s*)([A-Za-z0-9_.-]+)(\s*)(;?)\s*$/', $line, $matches)) {
-            return null;
-        }
-
-        if ($matches[2] === '{' || $matches[2] === '}') {
-            return null;
-        }
-
-        return [
-            'prefix' => $matches[1],
-            'key' => $matches[2],
-            'terminator' => $matches[4] === ';' ? ';' : '',
-        ];
-    }
-
-    private static function normalizeDirectiveValue(string $directive): string
-    {
-        $normalized = trim($directive);
-        $normalized = ltrim($normalized, ';');
-        $normalized = rtrim($normalized, ';');
-        return trim($normalized);
-    }
-
-    private static function remainingDirectives(mixed $candidate, array $used): array
-    {
-        $directives = is_array($candidate) ? $candidate : [$candidate];
-        $usedMap = [];
-        foreach ($used as $item) {
-            $usedMap[self::normalizeDirectiveValue((string) $item)] = true;
-        }
-
-        $remaining = [];
-        foreach ($directives as $directive) {
-            if (!is_string($directive) || trim($directive) === '') {
-                continue;
-            }
-            $normalized = self::normalizeDirectiveValue($directive);
-            if ($normalized === '' || isset($usedMap[$normalized])) {
-                continue;
-            }
-            $remaining[] = $normalized;
-        }
-
-        return $remaining;
-    }
-
-    private static function serializeLoadExtensionValue(mixed $value): ?string
-    {
-        if (is_array($value)) {
-            $path = trim((string) ($value['value'] ?? ''), " \t\"'");
-            if ($path === '') {
-                return null;
-            }
-
-            $argument = isset($value['argument']) ? trim((string) $value['argument'], " \t\"'") : '';
-            if ($argument !== '') {
-                return '"' . $path . '" : "' . $argument . '";';
-            }
-
-            return '"' . $path . '";';
-        }
-
-        $text = trim((string) $value);
-        if ($text === '') {
-            return null;
-        }
-
-        $parsed = self::parseLoadExtensionValue($text);
-        if (is_array($parsed)) {
-            return self::serializeLoadExtensionValue($parsed);
-        }
-
-        $normalized = trim((string) $parsed, " \t\"'");
-        return $normalized === '' ? null : '"' . $normalized . '";';
-    }
-
-    private static function parseScalarToken(string $rawValue): array
-    {
-        $trimmed = trim($rawValue);
-        $trimmed = preg_replace('/;\s*$/', '', $trimmed) ?? $trimmed;
-        if (preg_match('/^(["\'])(.*)\1$/s', $trimmed, $m)) {
-            return ['value' => $m[2], 'quoted' => true, 'quote' => $m[1]];
-        }
-
-        return ['value' => trim($trimmed, " \t\"'"), 'quoted' => false, 'quote' => null];
-    }
-
-    private static function serializeScalarValue(mixed $value, array $format): string
-    {
-        $text = (string) $value;
-        if (!($format['quoted'] ?? false)) {
-            return $text;
-        }
-
-        $quote = (string) ($format['quote'] ?? '"');
-        $clean = trim($text);
-        if (preg_match('/^(["\']).*\1$/s', $clean)) {
-            $clean = substr($clean, 1, -1);
-        }
-
-        return $quote . $clean . $quote;
     }
 }

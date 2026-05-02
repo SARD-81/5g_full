@@ -413,14 +413,14 @@ class ModuleController extends ApiController
 
             foreach ($attachedServers as $server) {
                 $this->chackPermissionModule($server);
-
+            
                 $serverCredentials = $submittedServers->get((int) $server->id);
                 if (!$serverCredentials) {
                     throw ValidationException::withMessages([
                         'servers' => "SSH credentials for server ID {$server->id} are required.",
                     ]);
                 }
-
+            
                 $this->assertSshDeletePreflight($server, $serverCredentials);
                 $this->cleanupModuleArtifactsFromServer($module, $server, $serverCredentials);
             }
@@ -448,89 +448,123 @@ class ModuleController extends ApiController
 
             return response()->json(['msg' => 'Module Deleted', 'module' => $module]);
 
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
-
+        
             $msg = null;
+        
             if ($e instanceof ValidationException) {
                 $errors = $e->errors();
-                $msg = $errors['msg'][0] ?? null;
+                $msg = $errors['msg'][0]
+                    ?? $errors['servers'][0]
+                    ?? collect($errors)->flatten()->first();
             }
-
-            $msg = $msg ?: $this->normalizeSshDeleteFailureMessage($e) ?: $e->getMessage();
-
-            return response()->json(['success' => false, 'msg' => $msg], 422);
+        
+            $msg = $msg
+                ?: $this->normalizeSshDeleteFailureMessage($e)
+                ?: 'Failed to delete module. Please check SSH credentials and try again.';
+        
+            return response()->json([
+                'success' => false,
+                'msg' => $msg,
+            ], 422);
         }
     }
 
     private function assertSshDeletePreflight(Server $server, array $credentials): void
-    {
-        $username = (string) $credentials['username'];
-        $password = (string) $credentials['password'];
-        $port = (int) ($credentials['port'] ?? 22);
+{
+    $username = (string) $credentials['username'];
+    $password = (string) $credentials['password'];
+    $port = (int) ($credentials['port'] ?? 22);
 
+    $marker = '__SSH_DELETE_PREFLIGHT_OK__';
+
+    try {
         $sshHelper = new SshHelper($server->ip, $username, $password, $port);
-        $preflightMarker = '__SSH_DELETE_PREFLIGHT_OK__';
+        $output = $sshHelper->runCommandModule(
+            'echo ' . escapeshellarg($marker),
+            'delete-module-preflight',
+            'deleteModule.assertSshDeletePreflight'
+        );
 
-        try {
-            $output = $sshHelper->runCommandModule('echo ' . escapeshellarg($preflightMarker), 'delete-module-preflight', 'deleteModule.assertSshDeletePreflight');
-            if (! str_contains((string) $output, $preflightMarker)) {
-                $normalized = $this->normalizeSshDeleteFailureMessage($output);
-                throw ValidationException::withMessages([
-                    'msg' => $normalized ?: 'Unable to connect to the selected server using the provided SSH credentials.',
-                ]);
-            }
-        } catch (Throwable $e) {
-            $normalized = $this->normalizeSshDeleteFailureMessage($e) ?: 'Unable to connect to the selected server using the provided SSH credentials.';
-            if (str_contains($normalized, 'SSH authentication failed.')) {
-                $normalized = 'SSH authentication failed for server ' . $server->name . '. Please check the SSH username and password.';
-            }
+        if (!str_contains((string) $output, $marker)) {
+            $message = $this->normalizeSshDeleteFailureMessage($output)
+                ?: 'Unable to connect to the selected server using the provided SSH credentials.';
 
-            throw ValidationException::withMessages(['msg' => $normalized]);
+            throw ValidationException::withMessages(['msg' => $message]);
         }
+    } catch (\Throwable $e) {
+        $message = $this->normalizeSshDeleteFailureMessage($e)
+            ?: 'Unable to connect to the selected server using the provided SSH credentials.';
+
+        throw ValidationException::withMessages(['msg' => $message]);
     }
+}
 
-    private function normalizeSshDeleteFailureMessage(Throwable|string|null $errorOrOutput): ?string
-    {
-        $raw = $errorOrOutput instanceof Throwable ? $errorOrOutput->getMessage() : (string) $errorOrOutput;
-        $value = strtolower(trim($raw));
+private function normalizeSshDeleteFailureMessage(\Throwable|string|null $errorOrOutput): ?string
+{
+    $raw = $errorOrOutput instanceof \Throwable
+        ? $errorOrOutput->getMessage()
+        : (string) $errorOrOutput;
 
-        if ($value === '') {
-            return null;
-        }
+    $value = strtolower(trim($raw));
 
-        $authNeedles = [
-            'permission denied', 'authentication failed', 'unable to authenticate', 'failed to authenticate',
-            'auth fail', 'all configured authentication methods failed', 'ssh was not successful',
-            'password', 'login incorrect', 'your server login credentials are incorrect',
-        ];
-
-        foreach ($authNeedles as $needle) {
-            if (str_contains($value, $needle)) {
-                return 'SSH authentication failed. Please check the SSH username and password.';
-            }
-        }
-
-        $connectionNeedles = [
-            'connection refused', 'no route to host', 'network is unreachable', 'operation timed out',
-            'timed out', 'could not resolve hostname', 'name or service not known', 'connection timed out',
-            'unable to connect', 'connection closed'
-        ];
-
-        foreach ($connectionNeedles as $needle) {
-            if (str_contains($value, $needle)) {
-                return 'Unable to connect to the selected server using the provided SSH credentials.';
-            }
-        }
-
-        if (str_contains($value, 'ssh command execution failed') || str_contains($value, 'remote_command_failed')) {
-            return 'Unable to connect to the selected server using the provided SSH credentials.';
-        }
-
+    if ($value === '') {
         return null;
     }
+
+    $authNeedles = [
+        'permission denied',
+        'authentication failed',
+        'unable to authenticate',
+        'failed to authenticate',
+        'auth fail',
+        'all configured authentication methods failed',
+        'ssh was not successful',
+        'password',
+        'login incorrect',
+        'your server login credentials are incorrect',
+        'ssh_login_failed',
+    ];
+
+    foreach ($authNeedles as $needle) {
+        if (str_contains($value, $needle)) {
+            return 'SSH authentication failed. Please check the SSH username and password.';
+        }
+    }
+
+    $connectionNeedles = [
+        'connection refused',
+        'no route to host',
+        'network is unreachable',
+        'operation timed out',
+        'timed out',
+        'could not resolve hostname',
+        'name or service not known',
+        'connection timed out',
+        'unable to connect',
+        'connection closed',
+        'ssh_connection_failed',
+    ];
+
+    foreach ($connectionNeedles as $needle) {
+        if (str_contains($value, $needle)) {
+            return 'Unable to connect to the selected server using the provided SSH credentials.';
+        }
+    }
+
+    if (
+        str_contains($value, 'ssh command execution failed')
+        || str_contains($value, 'ssh command execution failed unexpectedly')
+        || str_contains($value, 'remote_command_failed')
+    ) {
+        return 'Unable to connect to the selected server using the provided SSH credentials.';
+    }
+
+    return null;
+}
 
     private function cleanupModuleArtifactsFromServer(Module $module, Server $server, array $credentials): void
     {
@@ -1151,58 +1185,92 @@ class ModuleController extends ApiController
     }
 
 
-    public function expertModuleFileIsServer (ExpertModuleFileIsServerRequset $request)
-    {
-        $credentials = $request->validated();
-        $module = Module::find($credentials['module_id']);
-        $server = Server::find($credentials['server_id']);
-        $pivotData = $module?->servers()->where('server_id', $credentials['server_id'])->first()?->pivot;
-        $fileName = ModuleIdentity::configFileName($module, $pivotData?->current_config);
-        $command = 'cat ' . escapeshellarg(rtrim((string) $server->path_config, '/') . '/' . $fileName);
+    public function expertModuleFileIsServer(ExpertModuleFileIsServerRequset $request)
+{
+    $credentials = $request->validated();
 
-        if ($server['is_down'] == server::OFF)
-            throw ValidationException::withMessages(['server' => 'server is off']);
+    $module = Module::with('servers')->find($credentials['module_id']);
+    $server = Server::find($credentials['server_id']);
 
-        try {
-                // download file
-            $sshHelper = new sshHelper($server->ip, $credentials['username'], $credentials['password'], $credentials['port'] ?? 22);
-            $output = $sshHelper->getFileContent($command);
-
-            $commandWarning = ! empty($output) ? CommandOutputAnalyzerService::extractErrors($output) : null;
-            if ($commandWarning) throw ValidationException::withMessages($commandWarning);
-
-
-            activity('export-config-module')
-                ->causedBy(Auth::user())
-                ->event('get')
-                ->withProperties([
-                    'type-log'    => 'server',
-                    'route'       => request()->fullUrl(),
-                    'method'      => 'expertModuleFileIsServer',
-                    'user'        => Auth::user()->makeHidden(['roles', 'permissions'])->toArray(),
-                    'user_role'   => Auth::user()->roles()->pluck('name')->first(),
-                    'module_id'   => $module['id'],
-                    'module_name' => $module['name'],
-                    'module_type' => $module['type'],
-                    'server'      => $server
-                ])
-                ->log('The export file config is taken from the module configuration.');
-
-
-            return response($output, 200, [
-                'Content-Type' => 'application/octet-stream',
-                'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
-                'X-Name-Header' => $fileName,
-                'Content-Length' => strlen($output),
-            ]);
-
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'msg' => $e->getMessage(),
-            ], 422);
-        }
+    if (!$module || !$server) {
+        throw ValidationException::withMessages([
+            'msg' => 'Invalid module or server selected.',
+        ]);
     }
+
+    if ($server['is_down'] == Server::OFF) {
+        throw ValidationException::withMessages([
+            'server' => 'server is off',
+        ]);
+    }
+
+    $this->chackPermissionModule($server);
+
+    $pivot = $module->servers()
+        ->where('server_id', $server->id)
+        ->first()?->pivot;
+
+    if (!$pivot) {
+        throw ValidationException::withMessages([
+            'msg' => 'The selected module is not attached to this server.',
+        ]);
+    }
+
+    $fileName = ModuleIdentity::configFileName($module, $pivot->current_config);
+    $configPath = rtrim((string) $server->path_config, '/') . '/' . $fileName;
+
+    try {
+        $sshHelper = new SshHelper(
+            $server->ip,
+            $credentials['username'],
+            $credentials['password'],
+            $credentials['port'] ?? 22
+        );
+
+        $output = $sshHelper->getFileContent('cat ' . escapeshellarg($configPath));
+
+        $commandWarning = !empty($output)
+            ? CommandOutputAnalyzerService::extractErrors($output)
+            : null;
+
+        if ($commandWarning) {
+            throw ValidationException::withMessages($commandWarning);
+        }
+
+        activity('export-config-module')
+            ->causedBy(Auth::user())
+            ->event('get')
+            ->withProperties([
+                'type-log' => 'server',
+                'route' => request()->fullUrl(),
+                'method' => 'expertModuleFileIsServer',
+                'user' => Auth::user()->makeHidden(['roles', 'permissions'])->toArray(),
+                'user_role' => Auth::user()->roles()->pluck('name')->first(),
+                'module_id' => $module['id'],
+                'module_name' => $module['name'],
+                'module_type' => $module['type'],
+                'server' => $server,
+                'config_file' => $fileName,
+            ])
+            ->log('The export file config is taken from the module configuration.');
+
+        return response($output, 200, [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'X-Name-Header' => $fileName,
+            'Content-Length' => strlen($output),
+        ]);
+    } catch (ValidationException $e) {
+        throw $e;
+    } catch (\Throwable $e) {
+        report($e);
+
+        return response()->json([
+            'success' => false,
+            'msg' => 'Failed to export module config file.',
+        ], 422);
+    }
+}
 
 
     public function undoConfigModule (UndoConfigModulesRequest $request)

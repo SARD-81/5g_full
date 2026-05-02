@@ -1639,34 +1639,34 @@ function parseConfToJsonWithComments(confText) {
           const blockRawLine = lines[i];
           if (/^\s*}\s*;\s*$/.test(blockRawLine)) break;
 
-        if (!blockRawLine.trim()) {
-          entries.push({ type: "empty", raw: blockRawLine });
-          continue;
-        }
-        if (blockRawLine.trim().startsWith("#") || blockRawLine.trim().startsWith(";")) {
-          entries.push({ type: "comment", raw: blockRawLine });
-          continue;
-        }
+          if (!blockRawLine.trim()) {
+            entries.push({ type: "empty", raw: blockRawLine });
+            continue;
+          }
+          if (blockRawLine.trim().startsWith("#") || blockRawLine.trim().startsWith(";")) {
+            entries.push({ type: "comment", raw: blockRawLine });
+            continue;
+          }
 
-        const nestedEqualIndex = blockRawLine.indexOf("=");
-        if (nestedEqualIndex !== -1) {
-          const nestedRawKeyPart = blockRawLine.substring(0, nestedEqualIndex);
-          const nestedRawValuePart = blockRawLine.substring(nestedEqualIndex + 1);
-          const nestedKey = nestedRawKeyPart.trim();
-          const nestedValue = nestedRawValuePart.trim().replace(/;$/, "");
-          addValue(blockEntry, nestedKey, nestedValue);
-          entries.push({ type: "kv", key: nestedKey });
-          continue;
-        }
+          const nestedEqualIndex = blockRawLine.indexOf("=");
+          if (nestedEqualIndex !== -1) {
+            const nestedRawKeyPart = blockRawLine.substring(0, nestedEqualIndex);
+            const nestedRawValuePart = blockRawLine.substring(nestedEqualIndex + 1);
+            const nestedKey = nestedRawKeyPart.trim();
+            const nestedValue = nestedRawValuePart.trim().replace(/;$/, "");
+            addValue(blockEntry, nestedKey, nestedValue);
+            entries.push({ type: "kv", key: nestedKey });
+            continue;
+          }
 
-        const nestedDirective = parseDirectiveLine(blockRawLine);
-        if (nestedDirective) {
-          addValue(blockEntry, "_directives", nestedDirective.key);
-          entries.push({ type: "directive", key: nestedDirective.key });
-          continue;
-        }
+          const nestedDirective = parseDirectiveLine(blockRawLine);
+          if (nestedDirective) {
+            addValue(blockEntry, "_directives", nestedDirective.key);
+            entries.push({ type: "directive", key: nestedDirective.key });
+            continue;
+          }
 
-        entries.push({ type: "raw", raw: blockRawLine });
+          entries.push({ type: "raw", raw: blockRawLine });
         }
       }
 

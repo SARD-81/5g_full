@@ -18,6 +18,40 @@ import {
   resolveValidatedServerCredentials,
 } from "./serverCredentials.js";
 
+function extractApiErrorMessage(payload, fallback = "Failed to delete module. Please check SSH credentials and try again.") {
+  if (!payload) return fallback;
+
+  if (typeof payload === "string") return payload;
+
+  if (payload.msg) return payload.msg;
+  if (payload.message) return payload.message;
+
+  if (payload.errors) {
+    if (Array.isArray(payload.errors) && payload.errors.length > 0) {
+      return payload.errors.join(", ");
+    }
+
+    if (typeof payload.errors === "object") {
+      const first = Object.values(payload.errors).flat().find(Boolean);
+      if (first) return Array.isArray(first) ? first.join(", ") : String(first);
+    }
+  }
+
+  if (payload.error?.message) return payload.error.message;
+
+  return fallback;
+}
+
+function showDeleteModuleError(payload) {
+  Toastify({
+    text: extractApiErrorMessage(payload),
+    style: {
+      background: "linear-gradient(to right,rgb(255, 0, 0),rgb(231, 0, 0))",
+    },
+  }).showToast();
+
+  return false;
+}
 
 
 function getExportFilenameFromDisposition(contentDisposition, fallbackFilename) {
@@ -1700,11 +1734,9 @@ async function SubAddUser() {
       dataUser.push({
         id: data.data.user.id,
         name: data.data.user.first_name,
-        family: data.data.user.last_name,
         authName: data.data.user.auth_name,
         permission: data.data.permission_name,
         role: data.data.role,
-        phone: data.data.user.phone,
       });
       for (let x = 1; x <= 8; x++) {
         let td = document.createElement("td");
@@ -1900,11 +1932,9 @@ async function showUsers(page = 1) {
         dataUser.push({
           id: data.data.users[i].id,
           name: data.data.users[i].first_name,
-          family: data.data.users[i].last_name,
           authName: data.data.users[i].auth_name,
           permission: data.data.users[i].permissions,
           role: data.data.users[i].roles[0],
-          phone: data.data.users[i].phone,
           server_id: data.data.users[i].server_id,
         });
 
@@ -2258,13 +2288,6 @@ function showEditUser() {
       if (findEditUser != -1) {
         document.querySelector('input[name="name_nameInputEditUser"]').value =
           findEditUser.name;
-        document.querySelector('input[name="nameFamilyInputEditUser"]').value =
-          findEditUser.family;
-        if (project != "RRU") {
-          document.querySelector(
-            'input[name="namePhoneNumberEditUser"]'
-          ).value = findEditUser.phone;
-        }
         document.querySelector('input[name="namePasswordEditUser"]').value = "";
 
         if (document.getElementById("serverIdInputEditUser")) {
@@ -2414,33 +2437,23 @@ subEditUser.addEventListener("click", function () {
   if (btnEditUser == "") {
     numberPermission = 0;
     let lengthNameAddUser = document.getElementById("nameInputEditUser").value;
-    let lengthFamilyAddUser = document.getElementById(
-      "familyInputEditUser"
-    ).value;
     let lengthAuthNameAddUser = document.getElementById(
       "authNameInputEditUser"
     ).value;
     let checkBox = document.querySelectorAll(".accessLevelCheckboxEdit");
-    let lengthPhoneNumber;
-    if (document.getElementById("phoneNumberEditUser")) {
-      lengthPhoneNumber = document.getElementById("phoneNumberEditUser").value;
-    }
+
     let lengthPassword = document.getElementById("passwordEditUser").value;
     let lengthRepeatPassword = document.getElementById(
       "repeatPasswordEditUser"
     ).value;
 
     const isCheckedBox = [...checkBox].some((checkBox) => checkBox.checked);
-    let typePhoneNumber = /^\d+$/.test(lengthPhoneNumber);
+
 
     if (lengthNameAddUser.length < 3) {
       Toastify({
         text: "The name is less than 3 characters.",
         // avatar: "icons8-information.gif", // مسیر آیکون شما
-      }).showToast();
-    } else if (lengthFamilyAddUser.length < 3) {
-      Toastify({
-        text: "The last name is less than 3 characters.",
       }).showToast();
     } else if (lengthAuthNameAddUser.length < 3) {
       Toastify({
@@ -2449,18 +2462,6 @@ subEditUser.addEventListener("click", function () {
     } else if (isCheckedBox == false) {
       Toastify({
         text: "You must select one of the following permissions.",
-      }).showToast();
-    } else if (
-      lengthPhoneNumber &&
-      lengthPhoneNumber.length < 11 &&
-      project != "RRU"
-    ) {
-      Toastify({
-        text: "The phone number is less than 11 characters.",
-      }).showToast();
-    } else if (typePhoneNumber == false && project != "RRU") {
-      Toastify({
-        text: "The entered phone number is not numeric.",
       }).showToast();
     } else if (lengthPassword.length < 8 && lengthPassword.length != 0) {
       Toastify({
@@ -2475,7 +2476,6 @@ subEditUser.addEventListener("click", function () {
     if (project == "RRU") {
       if (
         lengthNameAddUser.length >= 3 &&
-        lengthFamilyAddUser.length >= 3 &&
         lengthAuthNameAddUser.length >= 3 &&
         isCheckedBox != false &&
         (lengthPassword.length >= 8 || lengthPassword.length == 0)
@@ -2513,11 +2513,8 @@ subEditUser.addEventListener("click", function () {
     } else {
       if (
         lengthNameAddUser.length >= 3 &&
-        lengthFamilyAddUser.length >= 3 &&
         lengthAuthNameAddUser.length >= 3 &&
         isCheckedBox != false &&
-        lengthPhoneNumber.length == 11 &&
-        typePhoneNumber == true &&
         (lengthPassword.length >= 8 || lengthPassword.length == 0)
       ) {
         if (lengthPassword === lengthRepeatPassword) {
@@ -2713,9 +2710,6 @@ async function editUsers(id) {
   permissionUser = [];
   let numberId = Number(id);
   let nameInputEditUser = document.getElementById("nameInputEditUser").value;
-  let familyInputEditUser = document.getElementById(
-    "familyInputEditUser"
-  ).value;
   let authNameInputEditUser = document.getElementById(
     "authNameInputEditUser"
   ).value;
@@ -2726,10 +2720,6 @@ async function editUsers(id) {
     ).value;
   }
   let roleEditUser = document.getElementById("selectEditUser").value;
-  let phoneNumberEditUser;
-  if (document.getElementById("phoneNumberEditUser")) {
-    phoneNumberEditUser = document.getElementById("phoneNumberEditUser").value;
-  }
   let passwordEditUser = document.getElementById("passwordEditUser").value;
   let repeatPasswordEditUser = document.getElementById(
     "repeatPasswordEditUser"
@@ -2740,7 +2730,6 @@ async function editUsers(id) {
   // اضافه کردن مقادیر به FormData
   formData.append("user_id", numberId);
   formData.append("first_name", nameInputEditUser);
-  formData.append("last_name", familyInputEditUser);
   formData.append("auth_name", authNameInputEditUser);
   if (document.getElementById("serverIdInputEditUser")) {
     if (serverIdInputEditUser != "") {
@@ -2748,9 +2737,6 @@ async function editUsers(id) {
     }
   }
   formData.append("role", roleEditUser);
-  if (project != "RRU") {
-    formData.append("phone", phoneNumberEditUser);
-  }
   formData.append("password", passwordEditUser);
   formData.append("password_confirmation", repeatPasswordEditUser);
 
@@ -2772,7 +2758,6 @@ async function editUsers(id) {
       dataUser.forEach((e) => {
         if (e.id == data.data.user.id) {
           e.name = data.data.user.name;
-          e.family = data.data.user.family;
           e.authName = data.data.user.authName;
           e.role = data.data.user.role;
           e.permission = data.data.user.permissions;
@@ -2786,7 +2771,6 @@ async function editUsers(id) {
       if (findEditUserIndex != -1) {
         dataUser[findEditUserIndex]["id"] = data.data.user.id;
         dataUser[findEditUserIndex]["name"] = data.data.user.first_name;
-        dataUser[findEditUserIndex]["family"] = data.data.user.last_name;
         dataUser[findEditUserIndex]["authName"] = data.data.user.auth_name;
         dataUser[findEditUserIndex]["role"] = data.data.user.roles;
       }
@@ -6108,18 +6092,18 @@ function iconDeleteModule() {
       deleteModuleInProgress = false;
 
       const container = document.getElementById("server-credentials-container");
-      container.innerHTML = ""; 
+      container.innerHTML = "";
 
       // ساخت فرم‌ها بر اساس آرایه serverIDs
       if (module && module.serverIDs) {
         // اطمینان از اینکه سرور آیدی‌ها به شکل آرایه هستند
-        let serverArray = Array.isArray(module.serverIDs) 
-            ? module.serverIDs 
-            : (typeof module.serverIDs === 'string' ? module.serverIDs.split(',') : [module.serverIDs]);
+        let serverArray = Array.isArray(module.serverIDs)
+          ? module.serverIDs
+          : (typeof module.serverIDs === 'string' ? module.serverIDs.split(',') : [module.serverIDs]);
 
         serverArray.forEach(serverId => {
           if (!serverId || serverId === "null" || serverId === "") return;
-          
+
           const serverForm = `
             <div class="mb-3 border p-2 rounded">
               <h6 class="text-primary mb-2">Server ID: ${serverId}</h6>
@@ -6189,50 +6173,55 @@ async function DeleteModules() {
       },
       callback: async function () {
         deleteSucceeded = true;
+
         const deletedModuleId = Number(moduleIdRemove);
+
         modulesInfo = modulesInfo.filter(
           (item) =>
             Number(item.moduleID) !== deletedModuleId &&
             Number(item.id) !== deletedModuleId
         );
+
         schedulingData = schedulingData.filter(
           (item) => Number(item.module_id) !== deletedModuleId
         );
-        if (Number(idModule) === deletedModuleId) idModule = null;
-        if (Number(idModuleScheduling) === deletedModuleId) idModuleScheduling = null;
+
+        if (Number(idModule) === deletedModuleId) {
+          idModule = null;
+        }
+
+        if (Number(idModuleScheduling) === deletedModuleId) {
+          idModuleScheduling = null;
+        }
 
         removeModuleParam();
+
         const pageToRefresh = Number(currentPageModule || urlModule || 1);
+
         await showModuls(pageToRefresh);
         await getScheduleingModules();
 
-        document.getElementById("subDeletModule").dataset.bsDismiss = "modal";
-        document.getElementById("subDeletModule").click();
-        showToast("Module deleted successfully", "success");
-      },
-      errorCallback: function (errorPayload, errorResponse) {
-        const errors = errorPayload?.errors;
-        let firstValidationError = "";
-
-        if (errors && typeof errors === "object") {
-          const firstErrorValue = Object.values(errors)[0];
-          if (Array.isArray(firstErrorValue) && firstErrorValue.length > 0) {
-            firstValidationError = firstErrorValue[0];
-          } else if (typeof firstErrorValue === "string") {
-            firstValidationError = firstErrorValue;
-          }
+        const deleteModalSubmitButton = document.getElementById("subDeletModule");
+        if (deleteModalSubmitButton) {
+          deleteModalSubmitButton.dataset.bsDismiss = "modal";
+          deleteModalSubmitButton.click();
         }
 
-        const message =
-          errorPayload?.msg ||
-          firstValidationError ||
-          errorPayload?.message ||
-          errorResponse?.data?.msg ||
-          errorResponse?.data?.message ||
-          "Failed to delete module. Please check SSH credentials and try again.";
+        showToast("Module deleted successfully", "success");
+      },
+      finallyCallback: function () {
+        const loading =
+          document.getElementById("idLoadingDashbord") ||
+          document.getElementById("idLoading");
 
-        showToast(message, "error");
-        return true;
+        if (loading) {
+          loading.style.display = "none";
+        }
+
+        const deleteModalSubmitButton = document.getElementById("subDeletModule");
+        if (deleteModalSubmitButton) {
+          deleteModalSubmitButton.disabled = false;
+        }
       },
     });
   } finally {
@@ -6242,8 +6231,8 @@ async function DeleteModules() {
     if (!deleteSucceeded) {
       // keep row unchanged for failed delete
     }
-      document.getElementById("idLoading").style.display = "none";
-      document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
+    document.getElementById("idLoading").style.display = "none";
+    document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
   }
 }
 
@@ -10275,3 +10264,17 @@ function loadKpiTable() {
     });
   });
 }
+//Gui BTN
+const GuiBtn = document.getElementById("Gui");
+
+GuiBtn.addEventListener("click", () => {
+
+  useApi({
+    method: 'post',
+    url: 'run-gui-endpoint',
+    callback: (res) => {
+      console.log(res);
+    }
+  });
+
+});

@@ -839,60 +839,174 @@ class ConfParserService
     }
 
     private static function appendExtraValues(array &$lines, array $jsonData, array $meta, array $counters): void
-    {
-        $metaKeys = [];
-        foreach ($meta as $item) {
-            if (($item['section'] ?? null) !== null) {
-                continue;
-            }
-            if (in_array(($item['type'] ?? ''), ['kv', 'block'], true) && isset($item['key'])) {
-                $metaKeys[$item['key']] = $item['type'];
-            }
+{
+    $rootMetaByKey = [];
+
+    foreach ($meta as $item) {
+        $type = $item['type'] ?? '';
+        $key = $item['key'] ?? null;
+        $section = $item['section'] ?? null;
+
+        if ($section !== null || !is_string($key) || $key === '') {
+            continue;
         }
 
-        foreach ($jsonData as $key => $value) {
-            if ($key === '_directives') {
-                $used = $counters['directive'][self::counterKey(null, '_directives', 'directive')] ?? 0;
-                $directives = self::listify($value);
-                for ($i = $used; $i < count($directives); $i++) {
-                    if (is_string($directives[$i]) && trim($directives[$i]) !== '') {
-                        $lines[] = self::normalizeDirectiveValue($directives[$i]) . ';';
-                    }
+        if (!in_array($type, ['kv', 'block'], true)) {
+            continue;
+        }
+
+        $rootMetaByKey[$key] ??= [
+            'type' => $type,
+            'items' => [],
+        ];
+
+        $rootMetaByKey[$key]['items'][] = $item;
+    }
+
+    foreach ($jsonData as $key => $value) {
+        if ($key === '_directives') {
+            $used = $counters['directive'][self::counterKey(null, '_directives', 'directive')] ?? 0;
+            $directives = self::listify($value);
+
+            for ($i = $used; $i < count($directives); $i++) {
+                if (is_string($directives[$i]) && trim($directives[$i]) !== '') {
+                    $lines[] = self::normalizeDirectiveValue($directives[$i]) . ';';
                 }
+            }
+
+            continue;
+        }
+
+        if (!isset($rootMetaByKey[$key])) {
+            continue;
+        }
+
+        $metaInfo = $rootMetaByKey[$key];
+        $type = $metaInfo['type'];
+
+        $counterKey = self::counterKey(null, $key, $type);
+        $used = $counters[$type][$counterKey] ?? count($metaInfo['items']);
+
+        $items = (is_array($value) && array_is_list($value)) ? $value : [$value];
+
+        for ($i = $used; $i < count($items); $i++) {
+            $itemValue = $items[$i];
+
+            if ($key === 'LoadExtension') {
+                $line = self::serializeLoadExtensionLine($key, $itemValue, [
+                    'prefix' => '',
+                    'suffixKey' => ' ',
+                    'separator' => '=',
+                    'valuePrefix' => ' ',
+                    'terminator' => ';',
+                    'loadExtension' => [
+                        'valueQuoted' => true,
+                        'valueQuote' => '"',
+                        'argumentQuoted' => true,
+                        'argumentQuote' => '"',
+                        'argumentSeparator' => ' : ',
+                    ],
+                ]);
+
+                if ($line !== '') {
+                    $lines[] = $line;
+                }
+
                 continue;
             }
 
-            if (isset($metaKeys[$key])) {
-                $type = $metaKeys[$key];
-                $counterKey = self::counterKey(null, $key, $type);
-                $used = $counters[$type][$counterKey] ?? 0;
-                $items = (is_array($value) && array_is_list($value)) ? $value : [$value];
+            if ($type === 'block' && is_array($itemValue)) {
+                $templateMeta = $metaInfo['items'][0] ?? [];
+                $format = $templateMeta['rawFormat'] ?? [
+                    'prefix' => '',
+                    'suffixKey' => ' ',
+                    'separator' => '=',
+                    'valuePrefix' => ' ',
+                    'quoted' => true,
+                    'quote' => '"',
+                    'childIndent' => '    ',
+                ];
 
-                for ($i = $used; $i < count($items); $i++) {
-                    if ($key === 'LoadExtension') {
-                        $line = self::serializeLoadExtensionLine($key, $items[$i], [
-                            'prefix' => '',
-                            'suffixKey' => ' ',
-                            'separator' => '=',
-                            'valuePrefix' => ' ',
-                            'terminator' => ';',
-                            'loadExtension' => [
-                                'valueQuoted' => true,
-                                'valueQuote' => '"',
-                                'argumentQuoted' => true,
-                                'argumentQuote' => '"',
-                                'argumentSeparator' => ' : ',
-                            ],
-                        ]);
+                $entries = self::buildExtraBlockEntriesFromData(
+                    $itemValue,
+                    $templateMeta['entries'] ?? [],
+                    $format['childIndent'] ?? '    '
+                );
 
-                        if ($line !== '') {
-                            $lines[] = $line;
-                        }
-                    }
-                }
+                $inline = array_key_exists('inline', $templateMeta)
+                    ? (bool) $templateMeta['inline']
+                    : true;
+
+                $lines = array_merge(
+                    $lines,
+                    self::serializeBlock($key, $itemValue, $format, $entries, $inline)
+                );
             }
         }
     }
+}
+
+private static function buildExtraBlockEntriesFromData(array $entry, array $templateEntries, string $childIndent): array
+{
+    $entries = $templateEntries;
+    $existingKvKeys = [];
+    $hasDirectiveSlot = false;
+
+    foreach ($entries as $metaEntry) {
+        if (($metaEntry['type'] ?? null) === 'kv' && isset($metaEntry['key'])) {
+            $existingKvKeys[(string) $metaEntry['key']] = true;
+        }
+
+        if (($metaEntry['type'] ?? null) === 'directive') {
+            $hasDirectiveSlot = true;
+        }
+    }
+
+    foreach ($entry as $key => $value) {
+        if ($key === 'value') {
+            continue;
+        }
+
+        if ($key === '_directives') {
+            $directives = self::listify($value);
+
+            if (!$hasDirectiveSlot && count($directives) > 0) {
+                $entries[] = [
+                    'type' => 'directive',
+                    'key' => self::normalizeDirectiveValue((string) $directives[0]),
+                    'rawFormat' => [
+                        'prefix' => $childIndent,
+                        'terminator' => ';',
+                    ],
+                ];
+            }
+
+            continue;
+        }
+
+        if (isset($existingKvKeys[$key])) {
+            continue;
+        }
+
+        $entries[] = [
+            'type' => 'kv',
+            'key' => $key,
+            'rawFormat' => [
+                'prefix' => $childIndent,
+                'suffixKey' => ' ',
+                'separator' => '=',
+                'valuePrefix' => ' ',
+                'terminator' => ';',
+                'quoted' => is_string($value),
+                'quote' => '"',
+            ],
+        ];
+
+        $existingKvKeys[$key] = true;
+    }
+
+    return $entries;
+}
 
     private static function listify(mixed $value): array
     {

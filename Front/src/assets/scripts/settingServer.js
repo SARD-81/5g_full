@@ -485,10 +485,22 @@ async function saveDataToServer() {
     }
   });
   let finalData = updateJsonKey(oldDataContainer, newDataContainer);
-  const container = document.getElementById("jsoneditor");
+const container = document.getElementById("jsoneditor");
 
-  const isConf = container.dataset.isConf === "true";
-  const meta = container._confMeta; // ✅ اینجا گرفتیم
+if (
+  container &&
+  container._jsonEditorInstance &&
+  typeof container._jsonEditorInstance.get === "function"
+) {
+  try {
+    finalData = container._jsonEditorInstance.get();
+  } catch (error) {
+    console.error("Failed to read JSONEditor data before saving module config.", error);
+  }
+}
+
+const isConf = container.dataset.isConf === "true";
+const meta = container._confMeta; // ✅ اینجا گرفتیم
 
 
   if (isConf) {
@@ -2004,6 +2016,7 @@ function setJsonEditor(data) {
     };
     console.log(options)
     const editor = new JSONEditor(container, options);
+    container._jsonEditorInstance = editor;
 
     // 🔥 FIX
     editor.set(parsedData);
@@ -2039,6 +2052,7 @@ function setJsonEditor(data) {
     };
 
     const editor = new JSONEditor(container, options);
+    container._jsonEditorInstance = editor;
 
     // 🔥 FIX
     editor.set(parsedData);

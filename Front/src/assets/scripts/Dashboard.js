@@ -4839,7 +4839,16 @@ async function showModuls(page = 1) {
       let numberTr = data.module.module.length;
 
       for (let y = 0; y < numberTr; y++) {
-        arrRowShowModule.push(data.module.module[y].module_id);
+        const moduleRow = data.module.module[y];
+        const hasServers = Array.isArray(moduleRow.server_ids)
+          ? moduleRow.server_ids.length > 0
+          : Boolean(String(moduleRow.server_ids || "").trim());
+        const hasServerNames = Array.isArray(moduleRow.server_name)
+          ? moduleRow.server_name.length > 0
+          : Boolean(String(moduleRow.server_name || "").trim());
+        if (!hasServers || !hasServerNames) continue;
+
+        arrRowShowModule.push(moduleRow.module_id);
         numberTrModule = y + 1;
         modulesInfo.push({
           serverIDs: data.module.module[y].server_ids,
@@ -6199,13 +6208,14 @@ async function DeleteModules() {
         const pageToRefresh = Number(currentPageModule || urlModule || 1);
 
         await showModuls(pageToRefresh);
-        await getScheduleingModules();
 
-        const deleteModalSubmitButton = document.getElementById("subDeletModule");
-        if (deleteModalSubmitButton) {
-          deleteModalSubmitButton.dataset.bsDismiss = "modal";
-          deleteModalSubmitButton.click();
-        }
+        moduleIdRemove = null;
+        trModuleRemove = null;
+
+        const deleteModalElement = document.getElementById("removeModule");
+        const deleteModalInstance = bootstrap.Modal.getInstance(deleteModalElement)
+          || bootstrap.Modal.getOrCreateInstance(deleteModalElement);
+        deleteModalInstance.hide();
 
         showToast("Module deleted successfully", "success");
       },
@@ -6612,100 +6622,9 @@ async function addModules() {
       "Content-Type": "multipart/form-data", // این هدر مهم است
     },
     callback: function (data) {
-      console.log(data)
-      // localStorage.setItem("port", port);
-      let serverId = [];
-      let endPageShowUser =
-        Number(arrRowShowModule.length) + pageShowModule - 1;
-      arrRowShowModule.push(data.data.created_modules[0].module.module_id);
-
-      for (let i = 0; i < data.data.created_modules.length; i++) {
-        serverId.push(data.data.created_modules[i].server.server_id);
-      }
-
-      if (isNaN(numberTrModule)) {
-        numberTrModule = 0;
-      }
-
-      let tr = document.createElement("tr");
-      tr.setAttribute("id", `tr${++numberTrModule}`);
-      tr.setAttribute(
-        "data-id",
-        `${data.data.created_modules[0].module.module_id}`
-      );
-      modulesInfo.push({
-        serverIDs: serverId,
-        moduleID: data.data.created_modules[0].module.module_id,
-        moduleName: data.data.created_modules[0].module.module_name,
-        moduleType: [data.data.created_modules[0].module.module_type],
-        configType: data.data.created_modules[0].module.config_type,
-      });
-
-      for (let x = 1; x <= 8; x++) {
-        let td = document.createElement("td");
-        td.setAttribute("class", `td${x}`);
-
-        if (x == 1) {
-          // Row
-          td.innerHTML = endPageShowUser;
-
-        } else if (x == 2) {
-          // nameModule
-          td.innerHTML =
-            data.data.created_modules[0].module.module_name;
-
-        } else if (x == 3) {
-          // Servers
-          let arrServers = [];
-          let span = document.createElement("span");
-
-          for (let y = 0; y < data.data.created_modules.length; y++) {
-            arrServers.push(data.data.created_modules[y].server.server_name);
-          }
-
-          span.innerHTML = arrServers.join(", ");
-          td.appendChild(span);
-
-        } else if (x == 4) {
-          // Type (EPC / 5GC)
-          let arrType = [];
-          for (let y = 0; y < 1; y++) {
-            arrType.push(
-              data.data.created_modules[y].module.module_type.toUpperCase()
-            );
-          }
-          td.innerHTML = arrType.join(", ");
-
-        } else if (x == 5) {
-          // Scheduling (SVG — بدون تغییر)
-          td.setAttribute("class", `td5`);
-          let svgElemEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="${numberTrModule}" data-id-modules = "${numberTrModule}" fill="currentColor" data-bs-toggle="modal" data-bs-target="#schedulingModule" class="bi bi-calendar4-week schedulingModule cursorPointer" viewBox="0 0 16 16"> <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M2 2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1zm13 3H1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/> <path d="M11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm-2 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/> </svg>`;
-          td.insertAdjacentHTML("afterbegin", svgElemEdit);
-
-        } else if (x == 6) {
-          // Edit (SVG — بدون تغییر)
-          td.setAttribute("class", `td6 tdEditModule`);
-          let svgElemEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" id="${numberTrModule}" data-id-modules = "${numberTrModule}" data-bs-toggle="modal" data-bs-target="#editModule" class="bi bi-pencil-square editModuleClick cursorPointer"
-          aria-label="Edit module"
-          data-test="module-edit-btn" viewBox="0 0 16 16" > <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" /> <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" /> </svg>`;
-          td.insertAdjacentHTML("afterbegin", svgElemEdit);
-
-        } else if (x == 7) {
-          // Delete (SVG — بدون تغییر)
-          td.setAttribute("class", `td7 tdRemoveModule`);
-          let svgElemEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="${numberTrModule}" data-id-modules = "${numberTrModule}" data-bs-toggle="modal" data-bs-target="#removeModule" fill="currentColor" class="bi bi-trash3 deleteModuleClick cursorPointer"
-           aria-label="Delete module"
-           data-test="module-delete-btn" viewBox="0 0 16 16"> <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/> </svg>`;
-          td.insertAdjacentHTML("afterbegin", svgElemEdit);
-        }
-
-        tr.appendChild(td);
-
-      }
-      document.getElementById("tBody3").appendChild(tr);
-      modalEditModule();
-      modalSchedulingModule();
-      iconDeleteModule();
+      const pageToRefresh = Number(currentPageModule || urlModule || 1);
+      modulesInfo = [];
+      showModuls(pageToRefresh);
 
       Toastify({
         text: data.msg,
@@ -6717,13 +6636,10 @@ async function addModules() {
       let button = document.getElementById("buttonAddModule");
       button.setAttribute("data-bs-dismiss", "modal");
       btnAddModule = "modalAddModule";
-      button.click(); // کلیک برنامه‌نویسی
-      let lengthTbody3 = document.getElementById("tBody3").rows.length;
-      if (!lengthTbody3) {
-        document.getElementById("divImgModule").style.display = "block";
-      } else {
-        document.getElementById("divImgModule").style.display = "none";
-      }
+      button.click();
+      document.querySelector('input[name="name_nameInputAddModule"]').value = "";
+      document.querySelector("#moduleAddFile").value = "";
+      document.querySelector("#moduleAddType").value = "";
     },
   });
   document.getElementById("idLoading").style.display = "none";

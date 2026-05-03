@@ -112,9 +112,22 @@ class ModuleController extends ApiController
         }
 
         $previousConfig = $pivotData->current_config;
-        $pivotData->previous_config = $previousConfig;
-        $pivotData->current_config = json_encode($parsedConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        $pivotData->save();
+$pivotData->previous_config = $previousConfig;
+
+$effectiveExtension = strtolower(pathinfo($configFileName, PATHINFO_EXTENSION));
+
+if ($effectiveExtension === 'json') {
+    $storedConfigForDb = json_encode([
+        'format' => 'json',
+        'extension' => 'json',
+        'data' => $parsedConfig,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+} else {
+    $storedConfigForDb = json_encode($parsedConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+}
+
+$pivotData->current_config = $storedConfigForDb;
+$pivotData->save();
 
         $serverIdsInModuleName = $module->servers->pluck('pivot.server_id');
         $serversData = $module->servers->map(function ($serverItem) {
@@ -127,9 +140,8 @@ class ModuleController extends ApiController
 
         return response()->json([
             'config' => $parsedConfig,
-            'effective_config_format' => ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig(
-                json_encode($parsedConfig, JSON_UNESCAPED_UNICODE)
-            ),
+            'effective_config_format' => ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($storedConfigForDb),
+'config_file_name' => $configFileName,
             'serversDetails' => $serversData,
             'serversIdInModuleName' => $serverIdsInModuleName,
             'moduleDetails' => [
@@ -201,7 +213,11 @@ class ModuleController extends ApiController
         if ($user->hasRole('admin')) {
             return response()->json([
                 'msg' => 'The list of modules was successfully retrieved',
-                'module' => $this->formatModules(Module::with('servers')->paginate($perPage))
+                'module' => $this->formatModules(
+                    Module::whereHas('servers')
+                        ->with('servers')
+                        ->paginate($perPage)
+                )
             ]);
         }
 
@@ -777,7 +793,8 @@ private function normalizeSshDeleteFailureMessage(\Throwable|string|null $errorO
         }
 
         $updatedModuleJson = null;
-        $commandWarning = null;
+$lastEditorData = null;
+$commandWarning = null;
 
         try {
             foreach ($serverIds as $serverId) {
@@ -799,6 +816,7 @@ private function normalizeSshDeleteFailureMessage(\Throwable|string|null $errorO
 
                 $jsonContent = $normalizedPayload['stored_json'];
                 $yamlContent = $normalizedPayload['remote_content'];
+                $lastEditorData = $normalizedPayload['editor_data'];
                 // --- STEP 2: SSH Operation (Heavy Lift - No DB Lock) ---
                 // ارسال به سرور قبل از درگیر کردن دیتابیس
                 $outputCommand = $this->sendConfigToServer(
@@ -849,8 +867,7 @@ private function normalizeSshDeleteFailureMessage(\Throwable|string|null $errorO
             });
 
             return response()->json([
-                'config' => json_decode($updatedModuleJson, true),
-                'effective_config_format' => ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($updatedModuleJson),
+                'config' => $lastEditorData ?? ModuleConfigParserService::editorDataFromStoredConfig($updatedModuleJson),                'effective_config_format' => ModuleConfigParserService::resolveEffectiveFormatFromStoredConfig($updatedModuleJson),
                 'commandWarinig' => $commandWarning,
                 'serverDetaile' => $serversData,
                 'serverIdsInModuleName' => $serverIdsInModuleName,

@@ -24,18 +24,43 @@ class ModuleConfigParserService
         }
 
         $jsonContent = YamlParserService::uploadModuleFile($file);
-        $normalizedExtension = strtolower($extension);
-        if (str_ends_with(strtolower($file->getClientOriginalName()), '.yaml.in')) {
-            $normalizedExtension = 'yaml.in';
-        }
-        $format = $normalizedExtension === 'json' ? 'json' : 'yaml';
-        return [
-            'format' => $format,
-            'extension' => in_array($normalizedExtension, ['yaml', 'yml', 'yaml.in', 'json'], true) ? $normalizedExtension : 'yaml',
-            'stored_json' => $jsonContent,
-            'remote_content' => $rawContent,
-            'editor_data' => json_decode($jsonContent, true),
-        ];
+$normalizedExtension = strtolower($extension);
+
+if (str_ends_with(strtolower($file->getClientOriginalName()), '.yaml.in')) {
+    $normalizedExtension = 'yaml.in';
+}
+
+$decodedJsonContent = json_decode($jsonContent, true);
+$format = $normalizedExtension === 'json' ? 'json' : 'yaml';
+
+if ($format === 'json') {
+    if (!is_array($decodedJsonContent)) {
+        throw ValidationException::withMessages([
+            'config_file' => 'The uploaded JSON file is invalid.',
+        ]);
+    }
+
+    return [
+        'format' => 'json',
+        'extension' => 'json',
+        'stored_json' => self::buildStoredJsonConfig($decodedJsonContent),
+        'remote_content' => json_encode(
+            $decodedJsonContent,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        ),
+        'editor_data' => $decodedJsonContent,
+    ];
+}
+
+return [
+    'format' => 'yaml',
+    'extension' => in_array($normalizedExtension, ['yaml', 'yml', 'yaml.in'], true)
+        ? $normalizedExtension
+        : 'yaml',
+    'stored_json' => $jsonContent,
+    'remote_content' => $rawContent,
+    'editor_data' => $decodedJsonContent,
+];
     }
 
     public static function serializeForRemote(string $storedConfig): string
@@ -112,21 +137,33 @@ class ModuleConfigParserService
             }
         });
 
-        $jsonContent = json_encode($payload, JSON_PRETTY_PRINT);
         $existingDecoded = is_string($existingStoredConfig) ? json_decode($existingStoredConfig, true) : null;
-        $existingFormat = is_array($existingDecoded) ? strtolower((string) ($existingDecoded['format'] ?? '')) : '';
-        $existingExtension = is_array($existingDecoded) ? strtolower((string) ($existingDecoded['extension'] ?? '')) : '';
-        $isJson = $existingFormat === 'json' || $existingExtension === 'json';
+$existingFormat = is_array($existingDecoded) ? strtolower((string) ($existingDecoded['format'] ?? '')) : '';
+$existingExtension = is_array($existingDecoded) ? strtolower((string) ($existingDecoded['extension'] ?? '')) : '';
+$isJson = $existingFormat === 'json' || $existingExtension === 'json';
 
-        return [
-            'format' => $isJson ? 'json' : 'yaml',
-            'extension' => $isJson ? 'json' : ($existingExtension ?: 'yaml'),
-            'stored_json' => $jsonContent,
-            'remote_content' => $isJson
-                ? json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                : YamlParserService::convertJsonToYaml($jsonContent),
-            'editor_data' => $payload,
-        ];
+if ($isJson) {
+    return [
+        'format' => 'json',
+        'extension' => 'json',
+        'stored_json' => self::buildStoredJsonConfig($payload),
+        'remote_content' => json_encode(
+            $payload,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        ),
+        'editor_data' => $payload,
+    ];
+}
+
+$jsonContent = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+return [
+    'format' => 'yaml',
+    'extension' => $existingExtension ?: 'yaml',
+    'stored_json' => $jsonContent,
+    'remote_content' => YamlParserService::convertJsonToYaml($jsonContent),
+    'editor_data' => $payload,
+];
     }
 
     public static function parseRawContent(string $content, string $fileName): array|string
@@ -186,6 +223,37 @@ class ModuleConfigParserService
         $format = strtolower((string) ($decoded['format'] ?? 'yaml'));
         return $format === 'conf' ? 'conf' : ($format === 'json' ? 'json' : 'yaml');
     }
+
+    private static function buildStoredJsonConfig(mixed $data): string
+{
+    return json_encode([
+        'format' => 'json',
+        'extension' => 'json',
+        'data' => $data,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+public static function editorDataFromStoredConfig(?string $storedConfig): mixed
+{
+    if (!is_string($storedConfig) || trim($storedConfig) === '') {
+        return [];
+    }
+
+    $decoded = json_decode($storedConfig, true);
+
+    if (!is_array($decoded)) {
+        return [];
+    }
+
+    if (
+        in_array(strtolower((string) ($decoded['format'] ?? '')), ['json', 'conf'], true)
+        && array_key_exists('data', $decoded)
+    ) {
+        return $decoded['data'];
+    }
+
+    return $decoded;
+}
 
     private static function normalizeConfDuplicateKeys(mixed $data): mixed
     {

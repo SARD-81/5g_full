@@ -113,6 +113,44 @@ let firstTabModule;
 let booleanFirstTabModule = true;
 let currentEffectiveConfigFormat = "yaml";
 let tabName = "";
+function moduleTypeIncludes(moduleDetails, targetType) {
+  return String(moduleDetails?.type || "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .includes(String(targetType).toLowerCase());
+}
+
+function isCurrentUpfJsonConfigOnlyModule() {
+  return (
+    moduleTypeIncludes(moduleDetails, "upf") &&
+    String(currentEffectiveConfigFormat || "").toLowerCase() === "json"
+  );
+}
+
+function setConfigOnlyActionState(isConfigOnly) {
+  [
+    "returnToPreviousState",
+    "returnToTheInitialState",
+    "exportModule",
+    "startModule",
+    "stopModule",
+    "restartModule",
+    "statusModule",
+  ].forEach((id) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.classList.toggle("d-none", isConfigOnly);
+    element.disabled = isConfigOnly;
+    element.setAttribute("aria-disabled", isConfigOnly ? "true" : "false");
+  });
+
+  const updateBtn = document.getElementById("updateBtn");
+  if (updateBtn) {
+    updateBtn.classList.remove("d-none");
+    updateBtn.disabled = false;
+    updateBtn.setAttribute("aria-disabled", "false");
+  }
+}
 
 function createSingleEditorTab(tabKey, title, data) {
   const mainTabs = document.getElementById("mainTabs");
@@ -158,6 +196,13 @@ function generateFormFromJson(data) {
       resolve();
       return;
     }
+    
+    if (effectiveFormat === "json" && isCurrentUpfJsonConfigOnlyModule()) {
+      createSingleEditorTab("data", "data", data);
+      resolve();
+      return;
+    }
+    
     if (effectiveFormat === "yaml") {
       createSingleEditorTab("configurations", "configurations", data);
       resolve();
@@ -918,6 +963,9 @@ async function getModuleConfig(moduleId) {
       document.getElementById("mainTabs").innerHTML = "";
       specifyingTheModuleServer = data.serversIdInModuleName;
       currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data?.config || {});
+      moduleDetails = data.moduleDetails || {};
+specifyingTheModuleServer = data.serversIdInModuleName || [];
+setConfigOnlyActionState(isCurrentUpfJsonConfigOnlyModule());
       if (data) jsonData = data.config;
       // removeLastGeneratedForm();
       await generateFormFromJson(jsonData);

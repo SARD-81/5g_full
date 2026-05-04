@@ -6099,6 +6099,33 @@ function resolveDeleteServersCredentials(serverIds = []) {
   };
 }
 
+function closeRemoveModuleModal() {
+  const modalElement = document.getElementById("removeModule");
+  if (!modalElement) return;
+
+  if (window.bootstrap?.Modal) {
+    const modalInstance =
+      window.bootstrap.Modal.getInstance(modalElement) ||
+      window.bootstrap.Modal.getOrCreateInstance(modalElement);
+
+    modalInstance.hide();
+  }
+
+  modalElement.classList.remove("show");
+  modalElement.style.display = "none";
+  modalElement.setAttribute("aria-hidden", "true");
+  modalElement.removeAttribute("aria-modal");
+  modalElement.removeAttribute("role");
+
+  document.body.classList.remove("modal-open");
+  document.body.style.removeProperty("overflow");
+  document.body.style.removeProperty("padding-right");
+
+  document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
+    backdrop.remove();
+  });
+}
+
 function iconDeleteModule() {
   document.querySelectorAll(".deleteModuleClick").forEach(function (e) {
     e.addEventListener("click", function () {
@@ -6226,13 +6253,14 @@ async function DeleteModules() {
         const pageToRefresh = Number(currentPageModule || urlModule || 1);
 
         await showModuls(pageToRefresh);
+await getScheduleingModules();
 
-        moduleIdRemove = null;
-        trModuleRemove = null;
+closeRemoveModuleModal();
 
-        closeModuleDeleteModal();
+moduleIdRemove = null;
+trModuleRemove = null;
 
-        showToast("Module deleted successfully", "success");
+showToast("Module deleted successfully", "success");
       },
       finallyCallback: function () {
         const loading =
@@ -6251,8 +6279,14 @@ async function DeleteModules() {
     });
   } finally {
     deleteModuleInProgress = false;
-    document.getElementById("subDeletModule").removeAttribute("data-bs-dismiss");
-    setDeleteModuleButtonState();
+
+const deleteButton = document.getElementById("subDeletModule");
+if (deleteButton) {
+  deleteButton.removeAttribute("data-bs-dismiss");
+  deleteButton.disabled = false;
+}
+
+setDeleteModuleButtonState();
     if (!deleteSucceeded) {
       // keep row unchanged for failed delete
     }

@@ -6974,8 +6974,11 @@ document.querySelectorAll("button.styleTabRRUsubMenu").forEach((button) => {
 
 document.querySelectorAll(".clickTab").forEach((method) => {
   method.addEventListener("click", function () {
-    updateUrlPath(getHash());
-    showTabContent(getHash());
+    const targetHash = this.dataset.bsTarget;
+    if (targetHash) {
+      updateUrlPath(targetHash);
+      showTabContent(targetHash);
+    }
   });
 });
 
@@ -7134,6 +7137,10 @@ async function showTabContent(hash) {
       case "#v-kpi":
         ActiveMenu(14);
         indexKpi();
+        break;
+      case "#v-gui":
+        ActiveMenu(15);
+        document.getElementById("idLoading").style.display = "none";
         break;
       case "#v-route":
         ActiveMenu(11);
@@ -9773,6 +9780,9 @@ function showViewFromHash() {
       break;
     case "#v-kpi":
       document.querySelector("#v-kpi-tab").click();
+      break;
+    case "#v-gui":
+      document.querySelector("#v-gui-tab").click();
       break;
     case "#v-ping":
       document.querySelector("#v-ping-tab").click();

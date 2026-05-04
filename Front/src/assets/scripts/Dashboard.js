@@ -6016,6 +6016,23 @@ let moduleIdRemove;
 let trModuleRemove;
 let deleteModuleInProgress = false;
 
+function closeModuleDeleteModal() {
+  const modalElement = document.getElementById("removeModule");
+  if (!modalElement) return;
+
+  if (window.bootstrap?.Modal) {
+    const modalInstance =
+      window.bootstrap.Modal.getInstance(modalElement)
+      || window.bootstrap.Modal.getOrCreateInstance(modalElement);
+    modalInstance.hide();
+  }
+
+  document.body.classList.remove("modal-open");
+  document.body.style.removeProperty("overflow");
+  document.body.style.removeProperty("padding-right");
+  document.querySelectorAll(".modal-backdrop").forEach((backdrop) => backdrop.remove());
+}
+
 function setDeleteModuleButtonState() {
   const deleteButton = document.getElementById("subDeletModule");
   if (!deleteButton) return;
@@ -6140,6 +6157,7 @@ function iconDeleteModule() {
 
 
 document.getElementById("subDeletModule").onclick = function () {
+  if (deleteModuleInProgress) return;
   DeleteModules();
 };
 
@@ -6212,10 +6230,7 @@ async function DeleteModules() {
         moduleIdRemove = null;
         trModuleRemove = null;
 
-        const deleteModalElement = document.getElementById("removeModule");
-        const deleteModalInstance = bootstrap.Modal.getInstance(deleteModalElement)
-          || bootstrap.Modal.getOrCreateInstance(deleteModalElement);
-        deleteModalInstance.hide();
+        closeModuleDeleteModal();
 
         showToast("Module deleted successfully", "success");
       },

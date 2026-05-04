@@ -129,26 +129,43 @@ function isCurrentUpfJsonConfigOnlyModule() {
 }
 
 function setConfigOnlyActionState(isConfigOnly) {
-  [
-    "returnToPreviousState",
-    "returnToTheInitialState",
-    "startModule",
-    "stopModule",
-    "restartModule",
-    "statusModule",
-  ].forEach((id) => {
+  ["startModule", "stopModule", "restartModule", "statusModule"].forEach((id) => {
     const element = document.getElementById(id);
     if (!element) return;
     element.disabled = isConfigOnly;
     element.setAttribute("aria-disabled", isConfigOnly ? "true" : "false");
   });
 
-  const updateBtn = document.getElementById("updateBtn");
-  if (updateBtn) {
-    updateBtn.classList.remove("d-none");
-    updateBtn.disabled = false;
-    updateBtn.setAttribute("aria-disabled", "false");
-  }
+  enableJsonConfigActions();
+}
+
+function enableJsonConfigActions() {
+  [
+    "returnToPreviousState",
+    "returnToTheInitialState",
+    "subReturnToPrevious",
+    "subReturnToTheInitial",
+    "exportModule",
+    "updateBtn",
+    "subUpdateModule",
+  ].forEach((id) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.classList.remove("d-none");
+    element.disabled = false;
+    element.style.pointerEvents = "";
+    element.style.opacity = "";
+    element.setAttribute("aria-disabled", "false");
+  });
+}
+
+function warnJsonConfigOnlyAction() {
+  Toastify({
+    text: "JSON config modules are config-only. Use Update, Restore, or Export instead.",
+    style: {
+      background: "linear-gradient(to right,rgb(255, 152, 0),rgb(245, 124, 0))",
+    },
+  }).showToast();
 }
 
 function createSingleEditorTab(tabKey, title, data) {
@@ -199,6 +216,11 @@ function generateFormFromJson(data) {
         
     if (effectiveFormat === "yaml") {
       createSingleEditorTab("configurations", "configurations", data);
+      resolve();
+      return;
+    }
+    if (effectiveFormat === "json") {
+      createSingleEditorTab("configuration", "configuration", data);
       resolve();
       return;
     }
@@ -473,6 +495,9 @@ async function returnToTheFirstState() {
       jsonData = data.config;
       currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data.config);
       await generateFormFromJson(jsonData);
+      if (isJsonConfigOnlyModule()) {
+        enableJsonConfigActions();
+      }
       setEventListeners();
       let status = 1;
       CallingTabs(status);
@@ -569,6 +594,9 @@ const meta = container._confMeta; // ✅ اینجا گرفتیم
       currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data.config);
 
       await generateFormFromJson(jsonData);
+      if (isJsonConfigOnlyModule()) {
+        enableJsonConfigActions();
+      }
       setEventListeners();
       let status = 0;
       CallingTabs(status);
@@ -960,9 +988,15 @@ async function getModuleConfig(moduleId) {
       moduleDetails = data.moduleDetails || {};
 specifyingTheModuleServer = data.serversIdInModuleName || [];
 setConfigOnlyActionState(isCurrentUpfJsonConfigOnlyModule());
+      if (isJsonConfigOnlyModule()) {
+        enableJsonConfigActions();
+      }
       if (data) jsonData = data.config;
       // removeLastGeneratedForm();
       await generateFormFromJson(jsonData);
+      if (isJsonConfigOnlyModule()) {
+        enableJsonConfigActions();
+      }
       setEventListeners();
       // setObserver();
       let status = 0;
@@ -1202,8 +1236,12 @@ async function StartModules(id) {
 
   if (isCurrentModuleConfBased() || isJsonConfigOnlyModule()) {
     document.getElementById("idLoading").style.display = "none";
+    if (isJsonConfigOnlyModule()) {
+      warnJsonConfigOnlyAction();
+      return;
+    }
     Toastify({
-      text: isJsonConfigOnlyModule() ? "JSON config modules are config-only. Use Update or Export instead." : "This action is not supported for .conf-based modules.",
+      text: "This action is not supported for .conf-based modules.",
       style: {
         background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
       },
@@ -1258,8 +1296,12 @@ async function StopModules(id) {
     "hsla(0, 0%, 100%, 0.5)";
   if (isCurrentModuleConfBased() || isJsonConfigOnlyModule()) {
     document.getElementById("idLoading").style.display = "none";
+    if (isJsonConfigOnlyModule()) {
+      warnJsonConfigOnlyAction();
+      return;
+    }
     Toastify({
-      text: isJsonConfigOnlyModule() ? "JSON config modules are config-only. Use Update or Export instead." : "This action is not supported for .conf-based modules.",
+      text: "This action is not supported for .conf-based modules.",
       style: {
         background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
       },
@@ -1310,8 +1352,12 @@ async function RestartModules(id) {
     "hsla(0, 0%, 100%, 0.5)";
   if (isCurrentModuleConfBased() || isJsonConfigOnlyModule()) {
     document.getElementById("idLoading").style.display = "none";
+    if (isJsonConfigOnlyModule()) {
+      warnJsonConfigOnlyAction();
+      return;
+    }
     Toastify({
-      text: isJsonConfigOnlyModule() ? "JSON config modules are config-only. Use Update or Export instead." : "This action is not supported for .conf-based modules.",
+      text: "This action is not supported for .conf-based modules.",
       style: {
         background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
       },
@@ -1394,10 +1440,16 @@ async function StatusModules(id) {
     "hsla(0, 0%, 100%, 0.5)";
   if (isCurrentModuleConfBased() || isJsonConfigOnlyModule()) {
     document.getElementById("idLoading").style.display = "none";
+    if (isJsonConfigOnlyModule()) {
+      document.getElementById("textStatus").textContent =
+        "JSON config modules are config-only. Use Update, Restore, or Export instead.";
+      warnJsonConfigOnlyAction();
+      return;
+    }
     document.getElementById("textStatus").textContent =
-      isJsonConfigOnlyModule() ? "JSON config modules are config-only. Use Update or Export instead." : "This action is not supported for .conf-based modules.";
+      "This action is not supported for .conf-based modules.";
     Toastify({
-      text: isJsonConfigOnlyModule() ? "JSON config modules are config-only. Use Update or Export instead." : "This action is not supported for .conf-based modules.",
+      text: "This action is not supported for .conf-based modules.",
       style: {
         background: "linear-gradient(to right, rgb(255, 0, 0), rgb(231, 0, 0))",
       },

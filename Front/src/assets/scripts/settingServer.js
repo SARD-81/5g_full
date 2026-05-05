@@ -120,36 +120,52 @@ function moduleTypeIncludes(moduleDetails, targetType) {
     .includes(String(targetType).toLowerCase());
 }
 
+function isJsonConfigOnlyModule() {
+  return String(currentEffectiveConfigFormat || "").toLowerCase() === "json";
+}
+
 function isCurrentUpfJsonConfigOnlyModule() {
-  return (
-    moduleTypeIncludes(moduleDetails, "upf") &&
-    String(currentEffectiveConfigFormat || "").toLowerCase() === "json"
-  );
+  return moduleTypeIncludes(moduleDetails, "upf") && isJsonConfigOnlyModule();
 }
 
 function setConfigOnlyActionState(isConfigOnly) {
-  [
-    "returnToPreviousState",
-    "returnToTheInitialState",
-    "exportModule",
-    "startModule",
-    "stopModule",
-    "restartModule",
-    "statusModule",
-  ].forEach((id) => {
+  ["startModule", "stopModule", "restartModule", "statusModule"].forEach((id) => {
     const element = document.getElementById(id);
     if (!element) return;
-    element.classList.toggle("d-none", isConfigOnly);
     element.disabled = isConfigOnly;
     element.setAttribute("aria-disabled", isConfigOnly ? "true" : "false");
   });
 
-  const updateBtn = document.getElementById("updateBtn");
-  if (updateBtn) {
-    updateBtn.classList.remove("d-none");
-    updateBtn.disabled = false;
-    updateBtn.setAttribute("aria-disabled", "false");
-  }
+  enableJsonConfigActions();
+}
+
+function enableJsonConfigActions() {
+  [
+    "returnToPreviousState",
+    "returnToTheInitialState",
+    "subReturnToPrevious",
+    "subReturnToTheInitial",
+    "exportModule",
+    "updateBtn",
+    "subUpdateModule",
+  ].forEach((id) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.classList.remove("d-none");
+    element.disabled = false;
+    element.style.pointerEvents = "";
+    element.style.opacity = "";
+    element.setAttribute("aria-disabled", "false");
+  });
+}
+
+function warnJsonConfigOnlyAction() {
+  Toastify({
+    text: "JSON config modules are config-only. Use Update, Restore, or Export instead.",
+    style: {
+      background: "linear-gradient(to right,rgb(255, 152, 0),rgb(245, 124, 0))",
+    },
+  }).showToast();
 }
 
 function createSingleEditorTab(tabKey, title, data) {
@@ -196,15 +212,15 @@ function generateFormFromJson(data) {
       resolve();
       return;
     }
-    
-    if (effectiveFormat === "json" && isCurrentUpfJsonConfigOnlyModule()) {
-      createSingleEditorTab("data", "data", data);
+
+
+    if (effectiveFormat === "yaml") {
+      createSingleEditorTab("configurations", "configurations", data);
       resolve();
       return;
     }
-    
-    if (effectiveFormat === "yaml") {
-      createSingleEditorTab("configurations", "configurations", data);
+    if (effectiveFormat === "json") {
+      createSingleEditorTab("configuration", "configuration", data);
       resolve();
       return;
     }
@@ -479,6 +495,9 @@ async function returnToTheFirstState() {
       jsonData = data.config;
       currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data.config);
       await generateFormFromJson(jsonData);
+      if (isJsonConfigOnlyModule()) {
+        enableJsonConfigActions();
+      }
       setEventListeners();
       let status = 1;
       CallingTabs(status);
@@ -530,22 +549,22 @@ async function saveDataToServer() {
     }
   });
   let finalData = updateJsonKey(oldDataContainer, newDataContainer);
-const container = document.getElementById("jsoneditor");
+  const container = document.getElementById("jsoneditor");
 
-if (
-  container &&
-  container._jsonEditorInstance &&
-  typeof container._jsonEditorInstance.get === "function"
-) {
-  try {
-    finalData = container._jsonEditorInstance.get();
-  } catch (error) {
-    console.error("Failed to read JSONEditor data before saving module config.", error);
+  if (
+    container &&
+    container._jsonEditorInstance &&
+    typeof container._jsonEditorInstance.get === "function"
+  ) {
+    try {
+      finalData = container._jsonEditorInstance.get();
+    } catch (error) {
+      console.error("Failed to read JSONEditor data before saving module config.", error);
+    }
   }
-}
 
-const isConf = container.dataset.isConf === "true";
-const meta = container._confMeta; // ✅ اینجا گرفتیم
+  const isConf = container.dataset.isConf === "true";
+  const meta = container._confMeta; // ✅ اینجا گرفتیم
 
 
   if (isConf) {
@@ -575,6 +594,9 @@ const meta = container._confMeta; // ✅ اینجا گرفتیم
       currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data.config);
 
       await generateFormFromJson(jsonData);
+      if (isJsonConfigOnlyModule()) {
+        enableJsonConfigActions();
+      }
       setEventListeners();
       let status = 0;
       CallingTabs(status);
@@ -964,11 +986,17 @@ async function getModuleConfig(moduleId) {
       specifyingTheModuleServer = data.serversIdInModuleName;
       currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data?.config || {});
       moduleDetails = data.moduleDetails || {};
-specifyingTheModuleServer = data.serversIdInModuleName || [];
-setConfigOnlyActionState(isCurrentUpfJsonConfigOnlyModule());
+      specifyingTheModuleServer = data.serversIdInModuleName || [];
+      setConfigOnlyActionState(isCurrentUpfJsonConfigOnlyModule());
+      if (isJsonConfigOnlyModule()) {
+        enableJsonConfigActions();
+      }
       if (data) jsonData = data.config;
       // removeLastGeneratedForm();
       await generateFormFromJson(jsonData);
+      if (isJsonConfigOnlyModule()) {
+        enableJsonConfigActions();
+      }
       setEventListeners();
       // setObserver();
       let status = 0;
@@ -1206,8 +1234,12 @@ async function StartModules(id) {
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
 
-  if (isCurrentModuleConfBased()) {
+  if (isCurrentModuleConfBased() || isJsonConfigOnlyModule()) {
     document.getElementById("idLoading").style.display = "none";
+    if (isJsonConfigOnlyModule()) {
+      warnJsonConfigOnlyAction();
+      return;
+    }
     Toastify({
       text: "This action is not supported for .conf-based modules.",
       style: {
@@ -1262,8 +1294,12 @@ async function StopModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  if (isCurrentModuleConfBased()) {
+  if (isCurrentModuleConfBased() || isJsonConfigOnlyModule()) {
     document.getElementById("idLoading").style.display = "none";
+    if (isJsonConfigOnlyModule()) {
+      warnJsonConfigOnlyAction();
+      return;
+    }
     Toastify({
       text: "This action is not supported for .conf-based modules.",
       style: {
@@ -1314,8 +1350,12 @@ async function RestartModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  if (isCurrentModuleConfBased()) {
+  if (isCurrentModuleConfBased() || isJsonConfigOnlyModule()) {
     document.getElementById("idLoading").style.display = "none";
+    if (isJsonConfigOnlyModule()) {
+      warnJsonConfigOnlyAction();
+      return;
+    }
     Toastify({
       text: "This action is not supported for .conf-based modules.",
       style: {
@@ -1398,8 +1438,14 @@ async function StatusModules(id) {
   document.getElementById("idLoading").style.display = "flex";
   document.getElementById("idLoading").style.background =
     "hsla(0, 0%, 100%, 0.5)";
-  if (isCurrentModuleConfBased()) {
+  if (isCurrentModuleConfBased() || isJsonConfigOnlyModule()) {
     document.getElementById("idLoading").style.display = "none";
+    if (isJsonConfigOnlyModule()) {
+      document.getElementById("textStatus").textContent =
+        "JSON config modules are config-only. Use Update, Restore, or Export instead.";
+      warnJsonConfigOnlyAction();
+      return;
+    }
     document.getElementById("textStatus").textContent =
       "This action is not supported for .conf-based modules.";
     Toastify({

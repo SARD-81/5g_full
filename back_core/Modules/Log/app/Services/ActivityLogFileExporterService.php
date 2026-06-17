@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class ActivityLogFileExporterService
 {
-    protected string $logDirectory = '5g-activity-logs';
+    protected string $logDirectory = 'logs/5g-activity-logs';
     protected int $retentionDays = 30;
 
     /**

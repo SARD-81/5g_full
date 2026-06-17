@@ -39,3 +39,10 @@ Schedule::call(function () {
     ->name('module-schedule');
 //    ->withoutOverlapping();
 
+
+// ==================== Activity Log File Exporter (هر 5 دقیقه) ====================
+Schedule::command('logs:export-activity-to-file')
+    ->everyFiveMinutes()
+    ->name('export-activity-logs-to-file')
+    ->withoutOverlapping()
+    ->runInBackground();

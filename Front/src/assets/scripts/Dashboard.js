@@ -10,7 +10,7 @@ import imageZabbix from "../img/Monitor-cuate.svg";
 import imageElk from "../img/Monitor-cuate.svg";
 import imageSubscribers from "../img/Monitor-cuate.svg";
 import "toastify-js/src/toastify.css";
-import { data, error } from "jquery";
+import { data, error, post } from "jquery";
 import Stepper from "bs-stepper";
 import "bs-stepper/dist/css/bs-stepper.min.css";
 import {
@@ -136,7 +136,7 @@ if (project == "BBDH") {
   document.getElementById("v-trace")?.remove();
   document.getElementById("tabRoute")?.remove();
   document.getElementById("v-route")?.remove();
-  document.getElementById("v-monitoring")?.remove();
+  // document.getElementById("v-monitoring")?.remove();
   document.querySelector(".bgSpecifications").style.display = "none";
   const elements = document.querySelectorAll(".replace-server");
 
@@ -153,10 +153,10 @@ if (window.innerWidth < 992) {
 if (window.innerWidth < 768) {
   document.getElementById("idSidebar")?.remove();
   document.querySelector(".divPing")?.classList.remove("w-50");
-  document.querySelector(".divInputMonitoring")?.classList.remove("d-flex");
-  document.querySelector(".divInputMonitoringELK")?.classList.remove("d-flex");
-  document.querySelector(".divButtonsMonitoring")?.classList.add("d-flex");
-  document.querySelector(".divButtonsMonitoringELK")?.classList.add("d-flex");
+  // document.querySelector(".divInputMonitoring")?.classList.remove("d-flex");
+  // document.querySelector(".divInputMonitoringELK")?.classList.remove("d-flex");
+  // document.querySelector(".divButtonsMonitoring")?.classList.add("d-flex");
+  // document.querySelector(".divButtonsMonitoringELK")?.classList.add("d-flex");
   document.getElementById("url_input_a")?.classList.remove("w-50");
   document.getElementById("url_input_b")?.classList.remove("w-50");
   document.getElementById("buttonOpenIframe1")?.classList.remove("ms-3");
@@ -320,43 +320,43 @@ document
     }
   });
 
-if (document.getElementById("v-trace")) {
-  document
-    .querySelector("#v-trace-tab")
-    .addEventListener("shown.bs.tab", async function () {
-      if (document.getElementById("closeOffcanvas")) {
-        document.getElementById("closeOffcanvas").click();
-      }
-      whichTab = "trace";
-      const id = this.dataset.id; // گرفتن id از data-id
-      ActiveMenu(id); // فراخوانی تابع با id مربوطه
-      if (serverCard == undefined) {
-        await showAllServer();
-      }
-      if (modulesInfo.length == 0) {
-        await showModuls();
-      }
-      showNameServerTrace();
-    });
-}
+// if (document.getElementById("v-trace")) {
+//   document
+//     .querySelector("#v-trace-tab")
+//     .addEventListener("shown.bs.tab", async function () {
+//       if (document.getElementById("closeOffcanvas")) {
+//         document.getElementById("closeOffcanvas").click();
+//       }
+//       whichTab = "trace";
+//       const id = this.dataset.id; // گرفتن id از data-id
+//       ActiveMenu(id); // فراخوانی تابع با id مربوطه
+//       if (serverCard == undefined) {
+//         await showAllServer();
+//       }
+//       if (modulesInfo.length == 0) {
+//         await showModuls();
+//       }
+//       showNameServerTrace();
+//     });
+// }
 
-let kpiStatus = true;
+// let kpiStatus = true;
 
-if (document.getElementById("v-kpi")) {
-  document
-    .querySelector("#v-kpi-tab")
-    .addEventListener("shown.bs.tab", async function () {
-      if (document.getElementById("closeOffcanvas")) {
-        document.getElementById("closeOffcanvas").click();
-      }
-      whichTab = "kpi";
-      const id = this.dataset.id; // گرفتن id از data-id
-      ActiveMenu(id); // فراخوانی تابع با id مربوطه
-      if (kpiStatus) {
-        indexKpi();
-      }
-    });
-}
+// if (document.getElementById("v-kpi")) {
+//   document
+//     .querySelector("#v-kpi-tab")
+//     .addEventListener("shown.bs.tab", async function () {
+//       if (document.getElementById("closeOffcanvas")) {
+//         document.getElementById("closeOffcanvas").click();
+//       }
+//       whichTab = "kpi";
+//       const id = this.dataset.id; // گرفتن id از data-id
+//       ActiveMenu(id); // فراخوانی تابع با id مربوطه
+//       if (kpiStatus) {
+//         indexKpi();
+//       }
+//     });
+// }
 
 if (document.getElementById("v-route")) {
   document
@@ -398,6 +398,7 @@ if (document.getElementById("v-gui")) {
       }
     });
 }
+
 if (document.getElementById("v-ping")) {
   document
     .querySelector("#v-ping-tab")
@@ -933,6 +934,7 @@ async function permissionShow() {
 }
 
 function createChecckBox(data) {
+  console.log(data)
   if (document.getElementById("showAccessLevel")) {
     document.getElementById("showAccessLevel").innerHTML = "";
   }
@@ -1142,7 +1144,7 @@ function changeSelectAddUser() {
       }
     });
 
-    document.getElementById("selectAccessLevel11").disabled = false;
+    document.getElementById("selectAccessLevel11").disabled = true;
   } else if (this.value === "expert") {
     expert.permissions.forEach((item) => {
       if (dataValueID.includes(item)) {
@@ -1172,7 +1174,7 @@ function changeSelectAddUser() {
     document.getElementById("selectAccessLevel2").checked = false;
     document.getElementById("selectAccessLevel2").disabled = true;
   }
-  document.getElementById("selectAccessLevel11").disabled = false;
+  document.getElementById("selectAccessLevel11").disabled = true;
   if (document.getElementById("selectAddUser").value != "visitor") {
     document.getElementById("selectAccessLevel9").disabled = false;
     document.getElementById("selectAccessLevel9").checked = true;
@@ -1190,16 +1192,16 @@ function changeSelectAddUser() {
       if (document.getElementById("selectAccessLevel" + numberSelect)) {
         document.getElementById(
           "selectAccessLevel" + numberSelect
-        ).checked = true;
+        ).checked = fasle;
         document.getElementById(
           "selectAccessLevel" + numberSelect
-        ).disabled = false;
+        ).disabled = true;
         numberSelect++;
       }
     }
   } else {
     let numberSelect = 13;
-    for (let i = 12; i <= checkBoxServer.length; i++) {
+    for (let i = 13; i <= checkBoxServer.length; i++) {
       document.getElementById(
         "selectAccessLevel" + numberSelect
       ).checked = true;
@@ -1613,7 +1615,7 @@ if (document.getElementById("serverIdInputAddUser")) {
         document.getElementById("selectAccessLevel2").checked = false;
         document.getElementById("selectAccessLevel2").disabled = true;
       }
-      document.getElementById("selectAccessLevel11").disabled = false;
+      document.getElementById("selectAccessLevel11").disabled = true;
       if (document.getElementById("selectAddUser").value != "visitor") {
         document.getElementById("selectAccessLevel9").disabled = false;
         document.getElementById("selectAccessLevel9").checked = true;
@@ -1752,23 +1754,25 @@ async function SubAddUser() {
 
       dataUser.push({
         id: data.data.user.id,
-        name: data.data.user.first_name,
+        // name: data.data.user.first_name,
         authName: data.data.user.auth_name,
         permission: data.data.permission_name,
         role: data.data.role,
       });
-      for (let x = 1; x <= 8; x++) {
+      for (let x = 1; x <= 6; x++) {
         let td = document.createElement("td");
         td.setAttribute("class", `td${x}`);
         if (x == 1) {
           td.innerHTML = endPageShowUser;
-        } else if (x == 2) {
-          td.innerHTML = data.data.user.first_name;
-        } else if (x == 3) {
-          td.innerHTML = data.data.user.last_name;
-        } else if (x == 4) {
+        }
+        // else if (x == 2) {
+        //   td.innerHTML = data.data.user.first_name;
+        // } else if (x == 3) {
+        //   td.innerHTML = data.data.user.last_name;
+        // }
+        else if (x == 2) {
           td.innerHTML = document.getElementById("authNameInputAddUser").value;
-        } else if (x == 5) {
+        } else if (x == 3) {
           let span = document.createElement("span");
           span.innerHTML = document.getElementById("selectAddUser").value;
           td.appendChild(span);
@@ -1777,7 +1781,7 @@ async function SubAddUser() {
           } else if (data.data.role == "visitor") {
             span.setAttribute("class", "badge text-bg-success fs-6");
           }
-        } else if (x == 6) {
+        } else if (x == 4) {
           let svgElemMore = `
             <button type="button" class="btn btn-secondary iconAccessLevel"  
              data-bs-toggle="modal"
@@ -1789,7 +1793,7 @@ async function SubAddUser() {
              </button>
             `;
           td.insertAdjacentHTML("afterbegin", svgElemMore);
-        } else if (x == 7) {
+        } else if (x == 5) {
           let svgElemEdit = `<svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
@@ -1811,7 +1815,7 @@ async function SubAddUser() {
         </svg>`;
 
           td.insertAdjacentHTML("afterbegin", svgElemEdit);
-        } else if (x == 8) {
+        } else if (x == 6) {
           let svgElemRemove = `<svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
@@ -1950,25 +1954,27 @@ async function showUsers(page = 1) {
 
         dataUser.push({
           id: data.data.users[i].id,
-          name: data.data.users[i].first_name,
+          // name: data.data.users[i].first_name,
           authName: data.data.users[i].auth_name,
           permission: data.data.users[i].permissions,
           role: data.data.users[i].roles[0],
           server_id: data.data.users[i].server_id,
         });
 
-        for (let x = 1; x <= 8; x++) {
+        for (let x = 1; x <= 6; x++) {
           let td = document.createElement("td");
           td.setAttribute("class", `td${x}`);
           if (x == 1) {
             td.innerHTML = paginationNamber++;
-          } else if (x == 2) {
-            td.innerHTML = data.data.users[i].first_name;
-          } else if (x == 3) {
-            td.innerHTML = data.data.users[i].last_name;
-          } else if (x == 4) {
+          }
+          //  else if (x == 2) {
+          //   td.innerHTML = data.data.users[i].first_name;
+          // } else if (x == 3) {
+          //   td.innerHTML = data.data.users[i].last_name;
+          // }
+          else if (x == 2) {
             td.innerHTML = data.data.users[i].auth_name;
-          } else if (x == 5) {
+          } else if (x == 3) {
             let span = document.createElement("span");
             span.innerHTML = data.data.users[i].roles[0];
             td.appendChild(span);
@@ -1979,7 +1985,7 @@ async function showUsers(page = 1) {
             } else if (data.data.users[i].roles[0] == "visitor") {
               span.setAttribute("class", "badge text-bg-success fs-6");
             }
-          } else if (x == 6) {
+          } else if (x == 4) {
             let svgElemMore = `
             <button type="button" 
             id="${data.data.users[i].id}" 
@@ -1992,7 +1998,7 @@ async function showUsers(page = 1) {
              </button>
             `;
             td.insertAdjacentHTML("afterbegin", svgElemMore);
-          } else if (x == 7) {
+          } else if (x == 5) {
             if (roleUserGetMe != "admin" && data.data.users[i].id == 1) {
               let p = document.createElement("p");
               p.innerHTML = "_";
@@ -2020,7 +2026,7 @@ async function showUsers(page = 1) {
 
               td.insertAdjacentHTML("afterbegin", svgElemEdit);
             }
-          } else if (x == 8) {
+          } else if (x == 6) {
             if (data.data.users[i].id != 1) {
               let svgElemRemove = `<svg
           xmlns="http://www.w3.org/2000/svg"
@@ -2219,7 +2225,7 @@ function showEditUser() {
   document.querySelectorAll(".iconAccessLevel").forEach((icon) => {
     icon.addEventListener("click", function () {
       let arrTableTr = document.querySelector(
-        `#usersTable tbody tr#tr${icon.id} .td4`
+        `#usersTable tbody tr#tr${icon.id} .td2`
       );
 
       document.getElementById("accessLevelUser").innerHTML =
@@ -2305,8 +2311,8 @@ function showEditUser() {
       });
 
       if (findEditUser != -1) {
-        document.querySelector('input[name="name_nameInputEditUser"]').value =
-          findEditUser.name;
+        // document.querySelector('input[name="name_nameInputEditUser"]').value =
+        //   findEditUser.name;
         document.querySelector('input[name="namePasswordEditUser"]').value = "";
 
         if (document.getElementById("serverIdInputEditUser")) {
@@ -2455,7 +2461,7 @@ let subEditUser = document.getElementById("addEditUser");
 subEditUser.addEventListener("click", function () {
   if (btnEditUser == "") {
     numberPermission = 0;
-    let lengthNameAddUser = document.getElementById("nameInputEditUser").value;
+    // let lengthNameAddUser = document.getElementById("nameInputEditUser").value;
     let lengthAuthNameAddUser = document.getElementById(
       "authNameInputEditUser"
     ).value;
@@ -2469,12 +2475,13 @@ subEditUser.addEventListener("click", function () {
     const isCheckedBox = [...checkBox].some((checkBox) => checkBox.checked);
 
 
-    if (lengthNameAddUser.length < 3) {
-      Toastify({
-        text: "The name is less than 3 characters.",
-        // avatar: "icons8-information.gif", // مسیر آیکون شما
-      }).showToast();
-    } else if (lengthAuthNameAddUser.length < 3) {
+    // if (lengthNameAddUser.length < 3) {
+    //   Toastify({
+    //     text: "The name is less than 3 characters.",
+    //     // avatar: "icons8-information.gif", // مسیر آیکون شما
+    //   }).showToast();
+    // } 
+    if (lengthAuthNameAddUser.length < 3) {
       Toastify({
         text: "The username is less than 3 characters.",
       }).showToast();
@@ -2531,7 +2538,7 @@ subEditUser.addEventListener("click", function () {
       }
     } else {
       if (
-        lengthNameAddUser.length >= 3 &&
+        // lengthNameAddUser.length >= 3 &&
         lengthAuthNameAddUser.length >= 3 &&
         isCheckedBox != false &&
         (lengthPassword.length >= 8 || lengthPassword.length == 0)
@@ -2728,7 +2735,7 @@ async function editUsers(id) {
     "hsla(0, 0%, 100%, 0.5)";
   permissionUser = [];
   let numberId = Number(id);
-  let nameInputEditUser = document.getElementById("nameInputEditUser").value;
+  // let nameInputEditUser = document.getElementById("nameInputEditUser").value;
   let authNameInputEditUser = document.getElementById(
     "authNameInputEditUser"
   ).value;
@@ -2748,7 +2755,7 @@ async function editUsers(id) {
 
   // اضافه کردن مقادیر به FormData
   formData.append("user_id", numberId);
-  formData.append("first_name", nameInputEditUser);
+  // formData.append("first_name", nameInputEditUser);
   formData.append("auth_name", authNameInputEditUser);
   if (document.getElementById("serverIdInputEditUser")) {
     if (serverIdInputEditUser != "") {
@@ -2789,22 +2796,22 @@ async function editUsers(id) {
 
       if (findEditUserIndex != -1) {
         dataUser[findEditUserIndex]["id"] = data.data.user.id;
-        dataUser[findEditUserIndex]["name"] = data.data.user.first_name;
+        // dataUser[findEditUserIndex]["name"] = data.data.user.first_name;
         dataUser[findEditUserIndex]["authName"] = data.data.user.auth_name;
         dataUser[findEditUserIndex]["role"] = data.data.user.roles;
       }
 
+      // document.querySelector(`#tr${id} .td2`).innerHTML =
+      //   data.data.user.first_name;
+      // document.querySelector(`#tr${id} .td3`).innerHTML =
+      //   data.data.user.last_name;
       document.querySelector(`#tr${id} .td2`).innerHTML =
-        data.data.user.first_name;
-      document.querySelector(`#tr${id} .td3`).innerHTML =
-        data.data.user.last_name;
-      document.querySelector(`#tr${id} .td4`).innerHTML =
         data.data.user.auth_name;
-      document.querySelector(`#tr${id} .td5 span`).innerHTML =
+      document.querySelector(`#tr${id} .td3 span`).innerHTML =
         data.data.user.roles;
 
 
-      let spanTd = document.querySelector(`#tr${data.data.user.id} .td5 span`);
+      let spanTd = document.querySelector(`#tr${data.data.user.id} .td3 span`);
 
       if (spanTd.innerHTML == "expert") {
         spanTd?.classList.remove("text-bg-success");
@@ -3118,11 +3125,11 @@ async function load() {
     document.getElementById("removeModule")?.remove();
   }
 
-  if (!permissionUsers.includes("kpi")) {
-    document.getElementById("v-kpi-tab")?.remove();
-    document.getElementById("v-kpi")?.remove();
-    arrForActiveMenu = arrForActiveMenu.filter((item) => item != 14);
-  }
+  // if (!permissionUsers.includes("kpi")) {
+  //   document.getElementById("v-kpi-tab")?.remove();
+  //   document.getElementById("v-kpi")?.remove();
+  //   arrForActiveMenu = arrForActiveMenu.filter((item) => item != 14);
+  // }
 
   if (!permissionUsers.includes("route")) {
     document.getElementById("v-route-tab")?.remove();
@@ -3136,11 +3143,11 @@ async function load() {
     arrForActiveMenu = arrForActiveMenu.filter((item) => item != 7);
   }
 
-  if (!permissionUsers.includes("trace")) {
-    document.getElementById("v-trace-tab")?.remove();
-    document.getElementById("v-trace")?.remove();
-    arrForActiveMenu = arrForActiveMenu.filter((item) => item != 10);
-  }
+  // if (!permissionUsers.includes("trace")) {
+  //   document.getElementById("v-trace-tab")?.remove();
+  //   document.getElementById("v-trace")?.remove();
+  //   arrForActiveMenu = arrForActiveMenu.filter((item) => item != 10);
+  // }
 
   if (!permissionUsers.includes("log")) {
     document.getElementById("v-log-tab")?.remove();
@@ -3512,6 +3519,27 @@ function cardServer(Servers) {
     }
     card.setAttribute("data-server-id", `${Servers[num].id}`);
     num++;
+    // <div
+    //   class="divFlex divIconPause justify-content-center align-items-center"
+    //   style="${Servers[num - 1].is_down == 1 ? "display:none" : "display:flex"}"
+    //   data-server-pause-id="${server.id}"
+    //   id="iconPause${server.id}"
+    //   data-bs-toggle="modal"
+    //   data-bs-target="#stopServer"
+    // >
+    //   <svg
+    //     xmlns="http://www.w3.org/2000/svg"
+    //     width="25"
+    //     height="25"
+    //     fill="currentColor"
+    //     class="bi bi-pause-fill"
+    //     viewBox="0 0 16 16"
+    //   >
+    //     <path
+    //       d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"
+    //     />
+    //   </svg>
+    // </div>
 
     card.innerHTML = `
   <h5 style="font-weight: bold;" id="nameServer${server.id}">${server.name}</h5>
@@ -3543,27 +3571,7 @@ function cardServer(Servers) {
   </div>
   <div class="d-flex justify-content-between">
   <div class="d-flex">
-    <div
-      class="divFlex divIconPause justify-content-center align-items-center"
-      style="${Servers[num - 1].is_down == 1 ? "display:none" : "display:flex"}"
-      data-server-pause-id="${server.id}"
-      id="iconPause${server.id}"
-      data-bs-toggle="modal"
-      data-bs-target="#stopServer"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="25"
-        height="25"
-        fill="currentColor"
-        class="bi bi-pause-fill"
-        viewBox="0 0 16 16"
-      >
-        <path
-          d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"
-        />
-      </svg>
-    </div>
+    
     <div
       class="divFlex divIconPlay justify-content-center align-items-center"
       style="${Servers[num - 1].is_down == 0 ? "display:none" : "display:flex"}"
@@ -3642,9 +3650,9 @@ function cardServer(Servers) {
 
   iconPlay();
 
-  document.getElementById("pauseClick").addEventListener("click", function () {
-    StopServers(idIconPause);
-  });
+  //  document.getElementById("pauseClick").addEventListener("click", function () {
+  //     StopServers(idIconPause);
+  //   }); 
 
   iconRemoveServer();
   iconPasswordServer();
@@ -3934,56 +3942,56 @@ async function StartServers(id) {
   document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
 }
 
-async function StopServers(id) {
-  if (roleUserGetMe == "visitor") return;
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
-  await useApi({
-    method: "post",
-    url: "server-stop",
-    data: {
-      server_id: id,
-    },
-    callback: function (data) {
-      let massge = data.msg;
+// async function StopServers(id) {
+//   if (roleUserGetMe == "visitor") return;
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 0.5)";
+//   await useApi({
+//     method: "post",
+//     url: "server-stop",
+//     data: {
+//       server_id: id,
+//     },
+//     callback: function (data) {
+//       let massge = data.msg;
 
-      let index = numberAndNameServers.findIndex(
-        (item) => item.nameServer === data.data.name
-      );
+//       let index = numberAndNameServers.findIndex(
+//         (item) => item.nameServer === data.data.name
+//       );
 
-      if (index !== -1) {
-        // انجام تغییرات
-        numberAndNameServers[index].serverStatus = 1;
-      }
+//       if (index !== -1) {
+//         // انجام تغییرات
+//         numberAndNameServers[index].serverStatus = 1;
+//       }
 
-      document.getElementById(`${idPause}`)?.classList.remove("d-flex");
-      document.getElementById(`${idPause}`)?.classList.add("d-none");
-      document
-        .getElementById(`iconPlay${idIconPause}`)
-        ?.classList.remove("d-none");
-      document
-        .getElementById(`iconPlay${idIconPause}`)
-        ?.classList.add("d-flex");
-      document
-        .querySelector(`.info-box[data-server-id='${data.data.id}']`)
-        ?.classList.remove("host");
-      document
-        .querySelector(`.info-box[data-server-id='${data.data.id}']`)
-        ?.classList.add("off");
+//       document.getElementById(`${idPause}`)?.classList.remove("d-flex");
+//       document.getElementById(`${idPause}`)?.classList.add("d-none");
+//       document
+//         .getElementById(`iconPlay${idIconPause}`)
+//         ?.classList.remove("d-none");
+//       document
+//         .getElementById(`iconPlay${idIconPause}`)
+//         ?.classList.add("d-flex");
+//       document
+//         .querySelector(`.info-box[data-server-id='${data.data.id}']`)
+//         ?.classList.remove("host");
+//       document
+//         .querySelector(`.info-box[data-server-id='${data.data.id}']`)
+//         ?.classList.add("off");
 
-      Toastify({
-        text: massge,
-        style: {
-          background:
-            "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
-        },
-      }).showToast();
-    },
-  });
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
-}
+//       Toastify({
+//         text: massge,
+//         style: {
+//           background:
+//             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+//         },
+//       }).showToast();
+//     },
+//   });
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
+// }
 
 let btnRemoveServer = "";
 
@@ -4176,7 +4184,26 @@ async function addServer() {
       addCard.className =
         "info-box host col-lg-3 col-md-4 col-11 ms-md-5 ms-sm-3 ms-3 text-dark";
       addCard.setAttribute("data-server-id", `${data.data.id}`);
-
+      // <div
+      //   class="divFlex divIconPause d-flex justify-content-center align-items-center"
+      //   data-server-pause-id="${data.data.id}"
+      //   id="iconPause${data.data.id}"
+      //   data-bs-toggle="modal"
+      //   data-bs-target="#stopServer"
+      // >
+      //   <svg
+      //     xmlns="http://www.w3.org/2000/svg"
+      //     width="25"
+      //     height="25"
+      //     fill="currentColor"
+      //     class="bi bi-pause-fill"
+      //     viewBox="0 0 16 16"
+      //   >
+      //     <path
+      //       d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"
+      //     />
+      //   </svg>
+      // </div>
       addCard.innerHTML = `
   <h5 style="font-weight: bold;" id="nameServer${data.data.id}">${data.data.name}</h5>
   <p id="ipServer${data.data.id}">${data.data.ip}</p>
@@ -4206,26 +4233,7 @@ async function addServer() {
   </div>
   <div class="d-flex justify-content-between">
   <div class="d-flex">
-    <div
-      class="divFlex divIconPause d-flex justify-content-center align-items-center"
-      data-server-pause-id="${data.data.id}"
-      id="iconPause${data.data.id}"
-      data-bs-toggle="modal"
-      data-bs-target="#stopServer"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="25"
-        height="25"
-        fill="currentColor"
-        class="bi bi-pause-fill"
-        viewBox="0 0 16 16"
-      >
-        <path
-          d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"
-        />
-      </svg>
-    </div>
+    
     <div
       class="divFlex divIconPlay justify-content-center align-items-center"
       style="display:none"
@@ -4399,58 +4407,27 @@ let showLogLoading = false;
 let requestShowLog = true;
 let desiredPageTFlog = true;
 let desiredPageLog = 1;
-let FilterBy = document.getElementById("FilterBy");
-let FilterBox = document.getElementById("FilterBox");
-document.getElementById("SearchLogBtn").style.display = "none";
-// بخش تغییر فیلتر
-FilterBy.addEventListener("change", () => {
-  FilterBox.innerHTML = ""; // پاک کردن محتوای قبلی
-  document.getElementById("SearchLogBtn").style.display = "flex";
 
-  switch (FilterBy.value) {
-    case "Name":
-      FilterBox.innerHTML = `
-        <p>UserName:</p>
-        <!-- دقت کنید: list="nameSuggestionsList" اضافه شد -->
-        <input type="text" class="NameFilter form-control" id="NameFilter" list="nameSuggestionsList" placeholder="User Name..." autocomplete="off">
-        <datalist id="nameSuggestionsList"></datalist>
-      `;
-      // حالا که اینپوت در صفحه ساخته شد، تابع پیشنهاد دهنده را فعال می‌کنیم
-      fetchSuggestions('NameFilter', 'nameSuggestionsList', 'name');
-      break;
+// =====================================================================
+// فعال سازی autocomplete فیلترها
+// =====================================================================
 
-    case "Date":
-      FilterBox.innerHTML = `
-        <p>Start:</p>
-        <input type="date" class="LogDateFilter form-control" id="LogStartDateFilter">
-        <p>End:</p>
-        <input type="date" class="LogDateFilter form-control" id="LogEndDateFilter"> 
-      `;
-      break;
+fetchSuggestions(
+  "NameFilter",
+  "nameSuggestionsList",
+  "name"
+);
 
-    case "Event":
-      FilterBox.innerHTML = `
-        <p>EventName:</p>
-        <!-- دقت کنید: list="eventSuggestionsList" اضافه شد -->
-        <input type="text" class="EventFilter form-control" id="EventFilter" list="eventSuggestionsList" placeholder="Event Name..." autocomplete="off">
-        <datalist id="eventSuggestionsList"></datalist>
-      `;
-      // حالا که اینپوت در صفحه ساخته شد، تابع پیشنهاد دهنده را فعال می‌کنیم
-      fetchSuggestions('EventFilter', 'eventSuggestionsList', 'event');
-      break;
+fetchSuggestions(
+  "EventFilter",
+  "eventSuggestionsList",
+  "event"
+);
 
-    default:
-      FilterBox.innerHTML = ``;
-      // اگر حالت دیفالت انتخاب شد، بهتر است دکمه سرچ هم مخفی شود
-      document.getElementById("SearchLogBtn").style.display = "none";
-      break;
-  }
-});
-
-// تابع اصلی لاگ
 // =====================================================================
 // بخش اول: سیستم پیشنهاد دهنده (Autocomplete / Suggestions)
 // =====================================================================
+
 let suggestionTimeout;
 
 async function fetchSuggestions(inputId, datalistId, type) {
@@ -4462,67 +4439,66 @@ async function fetchSuggestions(inputId, datalistId, type) {
     return;
   }
 
-  console.log(`سیستم پیشنهاد دهنده برای ${inputId} با موفقیت فعال شد.`);
+  inputElement.addEventListener("input", function () {
 
-  inputElement.addEventListener('input', function () {
     const term = this.value.trim();
-    console.log(`شما در حال تایپ هستید: ${term}`);
 
     clearTimeout(suggestionTimeout);
 
     if (term.length < 2) {
-      datalistElement.innerHTML = '';
+      datalistElement.innerHTML = "";
       return;
     }
 
     suggestionTimeout = setTimeout(async () => {
-      console.log(`ارسال درخواست به بک‌اند برای کلمه: ${term} و نوع: ${type}`);
-      try {
-        const response = await fetch('/api/log-suggestions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({ term: term, type: type })
-        });
 
-        console.log("وضعیت پاسخ سرور:", response.status);
+      try {
+
+        const response = await fetch("/api/log-suggestions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify({
+            term,
+            type
+          })
+        });
 
         if (!response.ok) {
           throw new Error(`Server error: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log("دیتای دریافت شده از لاراول:", data);
 
-        // پشتیبانی از هر دو فرمتی که بک‌اند ممکن است بفرستد
         let suggestionsArray = [];
+
         if (Array.isArray(data)) {
-          suggestionsArray = data; // اگر مستقیم آرایه بود
-        } else if (data.suggestions && Array.isArray(data.suggestions)) {
-          suggestionsArray = data.suggestions; // اگر داخل آبجکت بود
+          suggestionsArray = data;
+        } else if (
+          data.suggestions &&
+          Array.isArray(data.suggestions)
+        ) {
+          suggestionsArray = data.suggestions;
         }
 
-        datalistElement.innerHTML = '';
+        datalistElement.innerHTML = "";
 
-        if (suggestionsArray.length > 0) {
-          suggestionsArray.forEach(item => {
-            // حذف مقادیر خالی یا نال
-            if (item) {
-              const option = document.createElement('option');
-              option.value = item;
-              datalistElement.appendChild(option);
-            }
-          });
-          console.log("پیشنهادات با موفقیت به HTML اضافه شدند.");
-        } else {
-          console.log("لیست پیشنهادات خالی است!");
-        }
+        suggestionsArray.forEach(item => {
+
+          if (!item) return;
+
+          const option = document.createElement("option");
+          option.value = item;
+
+          datalistElement.appendChild(option);
+        });
 
       } catch (error) {
         console.error("خطا در ارتباط با سرور:", error);
       }
+
     }, 500);
   });
 }
@@ -4540,19 +4516,18 @@ async function pageLog(page = 1) {
   document.getElementById("idLoading").style.display = "flex";
 
   // ۱. خواندن مقادیر فیلترها در لحظه
-  let currentFilterType = FilterBy?.value;
-  let nameVal = "", eventVal = "", startVal = "", endVal = "";
 
-  if (currentFilterType === "Name") {
-    nameVal = document.getElementById("NameFilter")?.value || "";
-  }
-  else if (currentFilterType === "Date") {
-    startVal = document.getElementById("LogStartDateFilter")?.value || "";
-    endVal = document.getElementById("LogEndDateFilter")?.value || "";
-  }
-  else if (currentFilterType === "Event") {
-    eventVal = document.getElementById("EventFilter")?.value || "";
-  }
+  let nameVal =
+    document.getElementById("NameFilter")?.value?.trim() || "";
+
+  let eventVal =
+    document.getElementById("EventFilter")?.value?.trim() || "";
+
+  let startVal =
+    document.getElementById("LogStartDateFilter")?.value || "";
+
+  let endVal =
+    document.getElementById("LogEndDateFilter")?.value || "";
 
   // ۲. ارسال درخواست با استفاده از تابع کاستوم شما
   await useApi({
@@ -7145,14 +7120,14 @@ async function showTabContent(hash) {
         document.getElementById("idLoading").style.display = "none";
         ActiveMenu(9);
         break;
-      case "#v-trace":
-        ActiveMenu(10);
-        await showAllServer();
-        permissionShow();
-        await showModuls();
-        showNameServerTrace();
-        document.getElementById("idLoading").style.display = "none";
-        break;
+      // case "#v-trace":
+      //   ActiveMenu(10);
+      //   await showAllServer();
+      //   permissionShow();
+      //   await showModuls();
+      //   showNameServerTrace();
+      //   document.getElementById("idLoading").style.display = "none";
+      //   break;
       case "#v-kpi":
         ActiveMenu(14);
         indexKpi();
@@ -8209,696 +8184,701 @@ let backupClickTF = false;
 //   document.getElementById("idLoading").style.background = "hsl(0, 0%, 100%)";
 // }
 
-let stepperEl;
-let stepper;
-if (project != "RRU") {
-  stepperEl = document.querySelector("#stepper");
-  stepper = new Stepper(stepperEl, {
-    animation: true,
-  });
-}
+// let stepperEl;
+// let stepper;
+// if (project != "RRU") {
+//   stepperEl = document.querySelector("#stepper");
+//   stepper = new Stepper(stepperEl, {
+//     animation: true,
+//   });
+// }
 
-let serversTrace = [];
-const serverFetchedInterfaces = {};
-let tracingActive = false;
-let globalIdentifier = ""; // کلید IMSI/MSISDN جدا
+// let serversTrace = [];
+// const serverFetchedInterfaces = {};
+// let tracingActive = false;
+// let globalIdentifier = ""; // کلید IMSI/MSISDN جدا
 
-// --- fetchInterfaces جدید ---
-async function fetchInterfaces(serverData, serverName, container) {
-  const key = String(serverName).trim();
-  if (serverFetchedInterfaces[key]) {
-    container.innerHTML = serverFetchedInterfaces[key];
-    return;
-  }
+// // --- fetchInterfaces جدید ---
+// async function fetchInterfaces(serverData, serverName, container) {
+//   const key = String(serverName).trim();
+//   if (serverFetchedInterfaces[key]) {
+//     container.innerHTML = serverFetchedInterfaces[key];
+//     return;
+//   }
 
-  // پاراگراف ثابت "Interfaces:"
-  container.innerHTML = `
-    <p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>
-    <div class="placeholder-glow mt-2 ms-3 w-50">
-      <span class="placeholder col-8"></span>
-      <span class="placeholder col-8"></span>
-      <span class="placeholder col-8"></span>
-      <span class="placeholder col-8"></span>
-    </div>
-  `;
+//   // پاراگراف ثابت "Interfaces:"
+//   container.innerHTML = `
+//     <p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>
+//     <div class="placeholder-glow mt-2 ms-3 w-50">
+//       <span class="placeholder col-8"></span>
+//       <span class="placeholder col-8"></span>
+//       <span class="placeholder col-8"></span>
+//       <span class="placeholder col-8"></span>
+//     </div>
+//   `;
 
-  const servers = [
-    {
-      id: serverData.id,
-      username: serverData.username,
-      password: serverData.password,
-      port: serverData.port ? Number(serverData.port) : 22,
-    },
-  ];
-  await useApi({
-    method: "post",
-    url: "show-interface-vm",
-    data: { servers },
-    callback: function (data) {
-      const serverNameKey = key;
-      if (data[serverNameKey] && data[serverNameKey].command_output) {
-        let raw = data[serverNameKey].command_output;
-        let cleaned = raw.replace(/\\r/g, "").replace(/\\n/g, "\n");
-        cleaned = cleaned.replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "");
-        const lines = cleaned.split("\n");
-        const regex = /^\s*(\d+):\s*([^:]+):/;
-        const interfaces = [];
-        lines.forEach((line) => {
-          const match = line.match(regex);
-          if (match) interfaces.push(match[2]);
-        });
+//   const servers = [
+//     {
+//       id: serverData.id,
+//       username: serverData.username,
+//       password: serverData.password,
+//       port: serverData.port ? Number(serverData.port) : 22,
+//     },
+//   ];
+//   await useApi({
+//     method: "post",
+//     url: "show-interface-vm",
+//     data: { servers },
+//     callback: function (data) {
+//       const serverNameKey = key;
+//       if (data[serverNameKey] && data[serverNameKey].command_output) {
+//         let raw = data[serverNameKey].command_output;
+//         let cleaned = raw.replace(/\\r/g, "").replace(/\\n/g, "\n");
+//         cleaned = cleaned.replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "");
+//         const lines = cleaned.split("\n");
+//         const regex = /^\s*(\d+):\s*([^:]+):/;
+//         const interfaces = [];
+//         lines.forEach((line) => {
+//           const match = line.match(regex);
+//           if (match) interfaces.push(match[2]);
+//         });
 
-        if (interfaces.length > 0) {
-          let html = `<p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>`;
-          interfaces.forEach((iface) => {
-            html += `
-                <div class="form-check ms-4 mt-1">
-                  <input type="checkbox" class="form-check-input interfaceTrace interfaceTrace${serverData.id}" 
-                         id="iface_${serverData.id}_${iface}" value="${iface}">
-                  <label class="form-check-label" for="iface_${serverData.id}_${iface}">${iface}</label>
-                </div>`;
-          });
-          container.innerHTML = html;
-          serverFetchedInterfaces[key] = html;
-        } else {
-          container.innerHTML = `
-            <p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>
-            <div class="text-muted small ms-3">No interfaces found</div>`;
-          serverFetchedInterfaces[key] = container.innerHTML;
-        }
-      } else {
-        showInterfaceError(container, serverData, serverName);
-      }
-    },
-    errorCallback: function () {
-      showInterfaceError(container, serverData, serverName);
-    },
-  });
-}
+//         if (interfaces.length > 0) {
+//           let html = `<p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>`;
+//           interfaces.forEach((iface) => {
+//             html += `
+//                 <div class="form-check ms-4 mt-1">
+//                   <input type="checkbox" class="form-check-input interfaceTrace interfaceTrace${serverData.id}" 
+//                          id="iface_${serverData.id}_${iface}" value="${iface}">
+//                   <label class="form-check-label" for="iface_${serverData.id}_${iface}">${iface}</label>
+//                 </div>`;
+//           });
+//           container.innerHTML = html;
+//           serverFetchedInterfaces[key] = html;
+//         } else {
+//           container.innerHTML = `
+//             <p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>
+//             <div class="text-muted small ms-3">No interfaces found</div>`;
+//           serverFetchedInterfaces[key] = container.innerHTML;
+//         }
+//       } else {
+//         showInterfaceError(container, serverData, serverName);
+//       }
+//     },
+//     errorCallback: function () {
+//       showInterfaceError(container, serverData, serverName);
+//     },
+//   });
+// }
 
-// --- خطا + Retry ---
-function showInterfaceError(container, serverData, serverName) {
-  container.innerHTML = `
-    <p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>
-    <div class="text-danger small ms-3 d-flex align-items-center mt-1">
-      Failed to fetch interfaces
-      <button class="btn btn-outline-primary btn-sm ms-2 retry-btn">Retry</button>
-    </div>
-  `;
-  container.querySelector(".retry-btn").addEventListener("click", async () => {
-    container.innerHTML = `
-      <p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>
-      <div class="placeholder-glow mt-2 ms-3 w-50">
-        <span class="placeholder col-6"></span>
-        <span class="placeholder col-5"></span>
-        <span class="placeholder col-7"></span>
-        <span class="placeholder col-4"></span>
-      </div>
-    `;
-    await fetchInterfaces(serverData, serverName, container);
-  });
-}
+// // --- خطا + Retry ---
+// function showInterfaceError(container, serverData, serverName) {
+//   container.innerHTML = `
+//     <p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>
+//     <div class="text-danger small ms-3 d-flex align-items-center mt-1">
+//       Failed to fetch interfaces
+//       <button class="btn btn-outline-primary btn-sm ms-2 retry-btn">Retry</button>
+//     </div>
+//   `;
+//   container.querySelector(".retry-btn").addEventListener("click", async () => {
+//     container.innerHTML = `
+//       <p class="m-0 fw-bold text-secondary ms-2">Interfaces:</p>
+//       <div class="placeholder-glow mt-2 ms-3 w-50">
+//         <span class="placeholder col-6"></span>
+//         <span class="placeholder col-5"></span>
+//         <span class="placeholder col-7"></span>
+//         <span class="placeholder col-4"></span>
+//       </div>
+//     `;
+//     await fetchInterfaces(serverData, serverName, container);
+//   });
+// }
 
 // --- کنترل کلی Start / Stop ---
-function runActionForAll(action) {
-  if (action === "start" && typeof funStartTrace === "function")
-    funStartTrace(globalIdentifier);
-  else if (action === "stop" && typeof funStopTrace === "function")
-    funStopTrace(globalIdentifier);
-}
+// function runActionForAll(action) {
+//   if (action === "start" && typeof funStartTrace === "function")
+//     funStartTrace(globalIdentifier);
+//   else if (action === "stop" && typeof funStopTrace === "function")
+//     funStopTrace(globalIdentifier);
+// }
 
 // --- نمایش سرورها ---
-function showNameServerTrace() {
-  const step1 = document.getElementById("step-1");
-  step1.innerHTML = "";
-
-  serverCard.forEach((server) => {
-    const serverSection = document.createElement("div");
-    serverSection.className =
-      "server-section border rounded p-3 mt-3 bg-white shadow-sm";
-
-    // Header سرور
-    const header = document.createElement("div");
-    header.className = "d-flex align-items-center justify-content-between";
-
-    const left = document.createElement("div");
-    left.className = "form-check";
-
-    const chk = document.createElement("input");
-    chk.type = "checkbox";
-    chk.className = "form-check-input serverTrace me-2";
-    chk.id = `server${server.id}`;
-
-    const lbl = document.createElement("label");
-    lbl.className = "form-check-label fw-bold";
-    lbl.htmlFor = chk.id;
-    lbl.textContent = server.name;
-
-    left.appendChild(chk);
-    left.appendChild(lbl);
-
-    header.appendChild(left);
-    serverSection.appendChild(header);
-
-    // بخش افقی ماژول + اینترفیس
-    const row = document.createElement("div");
-    row.className = "d-flex flex-wrap gap-4 mt-2";
-
-    const modulesContainer = document.createElement("div");
-    modulesContainer.className = "flex-fill modules-container d-none";
-    modulesContainer.style.minWidth = "300px";
-
-    const interfacesContainer = document.createElement("div");
-    interfacesContainer.className = "flex-fill interfaces-container d-none";
-    interfacesContainer.style.minWidth = "300px";
-    interfacesContainer.id = `interfacesContainer_${server.id}`;
-
-    const mods = modulesInfo.filter((m) => m.serverIDs.includes(server.id));
-    if (mods.length > 0) {
-      const title = document.createElement("p");
-      title.className = "m-0 fw-bold text-secondary ms-2";
-      title.textContent = "Modules:";
-      modulesContainer.appendChild(title);
-      mods.forEach((m) => {
-        const div = document.createElement("div");
-        div.className = "form-check ms-3 mt-1";
-        div.innerHTML = `
-          <input type="checkbox" class="form-check-input moduleTrace moduleTrace${server.id}" id="module${m.moduleID}">
-          <label class="form-check-label" for="module${m.moduleID}">${m.moduleName}</label>
-        `;
-        modulesContainer.appendChild(div);
-      });
-    }
-
-    row.appendChild(modulesContainer);
-    row.appendChild(interfacesContainer);
-    serverSection.appendChild(row);
-
-    step1.appendChild(serverSection);
-
-    // رویداد تیک سرور
-    chk.addEventListener("change", async () => {
-      const checked = chk.checked;
-      modulesContainer.classList.toggle("d-none", !checked);
-      interfacesContainer.classList.toggle("d-none", !checked);
-      // modulesContainer
-      //   .querySelectorAll(".moduleTrace")
-      //   .forEach((c) => (c.checked = checked));
-
-      if (checked) {
-        const sData = dataServer.find((d) => d.id == server.id);
-        if (!sData?.username || !sData?.password) {
-          Toastify({
-            text: `Please enter username/password for ${server.name}`,
-          }).showToast();
-          chk.checked = false;
-          modulesContainer.classList.add("d-none");
-          interfacesContainer.classList.add("d-none");
-          return;
-        }
-        const key = String(server.name).trim();
-        if (!serverFetchedInterfaces[key])
-          await fetchInterfaces(sData, server.name, interfacesContainer);
-        else interfacesContainer.innerHTML = serverFetchedInterfaces[key];
-      } else {
-        interfacesContainer.classList.add("d-none");
-        interfacesContainer
-          .querySelectorAll(".interfaceTrace")
-          ?.forEach((c) => (c.checked = false));
-      }
-    });
-  });
-
-  // ورودی و کنترل کلی (IMSI / MSISDN + Start / Stop + Password)
-  const controlsDiv = document.createElement("div");
-  controlsDiv.className = "mt-4";
-
-  const leftControls = document.createElement("div");
-  leftControls.className = "d-flex align-items-center mb-3 gap-2";
-  leftControls.innerHTML = `
-    <label for="globalIdentifier" class="form-label mb-0 me-2">IMSI / MSISDN</label>
-    <input type="text" class="form-control form-control-sm w-25" id="globalIdentifier">
-  `;
-
-  const midControls = document.createElement("div");
-  midControls.className = "d-flex align-items-center mb-3 gap-2";
-  midControls.innerHTML = `
-    <label for="passServer" class="form-label mb-0 me-2">Current System Password</label>
-    <input type="password" class="form-control form-control-sm w-25" id="passServer">
-  `;
-
-  const rightControls = document.createElement("div");
-  rightControls.className = "d-flex align-items-center mb-2 gap-2";
-  rightControls.innerHTML = `
-    <button class="btn btn-success" type="button" id="globalStart">Start Trace</button>
-    <button class="btn btn-danger" type="button" id="globalStop" disabled>Stop Trace</button>
-  `;
-
-  controlsDiv.appendChild(leftControls);
-  controlsDiv.appendChild(midControls);
-  controlsDiv.appendChild(rightControls);
-  step1.appendChild(controlsDiv);
-
-  // --- هندلرهای Start / Stop ---
-  document.getElementById("globalStart").addEventListener("click", async () => {
-    globalIdentifier = document.getElementById("globalIdentifier").value.trim();
-
-    // if (!globalIdentifier) {
-    //   Toastify({ text: "Please enter IMSI / MSISDN" }).showToast();
-    //   return;
-    // }
-
-    const checkedServers = Array.from(
-      document.querySelectorAll(".serverTrace:checked")
-    ).map((cb) => Number(cb.id.replace("server", "")));
-
-    if (!checkedServers.length) {
-      Toastify({
-        text: "Please select at least one server to start trace.",
-      }).showToast();
-      return;
-    }
-
-    for (const sid of checkedServers) {
-      const sData = dataServer.find((d) => d.id == sid);
-      const label =
-        document.querySelector(`label[for="server${sid}"]`)?.textContent ||
-        String(sid);
-      if (!sData?.username || !sData?.password) {
-        Toastify({
-          text: `You didn’t enter the username and password for ${label}`,
-        }).showToast();
-        return;
-      }
-
-      // const key = String(label).trim();
-      // const container = document.getElementById(`interfacesContainer_${sid}`);
-      // if (!serverFetchedInterfaces[key]) {
-      //   container.classList.remove("d-none");
-      //   await fetchInterfaces(sData, label, container);
-      // }
-    }
-
-    let module_identifier = document.getElementById("globalIdentifier").value;
-
-    // ساخت داده trace
-    serversTrace = checkedServers.map((sid) => {
-      const sInfo = serverCard.find((s) => s.id == sid);
-      const dInfo = dataServer.find((d) => d.id == sid);
-      return {
-        id: sid,
-        name: sInfo?.name,
-        username: dInfo?.username,
-        password: dInfo?.password,
-        port: dInfo?.port || 22,
-        module_identifier: module_identifier,
-        module_ids: Array.from(
-          document.querySelectorAll(`.moduleTrace${sid}:checked`)
-        ).map((c) => Number(c.id.replace("module", ""))),
-        interfaces: Array.from(
-          document.querySelectorAll(`.interfaceTrace${sid}:checked`)
-        ).map((c) => c.value),
-      };
-    });
-    runActionForAll("start");
-  });
-
-  document.getElementById("globalStop").addEventListener("click", async () => {
-    if (!tracingActive) {
-      Toastify({
-        text: "You must Start trace before stopping it.",
-      }).showToast();
-      return;
-    }
-
-    document.getElementById("tabBtn2")?.classList.remove("active");
-    document.getElementById("tabBtn1")?.classList.add("active");
-    requestAnimationFrame(() => {
-      document.getElementById("tabMain")?.classList.add("show");
-      document.getElementById("tabMain")?.classList.add("active");
-    });
-
-    const checkedServers = Array.from(
-      document.querySelectorAll(".serverTrace:checked")
-    ).map((cb) => Number(cb.id.replace("server", "")));
-
-    for (const sid of checkedServers) {
-      const sData = dataServer.find((d) => d.id == sid);
-      const label =
-        document.querySelector(`label[for="server${sid}"]`)?.textContent ||
-        String(sid);
-      if (!sData?.username || !sData?.password) {
-        Toastify({
-          text: `You didn’t enter the username and password for ${label}`,
-        }).showToast();
-        return;
-      }
-
-      // const key = String(label).trim();
-      // const container = document.getElementById(`interfacesContainer_${sid}`);
-      // if (!serverFetchedInterfaces[key]) {
-      //   container.classList.remove("d-none");
-      //   await fetchInterfaces(sData, label, container);
-      // }
-    }
-
-    let module_identifier = document.getElementById("globalIdentifier").value;
-
-    serversTrace = checkedServers.map((sid) => {
-      const sInfo = serverCard.find((s) => s.id == sid);
-      const dInfo = dataServer.find((d) => d.id == sid);
-      return {
-        id: sid,
-        name: sInfo?.name,
-        username: dInfo?.username,
-        password: dInfo?.password,
-        port: dInfo?.port || 22,
-        module_identifier: module_identifier,
-        module_ids: Array.from(
-          document.querySelectorAll(`.moduleTrace${sid}:checked`)
-        ).map((c) => Number(c.id.replace("module", ""))),
-        interfaces: Array.from(
-          document.querySelectorAll(`.interfaceTrace${sid}:checked`)
-        ).map((c) => c.value),
-      };
-    });
-    runActionForAll("stop");
-  });
-}
-
-let statusTraceStart = true;
-let statusTraceStop = true;
-
-function showInputTrace() {
-  const container = document.getElementById("step-3");
-  container.innerHTML = "";
-  // حلقه روی همه سرورها (module ها)
-  for (let i = 0; i < allInterfacesTrace.length; i++) {
-    const moduleName = Object.keys(allInterfacesTrace[i])[0];
-
-    // نام سرور
-    const p = document.createElement("p");
-    p.setAttribute("class", "m-0");
-    p.textContent = moduleName;
-    container.appendChild(p);
-
-    // ایجاد div برای input
-    const div = document.createElement("div");
-    div.setAttribute("class", "mb-3 ms-4");
-
-    // label
-    const label = document.createElement("label");
-    label.setAttribute("for", `input_${moduleName}`);
-    label.setAttribute("class", "form-label fontSizeTrace");
-    label.textContent = `IMSI & MSYSDN`;
-
-    // input
-    const input = document.createElement("input");
-    input.setAttribute("type", "text");
-    input.setAttribute("class", "form-control serverInput w-75");
-    input.setAttribute("id", `input_${moduleName}`);
-    div.appendChild(label);
-    div.appendChild(input);
-    container.appendChild(div);
-  }
-
-  const labelPassServer = document.createElement("label");
-  labelPassServer.setAttribute("for", `passServer`);
-  labelPassServer.setAttribute("class", "form-label fontSizeTrace ms-4");
-  labelPassServer.textContent = `Current Server Password`;
-
-  const inputPassServer = document.createElement("input");
-  inputPassServer.setAttribute("type", "password");
-  inputPassServer.setAttribute("class", "form-control w-25 ms-4");
-  inputPassServer.setAttribute("id", `passServer`);
-
-  container.appendChild(labelPassServer);
-  container.appendChild(inputPassServer);
-
-  // دکمه‌ها
-  const buttonPrev = document.createElement("button");
-  buttonPrev.setAttribute("class", "btn btn-primary mt-5 me-2 buttonTrace");
-  buttonPrev.setAttribute("type", "button");
-  buttonPrev.setAttribute("id", "prev3");
-  buttonPrev.innerHTML = "Prev";
-
-  // const buttonNext = document.createElement("button");
-  // buttonNext.setAttribute("class", "btn btn-primary mt-3 buttonTrace");
-  // buttonNext.setAttribute("type", "button");
-  // buttonNext.setAttribute("id", "next3");
-  // buttonNext.innerHTML = "Next";
-
-  const startTrace = document.createElement("button");
-  startTrace.setAttribute("class", "btn btn-success mt-5 me-2 buttonTrace");
-  startTrace.setAttribute("type", "button");
-  startTrace.setAttribute("id", "startTrace");
-  startTrace.innerHTML = "Start Trace";
-
-  const stopTrace = document.createElement("button");
-  stopTrace.setAttribute("class", "btn btn-success mt-5 buttonTrace");
-  stopTrace.setAttribute("type", "button");
-  stopTrace.setAttribute("id", "StopTrace");
-  stopTrace.innerHTML = "Stop Trace";
-
-  container.appendChild(buttonPrev);
-  container.appendChild(startTrace);
-  container.appendChild(stopTrace);
-
-  // رویداد next
-  // document.getElementById("next3").addEventListener("click", () => {
-  //   stepper.next();
-  // });
-
-  document.getElementById("startTrace").addEventListener("click", () => {
-    if (statusTraceStart) {
-      // جمع‌آوری داده‌ها از input ها
-      const inputs = Array.from(document.querySelectorAll(".serverInput")).map(
-        (input) => ({
-          moduleName: input.id.replace("input_", ""),
-          value: input.value.trim(),
-        })
-      );
-
-      // افزودن فقط ورودی‌هایی که مقدار دارند
-      serversTrace.forEach((server) => {
-        const matched = inputs.find(
-          (inp) => inp.moduleName === (server.name || server.module_name)
-        );
-        if (matched && matched.value !== "") {
-          // فقط اگر مقدار پر شده بود
-          server.module_identifier = matched.value;
-        }
-      });
-
-      funStartTrace();
-    } else {
-      // document.querySelectorAll(".serverTrace").forEach((element) => {
-      //   element.checked = false;
-      // });
-      // document.querySelectorAll(".moduleTrace").forEach((element) => {
-      //   element.checked = false;
-      // });
-      // showInterfaceTrace = true;
-      // stepper.to(1);
-      statusTraceStart = true;
-    }
-  });
-
-  document.getElementById("StopTrace").addEventListener("click", () => {
-    if (statusTraceStop) {
-      // جمع‌آوری داده‌ها از input ها
-      const inputs = Array.from(document.querySelectorAll(".serverInput")).map(
-        (input) => ({
-          moduleName: input.id.replace("input_", ""),
-          value: input.value.trim(),
-        })
-      );
-
-      // افزودن فقط ورودی‌هایی که مقدار دارند
-      serversTrace.forEach((server) => {
-        const matched = inputs.find(
-          (inp) => inp.moduleName === (server.name || server.module_name)
-        );
-        if (matched && matched.value !== "") {
-          server.module_identifier = matched.value;
-        }
-      });
-
-      funStopTrace();
-    } else {
-      stepper.next();
-      statusTraceStop = true;
-    }
-  });
-
-  // رویداد prev
-  document.getElementById("prev3").addEventListener("click", () => {
-    stepper.previous();
-  });
-}
-
-async function funStartTrace() {
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
-
-  let current_server_password = document.getElementById("passServer").value;
-  await useApi({
-    method: "post",
-    url: "trace-server-start",
-    data: {
-      current_server_password,
-      servers: serversTrace,
-    },
-    callback: function (data) {
-      Toastify({
-        text: "trace started successfully",
-        style: {
-          background:
-            "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
-        },
-      }).showToast();
-      document.getElementById("globalStart").disabled = true;
-      document.getElementById("globalStop").disabled = false;
-      tracingActive = true;
-      statusTraceStart = false;
-    },
-  });
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 1)";
-}
-
-async function funStopTrace() {
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
-
-  let current_server_password = document.getElementById("passServer").value;
-
-  await useApi({
-    method: "post",
-    url: "trace-server-stop",
-    data: {
-      current_server_password,
-      servers: serversTrace,
-    },
-    callback: function (data) {
-      downloadFile(data.final_pcap);
-      // setTimeout(() => {
-      //   loadPcapIntoWebshark(data.final_pcap);
-      // }, 5000);
-      const iframe = document.getElementById("traceFrame");
-      if (iframe && data?.webshark) {
-        iframe.src = data.webshark;
-      }
-
-      const iframe2 = document.getElementById("traceFrame2");
-      if (iframe2 && data?.webshark_pcap) {
-        iframe2.src = data.webshark_pcap;
-      }
-      stepper.to(2);
-      Toastify({
-        text: "trace stopped successfully",
-        style: {
-          background:
-            "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
-        },
-      }).showToast();
-      document.getElementById("globalStart").disabled = false;
-      document.getElementById("globalStop").disabled = true;
-      tracingActive = false;
-      statusTraceStop = false;
-    },
-  });
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 1)";
-}
-
-function downloadFile(address) {
-  const url = address;
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "trace.pcapng"; // اسم دلخواه فایل
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-async function loadPcapIntoWebshark(userFile) {
-  // const iframe = document.getElementById("traceFrame");
-  // let testFile;
-  // await useApi({
-  //   url: userFile,
-  //   setToken: false,
-  //   headers: {
-  //     "Content-Type": "multipart/form-data",
-  //   },
-  //   responseType: "blob",
-  //   callback: function (data) {
-  //     testFile = new File([data], "test.pcapng", {
-  //       type: data.type || "application/octet-stream",
-  //     });
-  //   },
-  // });
-
-  iframe.onload = () => {
-    try {
-      const iframeDoc = iframe.contentWindow.document;
-
-      // پیدا کردن input آپلود Webshark
-      const fileInput = iframeDoc.querySelector('input[type="file"]');
-      if (!fileInput) {
-        console.error("Upload input not found in Webshark.");
-        return;
-      }
-
-      // ساخت FileList
-      const dt = new DataTransfer();
-      dt.items.add(testFile);
-      fileInput.files = dt.files;
-
-      // اجرای event آپلود
-      const changeEvent = new Event("change", { bubbles: true });
-      fileInput.dispatchEvent(changeEvent);
-    } catch (err) {
-      console.error("Cannot access Webshark iframe:", err);
-    }
-  };
-}
-
-document.getElementById("endStep").addEventListener("click", () => {
-  // برگشت به step سرورها
-  stepper.to(1);
-
-  // برداشتن تیک سرور‌ها
-  document.querySelectorAll(".serverTrace").forEach((cb) => {
-    cb.checked = false;
-  });
-
-  // مخفی کردن ماژول‌ها و اینترفیس‌ها
-  document
-    .querySelectorAll(".modules-container, .interfaces-container")
-    .forEach((el) => {
-      el.classList.add("d-none");
-    });
-
-  // برداشتن تیک ماژول‌ها و اینترفیس‌ها
-  document.querySelectorAll(".moduleTrace, .interfaceTrace").forEach((cb) => {
-    cb.checked = false;
-  });
-
-  // فعال‌سازی دوباره دکمه Start و غیرفعال‌سازی Stop
-  const btnStart = document.getElementById("globalStart");
-  const btnStop = document.getElementById("globalStop");
-  if (btnStart) btnStart.disabled = false;
-  if (btnStop) btnStop.disabled = true;
-
-  // پاک کردن وضعیت ردیابی فعال (در صورت وجود)
-  tracingActive = false;
-});
+// function showNameServerTrace() {
+//   const step1 = document.getElementById("step-1");
+//   step1.innerHTML = "";
+
+//   serverCard.forEach((server) => {
+//     const serverSection = document.createElement("div");
+//     serverSection.className =
+//       "server-section border rounded p-3 mt-3 bg-white shadow-sm";
+
+//     // Header سرور
+//     const header = document.createElement("div");
+//     header.className = "d-flex align-items-center justify-content-between";
+
+//     const left = document.createElement("div");
+//     left.className = "form-check";
+
+//     const chk = document.createElement("input");
+//     chk.type = "checkbox";
+//     chk.className = "form-check-input serverTrace me-2";
+//     chk.id = `server${server.id}`;
+
+//     const lbl = document.createElement("label");
+//     lbl.className = "form-check-label fw-bold";
+//     lbl.htmlFor = chk.id;
+//     lbl.textContent = server.name;
+
+//     left.appendChild(chk);
+//     left.appendChild(lbl);
+
+//     header.appendChild(left);
+//     serverSection.appendChild(header);
+
+//     // بخش افقی ماژول + اینترفیس
+//     const row = document.createElement("div");
+//     row.className = "d-flex flex-wrap gap-4 mt-2";
+
+//     const modulesContainer = document.createElement("div");
+//     modulesContainer.className = "flex-fill modules-container d-none";
+//     modulesContainer.style.minWidth = "300px";
+
+//     const interfacesContainer = document.createElement("div");
+//     interfacesContainer.className = "flex-fill interfaces-container d-none";
+//     interfacesContainer.style.minWidth = "300px";
+//     interfacesContainer.id = `interfacesContainer_${server.id}`;
+
+//     const mods = modulesInfo.filter((m) => m.serverIDs.includes(server.id));
+//     if (mods.length > 0) {
+//       const title = document.createElement("p");
+//       title.className = "m-0 fw-bold text-secondary ms-2";
+//       title.textContent = "Modules:";
+//       modulesContainer.appendChild(title);
+//       mods.forEach((m) => {
+//         const div = document.createElement("div");
+//         div.className = "form-check ms-3 mt-1";
+//         div.innerHTML = `
+//           <input type="checkbox" class="form-check-input moduleTrace moduleTrace${server.id}" id="module${m.moduleID}">
+//           <label class="form-check-label" for="module${m.moduleID}">${m.moduleName}</label>
+//         `;
+//         modulesContainer.appendChild(div);
+//       });
+//     }
+
+//     row.appendChild(modulesContainer);
+//     row.appendChild(interfacesContainer);
+//     serverSection.appendChild(row);
+
+//     step1.appendChild(serverSection);
+
+//     // رویداد تیک سرور
+//     chk.addEventListener("change", async () => {
+//       const checked = chk.checked;
+//       modulesContainer.classList.toggle("d-none", !checked);
+//       interfacesContainer.classList.toggle("d-none", !checked);
+//       // modulesContainer
+//       //   .querySelectorAll(".moduleTrace")
+//       //   .forEach((c) => (c.checked = checked));
+
+//       if (checked) {
+//         const sData = dataServer.find((d) => d.id == server.id);
+//         if (!sData?.username || !sData?.password) {
+//           Toastify({
+//             text: `Please enter username/password for ${server.name}`,
+//           }).showToast();
+//           chk.checked = false;
+//           modulesContainer.classList.add("d-none");
+//           interfacesContainer.classList.add("d-none");
+//           return;
+//         }
+//         const key = String(server.name).trim();
+//         if (!serverFetchedInterfaces[key])
+//           await fetchInterfaces(sData, server.name, interfacesContainer);
+//         else interfacesContainer.innerHTML = serverFetchedInterfaces[key];
+//       } else {
+//         interfacesContainer.classList.add("d-none");
+//         interfacesContainer
+//           .querySelectorAll(".interfaceTrace")
+//           ?.forEach((c) => (c.checked = false));
+//       }
+//     });
+//   });
+
+//   // ورودی و کنترل کلی (IMSI / MSISDN + Start / Stop + Password)
+//   const controlsDiv = document.createElement("div");
+//   controlsDiv.className = "mt-4";
+
+//   const leftControls = document.createElement("div");
+//   leftControls.className = "d-flex align-items-center mb-3 gap-2";
+//   leftControls.innerHTML = `
+//     <label for="globalIdentifier" class="form-label mb-0 me-2">IMSI / MSISDN</label>
+//     <input type="text" class="form-control form-control-sm w-25" id="globalIdentifier">
+//   `;
+
+//   const midControls = document.createElement("div");
+//   midControls.className = "d-flex align-items-center mb-3 gap-2";
+//   midControls.innerHTML = `
+//     <label for="passServer" class="form-label mb-0 me-2">Current System Password</label>
+//     <input type="password" class="form-control form-control-sm w-25" id="passServer">
+//   `;
+
+//   const rightControls = document.createElement("div");
+//   rightControls.className = "d-flex align-items-center mb-2 gap-2";
+//   rightControls.innerHTML = `
+//     <button class="btn btn-success" type="button" id="globalStart">Start Trace</button>
+//     <button class="btn btn-danger" type="button" id="globalStop" disabled>Stop Trace</button>
+//   `;
+
+//   controlsDiv.appendChild(leftControls);
+//   controlsDiv.appendChild(midControls);
+//   controlsDiv.appendChild(rightControls);
+//   step1.appendChild(controlsDiv);
+
+//   // --- هندلرهای Start / Stop ---
+//   document.getElementById("globalStart").addEventListener("click", async () => {
+//     globalIdentifier = document.getElementById("globalIdentifier").value.trim();
+
+//     // if (!globalIdentifier) {
+//     //   Toastify({ text: "Please enter IMSI / MSISDN" }).showToast();
+//     //   return;
+//     // }
+
+//     const checkedServers = Array.from(
+//       document.querySelectorAll(".serverTrace:checked")
+//     ).map((cb) => Number(cb.id.replace("server", "")));
+
+//     if (!checkedServers.length) {
+//       Toastify({
+//         text: "Please select at least one server to start trace.",
+//       }).showToast();
+//       return;
+//     }
+
+//     for (const sid of checkedServers) {
+//       const sData = dataServer.find((d) => d.id == sid);
+//       const label =
+//         document.querySelector(`label[for="server${sid}"]`)?.textContent ||
+//         String(sid);
+//       if (!sData?.username || !sData?.password) {
+//         Toastify({
+//           text: `You didn’t enter the username and password for ${label}`,
+//         }).showToast();
+//         return;
+//       }
+
+//       // const key = String(label).trim();
+//       // const container = document.getElementById(`interfacesContainer_${sid}`);
+//       // if (!serverFetchedInterfaces[key]) {
+//       //   container.classList.remove("d-none");
+//       //   await fetchInterfaces(sData, label, container);
+//       // }
+//     }
+
+//     let module_identifier = document.getElementById("globalIdentifier").value;
+
+//     // ساخت داده trace
+//     serversTrace = checkedServers.map((sid) => {
+//       const sInfo = serverCard.find((s) => s.id == sid);
+//       const dInfo = dataServer.find((d) => d.id == sid);
+//       return {
+//         id: sid,
+//         name: sInfo?.name,
+//         username: dInfo?.username,
+//         password: dInfo?.password,
+//         port: dInfo?.port || 22,
+//         module_identifier: module_identifier,
+//         module_ids: Array.from(
+//           document.querySelectorAll(`.moduleTrace${sid}:checked`)
+//         ).map((c) => Number(c.id.replace("module", ""))),
+//         interfaces: Array.from(
+//           document.querySelectorAll(`.interfaceTrace${sid}:checked`)
+//         ).map((c) => c.value),
+//       };
+//     });
+//     console.log(module_identifier);
+//     console.log(typeof module_identifier);
+//     runActionForAll("start");
+//   });
+
+//   document.getElementById("globalStop").addEventListener("click", async () => {
+//     if (!tracingActive) {
+//       Toastify({
+//         text: "You must Start trace before stopping it.",
+//       }).showToast();
+//       return;
+//     }
+
+//     document.getElementById("tabBtn2")?.classList.remove("active");
+//     document.getElementById("tabBtn1")?.classList.add("active");
+//     requestAnimationFrame(() => {
+//       document.getElementById("tabMain")?.classList.add("show");
+//       document.getElementById("tabMain")?.classList.add("active");
+//     });
+
+//     const checkedServers = Array.from(
+//       document.querySelectorAll(".serverTrace:checked")
+//     ).map((cb) => Number(cb.id.replace("server", "")));
+
+//     for (const sid of checkedServers) {
+//       const sData = dataServer.find((d) => d.id == sid);
+//       const label =
+//         document.querySelector(`label[for="server${sid}"]`)?.textContent ||
+//         String(sid);
+//       if (!sData?.username || !sData?.password) {
+//         Toastify({
+//           text: `You didn’t enter the username and password for ${label}`,
+//         }).showToast();
+//         return;
+//       }
+
+//       // const key = String(label).trim();
+//       // const container = document.getElementById(`interfacesContainer_${sid}`);
+//       // if (!serverFetchedInterfaces[key]) {
+//       //   container.classList.remove("d-none");
+//       //   await fetchInterfaces(sData, label, container);
+//       // }
+//     }
+
+//     let module_identifier = document.getElementById("globalIdentifier").value;
+
+//     serversTrace = checkedServers.map((sid) => {
+//       const sInfo = serverCard.find((s) => s.id == sid);
+//       const dInfo = dataServer.find((d) => d.id == sid);
+//       return {
+//         id: sid,
+//         name: sInfo?.name,
+//         username: dInfo?.username,
+//         password: dInfo?.password,
+//         port: dInfo?.port || 22,
+//         module_identifier: module_identifier,
+//         module_ids: Array.from(
+//           document.querySelectorAll(`.moduleTrace${sid}:checked`)
+//         ).map((c) => Number(c.id.replace("module", ""))),
+//         interfaces: Array.from(
+//           document.querySelectorAll(`.interfaceTrace${sid}:checked`)
+//         ).map((c) => c.value),
+//       };
+//     });
+//     runActionForAll("stop");
+//   });
+// }
+
+// let statusTraceStart = true;
+// let statusTraceStop = true;
+
+// function showInputTrace() {
+//   const container = document.getElementById("step-3");
+//   container.innerHTML = "";
+//   // حلقه روی همه سرورها (module ها)
+//   for (let i = 0; i < allInterfacesTrace.length; i++) {
+//     const moduleName = Object.keys(allInterfacesTrace[i])[0];
+
+//     // نام سرور
+//     const p = document.createElement("p");
+//     p.setAttribute("class", "m-0");
+//     p.textContent = moduleName;
+//     container.appendChild(p);
+
+//     // ایجاد div برای input
+//     const div = document.createElement("div");
+//     div.setAttribute("class", "mb-3 ms-4");
+
+//     // label
+//     const label = document.createElement("label");
+//     label.setAttribute("for", `input_${moduleName}`);
+//     label.setAttribute("class", "form-label fontSizeTrace");
+//     label.textContent = `IMSI & MSYSDN`;
+
+//     // input
+//     const input = document.createElement("input");
+//     input.setAttribute("type", "text");
+//     input.setAttribute("class", "form-control serverInput w-75");
+//     input.setAttribute("id", `input_${moduleName}`);
+//     div.appendChild(label);
+//     div.appendChild(input);
+//     container.appendChild(div);
+//   }
+
+//   const labelPassServer = document.createElement("label");
+//   labelPassServer.setAttribute("for", `passServer`);
+//   labelPassServer.setAttribute("class", "form-label fontSizeTrace ms-4");
+//   labelPassServer.textContent = `Current Server Password`;
+
+//   const inputPassServer = document.createElement("input");
+//   inputPassServer.setAttribute("type", "password");
+//   inputPassServer.setAttribute("class", "form-control w-25 ms-4");
+//   inputPassServer.setAttribute("id", `passServer`);
+
+//   container.appendChild(labelPassServer);
+//   container.appendChild(inputPassServer);
+
+//   // دکمه‌ها
+//   const buttonPrev = document.createElement("button");
+//   buttonPrev.setAttribute("class", "btn btn-primary mt-5 me-2 buttonTrace");
+//   buttonPrev.setAttribute("type", "button");
+//   buttonPrev.setAttribute("id", "prev3");
+//   buttonPrev.innerHTML = "Prev";
+
+//   // const buttonNext = document.createElement("button");
+//   // buttonNext.setAttribute("class", "btn btn-primary mt-3 buttonTrace");
+//   // buttonNext.setAttribute("type", "button");
+//   // buttonNext.setAttribute("id", "next3");
+//   // buttonNext.innerHTML = "Next";
+
+//   const startTrace = document.createElement("button");
+//   startTrace.setAttribute("class", "btn btn-success mt-5 me-2 buttonTrace");
+//   startTrace.setAttribute("type", "button");
+//   startTrace.setAttribute("id", "startTrace");
+//   startTrace.innerHTML = "Start Trace";
+
+//   const stopTrace = document.createElement("button");
+//   stopTrace.setAttribute("class", "btn btn-success mt-5 buttonTrace");
+//   stopTrace.setAttribute("type", "button");
+//   stopTrace.setAttribute("id", "StopTrace");
+//   stopTrace.innerHTML = "Stop Trace";
+
+//   container.appendChild(buttonPrev);
+//   container.appendChild(startTrace);
+//   container.appendChild(stopTrace);
+
+//   // رویداد next
+//   // document.getElementById("next3").addEventListener("click", () => {
+//   //   stepper.next();
+//   // });
+
+//   document.getElementById("startTrace").addEventListener("click", () => {
+//     if (statusTraceStart) {
+//       // جمع‌آوری داده‌ها از input ها
+//       const inputs = Array.from(document.querySelectorAll(".serverInput")).map(
+//         (input) => ({
+//           moduleName: input.id.replace("input_", ""),
+//           value: input.value.trim(),
+//         })
+//       );
+
+//       // افزودن فقط ورودی‌هایی که مقدار دارند
+//       serversTrace.forEach((server) => {
+//         const matched = inputs.find(
+//           (inp) => inp.moduleName === (server.name || server.module_name)
+//         );
+//         if (matched && matched.value !== "") {
+//           // فقط اگر مقدار پر شده بود
+//           server.module_identifier = matched.value;
+//         }
+//       });
+
+//       funStartTrace();
+//     } else {
+//       // document.querySelectorAll(".serverTrace").forEach((element) => {
+//       //   element.checked = false;
+//       // });
+//       // document.querySelectorAll(".moduleTrace").forEach((element) => {
+//       //   element.checked = false;
+//       // });
+//       // showInterfaceTrace = true;
+//       // stepper.to(1);
+//       statusTraceStart = true;
+//     }
+//   });
+
+//   document.getElementById("StopTrace").addEventListener("click", () => {
+//     if (statusTraceStop) {
+//       // جمع‌آوری داده‌ها از input ها
+//       const inputs = Array.from(document.querySelectorAll(".serverInput")).map(
+//         (input) => ({
+//           moduleName: input.id.replace("input_", ""),
+//           value: input.value.trim(),
+//         })
+//       );
+
+//       // افزودن فقط ورودی‌هایی که مقدار دارند
+//       serversTrace.forEach((server) => {
+//         const matched = inputs.find(
+//           (inp) => inp.moduleName === (server.name || server.module_name)
+//         );
+//         if (matched && matched.value !== "") {
+//           server.module_identifier = matched.value;
+//         }
+//       });
+
+//       funStopTrace();
+//     } else {
+//       stepper.next();
+//       statusTraceStop = true;
+//     }
+//   });
+
+//   // رویداد prev
+//   document.getElementById("prev3").addEventListener("click", () => {
+//     stepper.previous();
+//   });
+// }
+
+// async function funStartTrace() {
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background = "hsla(0, 0%, 100%, 0.5)";
+
+//   let current_server_password = document.getElementById("passServer").value;
+//   let module_identifier = String(document.getElementById("globalIdentifier")?.value ?? "");
+//   console.log("serversTrace", JSON.stringify(serversTrace, null, 2));
+//   await useApi({
+//     method: "post",
+//     url: "trace-server-start",
+//     data: {
+//       current_server_password,
+//       servers: serversTrace.map(s => ({
+//         ...s,
+//         module_identifier,
+//       })),
+//     },
+//     callback: function (data) {
+//       Toastify({
+//         text: "trace started successfully",
+//         style: {
+//           background: "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+//         },
+//       }).showToast();
+//       document.getElementById("globalStart").disabled = true;
+//       document.getElementById("globalStop").disabled = false;
+//       tracingActive = true;
+//       statusTraceStart = false;
+//     },
+//   });
+
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background = "hsla(0, 0%, 100%, 1)";
+// }
+
+// async function funStopTrace() {
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 0.5)";
+
+//   let current_server_password = document.getElementById("passServer").value;
+
+//   await useApi({
+//     method: "post",
+//     url: "trace-server-stop",
+//     data: {
+//       current_server_password,
+//       servers: serversTrace,
+//     },
+//     callback: function (data) {
+//       downloadFile(data.final_pcap);
+//       // setTimeout(() => {
+//       //   loadPcapIntoWebshark(data.final_pcap);
+//       // }, 5000);
+//       const iframe = document.getElementById("traceFrame");
+//       if (iframe && data?.webshark) {
+//         iframe.src = data.webshark;
+//       }
+
+//       const iframe2 = document.getElementById("traceFrame2");
+//       if (iframe2 && data?.webshark_pcap) {
+//         iframe2.src = data.webshark_pcap;
+//       }
+//       stepper.to(2);
+//       Toastify({
+//         text: "trace stopped successfully",
+//         style: {
+//           background:
+//             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+//         },
+//       }).showToast();
+//       document.getElementById("globalStart").disabled = false;
+//       document.getElementById("globalStop").disabled = true;
+//       tracingActive = false;
+//       statusTraceStop = false;
+//     },
+//   });
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 1)";
+// }
+
+// function downloadFile(address) {
+//   const url = address;
+
+//   const a = document.createElement("a");
+//   a.href = url;
+//   a.download = "trace.pcapng"; // اسم دلخواه فایل
+//   document.body.appendChild(a);
+//   a.click();
+//   a.remove();
+// }
+
+// async function loadPcapIntoWebshark(userFile) {
+// const iframe = document.getElementById("traceFrame");
+// let testFile;
+// await useApi({
+//   url: userFile,
+//   setToken: false,
+//   headers: {
+//     "Content-Type": "multipart/form-data",
+//   },
+//   responseType: "blob",
+//   callback: function (data) {
+//     testFile = new File([data], "test.pcapng", {
+//       type: data.type || "application/octet-stream",
+//     });
+//   },
+// });
+
+//   iframe.onload = () => {
+//     try {
+//       const iframeDoc = iframe.contentWindow.document;
+
+//       // پیدا کردن input آپلود Webshark
+//       const fileInput = iframeDoc.querySelector('input[type="file"]');
+//       if (!fileInput) {
+//         console.error("Upload input not found in Webshark.");
+//         return;
+//       }
+
+//       // ساخت FileList
+//       const dt = new DataTransfer();
+//       dt.items.add(testFile);
+//       fileInput.files = dt.files;
+
+//       // اجرای event آپلود
+//       const changeEvent = new Event("change", { bubbles: true });
+//       fileInput.dispatchEvent(changeEvent);
+//     } catch (err) {
+//       console.error("Cannot access Webshark iframe:", err);
+//     }
+//   };
+// }
+
+// document.getElementById("endStep").addEventListener("click", () => {
+//   // برگشت به step سرورها
+//   stepper.to(1);
+
+//   // برداشتن تیک سرور‌ها
+//   document.querySelectorAll(".serverTrace").forEach((cb) => {
+//     cb.checked = false;
+//   });
+
+//   // مخفی کردن ماژول‌ها و اینترفیس‌ها
+//   document
+//     .querySelectorAll(".modules-container, .interfaces-container")
+//     .forEach((el) => {
+//       el.classList.add("d-none");
+//     });
+
+//   // برداشتن تیک ماژول‌ها و اینترفیس‌ها
+//   document.querySelectorAll(".moduleTrace, .interfaceTrace").forEach((cb) => {
+//     cb.checked = false;
+//   });
+
+//   // فعال‌سازی دوباره دکمه Start و غیرفعال‌سازی Stop
+//   const btnStart = document.getElementById("globalStart");
+//   const btnStop = document.getElementById("globalStop");
+//   if (btnStart) btnStart.disabled = false;
+//   if (btnStop) btnStop.disabled = true;
+
+//   // پاک کردن وضعیت ردیابی فعال (در صورت وجود)
+//   tracingActive = false;
+// });
 
 // document.getElementById("endStep2").addEventListener("click", () => {
 //   // برگشت به step سرورها
@@ -9794,11 +9774,14 @@ function showViewFromHash() {
     case "#v-subscribers":
       document.querySelector("#v-subscribers-tab").click();
       break;
-    case "#v-trace":
-      document.querySelector("#v-trace-tab").click();
-      break;
-    case "#v-kpi":
-      document.querySelector("#v-kpi-tab").click();
+    // case "#v-trace":
+    //   document.querySelector("#v-trace-tab").click();
+    //   break;
+    // case "#v-kpi":
+    //   document.querySelector("#v-kpi-tab").click();
+    //   break;
+    case "#v-gui":
+      document.querySelector("#v-gui-tab").click();
       break;
     case "#v-gui":
       document.querySelector("#v-gui-tab").click();
@@ -10109,145 +10092,145 @@ document.getElementById("deletRoute").addEventListener("click", () => {
 //   });
 // }
 
-let testKpi;
+// let testKpi;
 
-document.getElementById("initKpi").addEventListener("click", () => {
-  document.getElementById("kpiAddFile").value = "";
-  document.getElementById("kpiPath").value = "";
-});
+// document.getElementById("initKpi").addEventListener("click", () => {
+//   document.getElementById("kpiAddFile").value = "";
+//   document.getElementById("kpiPath").value = "";
+// });
 
-document.getElementById("buttonInitKpi").addEventListener("click", () => {
-  initKpi();
-});
+// document.getElementById("buttonInitKpi").addEventListener("click", () => {
+//   initKpi();
+// });
 
-async function indexKpi() {
-  document.getElementById("idLoading").style.display = "flex";
+// async function indexKpi() {
+//   document.getElementById("idLoading").style.display = "flex";
 
-  let formData = new FormData();
+//   let formData = new FormData();
 
-  let fileInput = document.getElementById("kpiAddFile");
-  let fileModule = fileInput.files[0];
+//   let fileInput = document.getElementById("kpiAddFile");
+//   let fileModule = fileInput.files[0];
 
-  let pathInput = document.getElementById("kpiPath");
+//   let pathInput = document.getElementById("kpiPath");
 
-  if (fileModule) {
-    formData.append("file", fileModule);
-  }
-  formData.append("path", pathInput);
+//   if (fileModule) {
+//     formData.append("file", fileModule);
+//   }
+//   formData.append("path", pathInput);
 
-  await useApi({
-    url: `kpi/index`,
-    callback: function (data) {
-      testKpi = data;
-      kpiStatus = false;
-      loadKpiTable();
-    },
-  });
+//   await useApi({
+//     url: `kpi/index`,
+//     callback: function (data) {
+//       testKpi = data;
+//       kpiStatus = false;
+//       loadKpiTable();
+//     },
+//   });
 
-  document.getElementById("idLoading").style.display = "none";
-}
+//   document.getElementById("idLoading").style.display = "none";
+// }
 
-async function initKpi() {
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
+// async function initKpi() {
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 0.5)";
 
-  let formData = new FormData();
+//   let formData = new FormData();
 
-  let fileInput = document.getElementById("kpiAddFile");
-  let fileModule = fileInput.files[0];
+//   let fileInput = document.getElementById("kpiAddFile");
+//   let fileModule = fileInput.files[0];
 
-  let pathInput = document.getElementById("kpiPath").value;
+//   let pathInput = document.getElementById("kpiPath").value;
 
-  if (fileModule) {
-    formData.append("file", fileModule);
-  }
-  formData.append("path", JSON.stringify(pathInput));
+//   if (fileModule) {
+//     formData.append("file", fileModule);
+//   }
+//   formData.append("path", JSON.stringify(pathInput));
 
-  await useApi({
-    method: "post",
-    url: `kpi/init`,
-    data: formData,
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    callback: function (data) {
-      testKpi = data.items;
-      loadKpiTable();
-      Toastify({
-        text: data.msg,
-        style: {
-          background:
-            "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
-        },
-      }).showToast();
-      document.getElementById("cancelKPI").click();
-    },
-  });
+//   await useApi({
+//     method: "post",
+//     url: `kpi/init`,
+//     data: formData,
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//     callback: function (data) {
+//       testKpi = data.items;
+//       loadKpiTable();
+//       Toastify({
+//         text: data.msg,
+//         style: {
+//           background:
+//             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+//         },
+//       }).showToast();
+//       document.getElementById("cancelKPI").click();
+//     },
+//   });
 
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 1)";
-}
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 1)";
+// }
 
-async function editKpi(id, status) {
-  document.getElementById("idLoading").style.display = "flex";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 0.5)";
+// async function editKpi(id, status) {
+//   document.getElementById("idLoading").style.display = "flex";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 0.5)";
 
-  await useApi({
-    method: "put",
-    url: `kpi/update`,
-    data: { id, status },
-    callback: function (data) {
-      Toastify({
-        text: data.msg,
-        style: {
-          background:
-            "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
-        },
-      }).showToast();
-    },
-  });
+//   await useApi({
+//     method: "put",
+//     url: `kpi/update`,
+//     data: { id, status },
+//     callback: function (data) {
+//       Toastify({
+//         text: data.msg,
+//         style: {
+//           background:
+//             "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+//         },
+//       }).showToast();
+//     },
+//   });
 
-  document.getElementById("idLoading").style.display = "none";
-  document.getElementById("idLoading").style.background =
-    "hsla(0, 0%, 100%, 1)";
-}
+//   document.getElementById("idLoading").style.display = "none";
+//   document.getElementById("idLoading").style.background =
+//     "hsla(0, 0%, 100%, 1)";
+// }
 
-// تابع برای بارگذاری جدول KPI
-function loadKpiTable() {
-  const tbody = document.getElementById("tBodyKpi");
-  tbody.innerHTML = ""; // خالی کردن جدول
+// // تابع برای بارگذاری جدول KPI
+// function loadKpiTable() {
+//   const tbody = document.getElementById("tBodyKpi");
+//   tbody.innerHTML = ""; // خالی کردن جدول
 
-  Object.values(testKpi).forEach((item) => {
-    const tr = document.createElement("tr");
+//   Object.values(testKpi).forEach((item) => {
+//     const tr = document.createElement("tr");
 
-    const tdId = document.createElement("td");
-    tdId.textContent = item.id;
+//     const tdId = document.createElement("td");
+//     tdId.textContent = item.id;
 
-    const tdDesc = document.createElement("td");
-    tdDesc.textContent = item.title;
+//     const tdDesc = document.createElement("td");
+//     tdDesc.textContent = item.title;
 
-    const tdStatus = document.createElement("td");
-    tdStatus.innerHTML = `
-      <div class="mt-2">
-        <label class="switch">
-          <input 
-            type="checkbox" 
-            class="inputToggle" 
-            data-id="${item.id}" 
-            ${item.status === "on" ? "checked" : ""}>
-          <span class="slider"></span>
-        </label>
-      </div>
-    `;
+//     const tdStatus = document.createElement("td");
+//     tdStatus.innerHTML = `
+//       <div class="mt-2">
+//         <label class="switch">
+//           <input 
+//             type="checkbox" 
+//             class="inputToggle" 
+//             data-id="${item.id}" 
+//             ${item.status === "on" ? "checked" : ""}>
+//           <span class="slider"></span>
+//         </label>
+//       </div>
+//     `;
 
-    tr.appendChild(tdId);
-    tr.appendChild(tdDesc);
-    tr.appendChild(tdStatus);
-    tbody.appendChild(tr);
-  });
+//     tr.appendChild(tdId);
+//     tr.appendChild(tdDesc);
+//     tr.appendChild(tdStatus);
+//     tbody.appendChild(tr);
+//   });
 
   // افزودن رویداد کلیک برای toggle‌ها
   document.querySelectorAll(".inputToggle").forEach((toggle) => {
@@ -10258,6 +10241,17 @@ function loadKpiTable() {
     });
   });
 }
+//Gui BTN
+const GuiBtn = document.getElementById("Gui");
 
+GuiBtn.addEventListener("click", () => {
 
+  useApi({
+    method: 'post',
+    url: 'run-gui-endpoint',
+    callback: (res) => {
+      console.log(res);
+    }
+  });
 
+});

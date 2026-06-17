@@ -168,6 +168,30 @@ function warnJsonConfigOnlyAction() {
   }).showToast();
 }
 
+function getUpdateBoxElement() {
+  return (
+    document.querySelector(".boxChange#updateBtn") ||
+    document.querySelector(".boxChange")
+  );
+}
+
+function hideUpdateBox() {
+  const updateBox = getUpdateBoxElement();
+  if (!updateBox) return;
+
+  updateBox.style.bottom = "-100px";
+}
+
+function showUpdateSuccessToast() {
+  Toastify({
+    text: "The configurations have been successfully updated.",
+    style: {
+      background:
+        "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
+    },
+  }).showToast();
+}
+
 function createSingleEditorTab(tabKey, title, data) {
   const mainTabs = document.getElementById("mainTabs");
   const tabId = `tab-${tabKey}`;
@@ -588,35 +612,54 @@ async function saveDataToServer() {
       // ...(!!port ? { port } : {}),
     },
     callback: async function (data) {
-      document.getElementById("mainTabs").innerHTML = "";
-      // document.querySelectorId("jsoneditor").innerHTML = "";
-      jsonData = data.config;
-      currentEffectiveConfigFormat = String(data?.effective_config_format || "").toLowerCase() || detectEffectiveFormat(data.config);
-
-      await generateFormFromJson(jsonData);
-      if (isJsonConfigOnlyModule()) {
-        enableJsonConfigActions();
+      try {
+        document.getElementById("mainTabs").innerHTML = "";
+    
+        jsonData = data.config;
+        currentEffectiveConfigFormat =
+          String(data?.effective_config_format || "").toLowerCase() ||
+          detectEffectiveFormat(data.config);
+    
+        await generateFormFromJson(jsonData);
+    
+        if (isJsonConfigOnlyModule()) {
+          enableJsonConfigActions();
+        }
+    
+        setEventListeners();
+    
+        let status = 0;
+        CallingTabs(status);
+        showAllModules();
+    
+        const activeTabName =
+          tabName ||
+          firstTabModule ||
+          (isJsonConfigOnlyModule() ? "configuration" : "");
+    
+        document.querySelectorAll("#mainTabs .nav-link").forEach((tab) => {
+          tab.classList.remove("active");
+        });
+    
+        if (activeTabName) {
+          const activeTab = document.getElementById(`tab-${activeTabName}-tab`);
+          if (activeTab) {
+            activeTab.classList.add("active");
+          }
+    
+          try {
+            findProperty(activeTabName);
+          } catch (error) {
+            console.error("Failed to reactivate module config tab after update.", error);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to refresh module config UI after update.", error);
+      } finally {
+        resetChanges();
+        hideUpdateBox();
+        showUpdateSuccessToast();
       }
-      setEventListeners();
-      let status = 0;
-      CallingTabs(status);
-      showAllModules();
-      document.querySelectorAll(".nav-link").forEach((tab) => {
-        tab.classList.remove("active");
-      });
-      findProperty(tabName);
-
-      resetChanges();
-      if (document.getElementById(`tab-${tabName}-tab`))
-        document.getElementById(`tab-${tabName}-tab`).classList.add("active");
-      Toastify({
-        text: "The configurations have been successfully updated.",
-        style: {
-          background:
-            "linear-gradient(to right,rgb(0, 172, 14),rgb(0, 167, 14))",
-        },
-      }).showToast();
-      document.getElementById("updateBtn").style.bottom = "-100px";
     },
     // errorCallback: function (data) {
     //   Toastify({

@@ -189,6 +189,7 @@ input {
   box-shadow: none;
 }
 
+
 .accordion-body a {
   padding: 8px 30px;
   /* Spacing for submenu items */
@@ -2195,20 +2196,4 @@ button.iconAccessLevel {
   height: fit-content;
   margin-right: 10px;
   padding-top: 15px;
-}
-
-.GuiContainer {
-  width: 100%;
-  height: 100%;
-}
-
-.GuiIframe {
-  width: 100%;
-  height: 100%;
-  border: 0px;
-}
-
-#v-gui {
-  height: 740px !important;
-  overflow: hidden;
 }

@@ -2,7 +2,6 @@
 
 namespace Modules\Log\Services;
 
-use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon;
 
@@ -13,7 +12,12 @@ class ActivityLogFileExporterService
 
     public function export(): int
     {
-        Storage::disk('local')->makeDirectory($this->logDirectory, 0755, true);
+        $fullPath = storage_path('app/' . $this->logDirectory);
+
+        // اطمینان از وجود دایرکتوری
+        if (!is_dir($fullPath)) {
+            mkdir($fullPath, 0755, true);
+        }
 
         $lastExportedId = $this->getLastExportedId();
 
@@ -31,11 +35,16 @@ class ActivityLogFileExporterService
         }
 
         $formattedLogs = $this->formatLogs($newLogs);
-        $this->appendToCurrentDayLog($formattedLogs);
 
-        // ذخیره آخرین ID لاگ خروجی گرفته شده
+        // نوشتن مستقیم با file_put_contents (قابل اعتمادتر)
+        $filename = $this->getCurrentDayFilename();
+        file_put_contents(
+            $fullPath . '/' . $filename,
+            $formattedLogs,
+            FILE_APPEND | LOCK_EX
+        );
+
         $this->updateLastExportedId($newLogs->last()->id);
-
         $this->rotateAndCleanOldLogs();
 
         return $count;
@@ -81,12 +90,6 @@ class ActivityLogFileExporterService
         return implode(' | ', $parts);
     }
 
-    protected function appendToCurrentDayLog(string $content): void
-    {
-        $filename = $this->getCurrentDayFilename();
-        Storage::disk('local')->append("{$this->logDirectory}/{$filename}", $content);
-    }
-
     protected function getCurrentDayFilename(): string
     {
         return 'activity-' . now()->format('Y-m-d') . '.log';
@@ -94,42 +97,42 @@ class ActivityLogFileExporterService
 
     protected function rotateAndCleanOldLogs(): void
     {
-        $files = Storage::disk('local')->files($this->logDirectory);
+        $fullPath = storage_path('app/' . $this->logDirectory);
+
+        if (!is_dir($fullPath)) return;
+
+        $files = scandir($fullPath);
         $cutoffDate = now()->subDays($this->retentionDays);
 
         foreach ($files as $file) {
             if (!str_ends_with($file, '.log')) continue;
 
-            if (preg_match('/activity-(\d{4}-\d{2}-\d{2})\.log/', basename($file), $matches)) {
+            if (preg_match('/activity-(\d{4}-\d{2}-\d{2})\.log/', $file, $matches)) {
                 $fileDate = Carbon::createFromFormat('Y-m-d', $matches[1]);
                 if ($fileDate->lt($cutoffDate)) {
-                    Storage::disk('local')->delete($file);
+                    @unlink($fullPath . '/' . $file);
                 }
             }
         }
     }
 
-    /**
-     * خواندن آخرین ID لاگ خروجی گرفته شده
-     */
     protected function getLastExportedId(): ?int
     {
-        $path = "{$this->logDirectory}/.last-export-id";
+        $fullPath = storage_path('app/' . $this->logDirectory);
+        $path = $fullPath . '/.last-export-id';
 
-        if (!Storage::disk('local')->exists($path)) {
+        if (!file_exists($path)) {
             return null;
         }
 
-        $id = Storage::disk('local')->get($path);
-        return $id ? (int) $id : null;
+        $id = file_get_contents($path);
+        return $id ? (int) trim($id) : null;
     }
 
-    /**
-     * ذخیره آخرین ID لاگ خروجی گرفته شده
-     */
     protected function updateLastExportedId(int $id): void
     {
-        $path = "{$this->logDirectory}/.last-export-id";
-        Storage::disk('local')->put($path, (string) $id);
+        $fullPath = storage_path('app/' . $this->logDirectory);
+        $path = $fullPath . '/.last-export-id';
+        file_put_contents($path, (string) $id);
     }
 }

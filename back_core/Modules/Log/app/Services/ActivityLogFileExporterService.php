@@ -11,21 +11,16 @@ class ActivityLogFileExporterService
     protected string $logDirectory = 'logs/5g-activity-logs';
     protected int $retentionDays = 30;
 
-    /**
-     * اجرای اصلی خروجی‌گیری لاگ‌ها به فایل
-     * @return int تعداد لاگ‌های خروجی گرفته شده
-     */
     public function export(): int
     {
-        // اطمینان از وجود دایرکتوری
         Storage::disk('local')->makeDirectory($this->logDirectory, 0755, true);
 
-        $lastExportedAt = $this->getLastExportedTimestamp();
+        $lastExportedId = $this->getLastExportedId();
 
-        $query = Activity::query()->orderBy('created_at', 'asc');
+        $query = Activity::query()->orderBy('id', 'asc');
 
-        if ($lastExportedAt) {
-            $query->where('created_at', '>', $lastExportedAt);
+        if ($lastExportedId) {
+            $query->where('id', '>', $lastExportedId);
         }
 
         $newLogs = $query->get();
@@ -36,9 +31,11 @@ class ActivityLogFileExporterService
         }
 
         $formattedLogs = $this->formatLogs($newLogs);
-
         $this->appendToCurrentDayLog($formattedLogs);
-        $this->updateLastExportedTimestamp($newLogs->last()->created_at);
+
+        // ذخیره آخرین ID لاگ خروجی گرفته شده
+        $this->updateLastExportedId($newLogs->last()->id);
+
         $this->rotateAndCleanOldLogs();
 
         return $count;
@@ -112,21 +109,27 @@ class ActivityLogFileExporterService
         }
     }
 
-    protected function getLastExportedTimestamp(): ?Carbon
+    /**
+     * خواندن آخرین ID لاگ خروجی گرفته شده
+     */
+    protected function getLastExportedId(): ?int
     {
-        $path = "{$this->logDirectory}/.last-export-timestamp";
+        $path = "{$this->logDirectory}/.last-export-id";
 
         if (!Storage::disk('local')->exists($path)) {
             return null;
         }
 
-        $timestamp = Storage::disk('local')->get($path);
-        return $timestamp ? Carbon::parse($timestamp) : null;
+        $id = Storage::disk('local')->get($path);
+        return $id ? (int) $id : null;
     }
 
-    protected function updateLastExportedTimestamp(Carbon $timestamp): void
+    /**
+     * ذخیره آخرین ID لاگ خروجی گرفته شده
+     */
+    protected function updateLastExportedId(int $id): void
     {
-        $path = "{$this->logDirectory}/.last-export-timestamp";
-        Storage::disk('local')->put($path, $timestamp->toDateTimeString());
+        $path = "{$this->logDirectory}/.last-export-id";
+        Storage::disk('local')->put($path, (string) $id);
     }
 }
